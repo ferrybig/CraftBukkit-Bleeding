@@ -2337,7 +2337,7 @@ public abstract class World implements IBlockAccess {
         boolean defaultReturn = axisalignedbb != null && !this.a(axisalignedbb, entity) ? false : (block1.getMaterial() == Material.ORIENTABLE && block == Blocks.ANVIL ? true : block1.getMaterial().isReplaceable() && block.canPlace(this, i, j, k, l, itemstack));
 
         // CraftBukkit start
-        BlockCanBuildEvent event = new BlockCanBuildEvent(this.getWorld().getBlockAt(i, j, k), CraftMagicNumbers.getId(block), defaultReturn);
+        BlockCanBuildEvent event = new BlockCanBuildEvent(this.getWorld().getBlockAt(i, j, k), CraftMagicNumbers.getMaterial(block), defaultReturn);
         this.getServer().getPluginManager().callEvent(event);
 
         return event.isBuildable();
