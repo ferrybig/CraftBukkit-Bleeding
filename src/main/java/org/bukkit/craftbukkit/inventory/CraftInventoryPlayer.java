@@ -8,6 +8,7 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 
 public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.inventory.PlayerInventory, EntityEquipment {
     public CraftInventoryPlayer(net.minecraft.server.PlayerInventory inventory) {
@@ -99,6 +100,7 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
         }
     }
 
+    @Deprecated
     public int clear(int id, int data) {
         int count = 0;
         ItemStack[] items = getContents();
@@ -124,6 +126,14 @@ public class CraftInventoryPlayer extends CraftInventory implements org.bukkit.i
             setItem(armorSlot++, null);
         }
         return count;
+    }
+
+    public int clear(MaterialData data) {
+        if (data == null) {
+            return clear(-1, -1);
+        } else {
+            return clear(data.getItemTypeId(), data.getData());
+        }
     }
 
     @Override
