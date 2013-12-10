@@ -474,7 +474,7 @@ public abstract class World implements IBlockAccess {
                 // CraftBukkit start
                 CraftWorld world = ((WorldServer) this).getWorld();
                 if (world != null) {
-                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(i, j, k), CraftMagicNumbers.getId(block));
+                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(i, j, k), CraftMagicNumbers.getMaterial(block));
                     this.getServer().getPluginManager().callEvent(event);
 
                     if (event.isCancelled()) {
