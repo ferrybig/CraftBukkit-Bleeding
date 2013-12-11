@@ -29,6 +29,7 @@ import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.craftbukkit.entity.*;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.metadata.BlockMetadataStore;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.util.LongHash;
 import org.bukkit.entity.*;
 import org.bukkit.entity.Entity;
@@ -82,8 +83,13 @@ public class CraftWorld implements World {
         return getChunkAt(x >> 4, z >> 4).getBlock(x & 0xF, y & 0xFF, z & 0xF);
     }
 
+    @Deprecated
     public int getBlockTypeIdAt(int x, int y, int z) {
         return world.getTypeId(x, y, z);
+    }
+
+    public org.bukkit.Material getBlockTypeAt(int x, int y, int z) {
+        return CraftMagicNumbers.getMaterial(world.getType(x, y, z));
     }
 
     public int getHighestBlockYAt(int x, int z) {
@@ -487,8 +493,13 @@ public class CraftWorld implements World {
         return getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
+    @Deprecated
     public int getBlockTypeIdAt(Location location) {
         return getBlockTypeIdAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    }
+
+    public org.bukkit.Material getBlockTypeAt(Location location) {
+        return getBlockTypeAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     public int getHighestBlockYAt(Location location) {
