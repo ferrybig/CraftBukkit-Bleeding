@@ -60,4 +60,14 @@ public class CraftBoat extends CraftVehicle implements Boat {
     public EntityType getType() {
         return EntityType.BOAT;
     }
+
+    @Override
+    public double getDamage() {
+        return getHandle().getDamage();
+    }
+
+    @Override
+    public void setDamage(double damage) {
+        getHandle().setDamage((float) damage);
+    }
 }
