@@ -24,7 +24,7 @@ public class EntityBoat extends Entity {
     private double h;
 
     // CraftBukkit start
-    public double maxSpeed = 0.4D;
+    public double maxSpeed = 0.35D;
     public double occupiedDeceleration = 0.2D;
     public double unoccupiedDeceleration = -1;
     public boolean landBoats = false;
@@ -47,7 +47,7 @@ public class EntityBoat extends Entity {
     public EntityBoat(World world) {
         super(world);
         this.a = true;
-        this.b = 0.07D;
+        this.b = this.maxSpeed / 5.0D; // CraftBukkit
         this.k = true;
         this.a(1.5F, 0.6F);
         this.height = this.length / 2.0F;
@@ -147,7 +147,7 @@ public class EntityBoat extends Entity {
         return !this.dead;
     }
 
-        public void h() {
+    public void h() {
         // CraftBukkit start
         double prevX = this.locX;
         double prevY = this.locY;
@@ -271,24 +271,27 @@ public class EntityBoat extends Entity {
             // CraftBukkit end
 
             d4 = Math.sqrt(this.motX * this.motX + this.motZ * this.motZ);
-            if (d4 > 0.35D) {
-                d5 = 0.35D / d4;
+
+            // CraftBukkit start - Support maxSpeed
+            if (d4 > this.maxSpeed) {
+                d5 = this.maxSpeed / d4;
                 this.motX *= d5;
                 this.motZ *= d5;
-                d4 = 0.35D;
+                d4 = this.maxSpeed;
             }
 
-            if (d4 > d3 && this.b < 0.35D) {
-                this.b += (0.35D - this.b) / 35.0D;
-                if (this.b > 0.35D) {
-                    this.b = 0.35D;
+            if (d4 > d3 && this.b < this.maxSpeed) {
+                this.b += (this.maxSpeed - this.b) / (this.maxSpeed * 10);
+                if (this.b > this.maxSpeed) {
+                    this.b = this.maxSpeed;
                 }
             } else {
-                this.b -= (this.b - 0.07D) / 35.0D;
-                if (this.b < 0.07D) {
-                    this.b = 0.07D;
+                this.b -= (this.b - (this.maxSpeed / 5)) / (this.maxSpeed * 10);
+                if (this.b < (this.maxSpeed / 5)) {
+                    this.b = (this.maxSpeed / 5);
                 }
             }
+            // CraftBukkit end
 
             int k;
 
