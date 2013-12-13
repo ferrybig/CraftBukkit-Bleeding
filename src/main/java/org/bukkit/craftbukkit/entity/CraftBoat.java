@@ -21,10 +21,12 @@ public class CraftBoat extends CraftVehicle implements Boat {
         }
     }
 
+    @Deprecated
     public double getOccupiedDeceleration() {
         return getHandle().occupiedDeceleration;
     }
 
+    @Deprecated
     public void setOccupiedDeceleration(double speed) {
         if (speed >= 0D) {
             getHandle().occupiedDeceleration = speed;

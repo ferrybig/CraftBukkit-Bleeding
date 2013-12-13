@@ -25,6 +25,7 @@ public class EntityBoat extends Entity {
 
     // CraftBukkit start
     public double maxSpeed = 0.35D;
+    @Deprecated
     public double occupiedDeceleration = 0.2D;
     public double unoccupiedDeceleration = -1;
     public boolean landBoats = false;
