@@ -5,8 +5,10 @@ import java.util.List;
 
 import net.minecraft.server.Block;
 
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
+import org.bukkit.material.MaterialData;
 
 public class BlockStateListPopulator {
     private final World world;
@@ -23,13 +25,15 @@ public class BlockStateListPopulator {
 
     public void setTypeAndData(int x, int y, int z, Block block, int data, int light) {
         BlockState state = world.getBlockAt(x, y, z).getState();
-        state.setType(CraftMagicNumbers.getMaterial(block));
-        state.setRawData((byte) data);
+        Material type = CraftMagicNumbers.getMaterial(block);
+        state.setType(type);
+        state.setData(new MaterialData(type, (byte) data));
         list.add(state);
     }
+
     public void setTypeId(int x, int y, int z, int type) {
         BlockState state = world.getBlockAt(x, y, z).getState();
-        state.setTypeId(type);
+        state.setType(Material.getMaterial(type));
         list.add(state);
     }
 

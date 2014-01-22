@@ -55,9 +55,8 @@ public class CraftShapedRecipe extends ShapedRecipe implements CraftRecipe {
             if (mdata == null) continue;
             data[i] = c;
             i++;
-            int id = mdata.getTypeId();
             short dmg = mdata.getDurability();
-            data[i] = new net.minecraft.server.ItemStack(CraftMagicNumbers.getItem(id), 1, dmg);
+            data[i] = new net.minecraft.server.ItemStack(CraftMagicNumbers.getItem(mdata.getType()), 1, dmg);
             i++;
         }
         CraftingManager.getInstance().registerShapedRecipe(CraftItemStack.asNMSCopy(this.getResult()), data);

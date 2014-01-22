@@ -18,7 +18,7 @@ public class CraftEnderman extends CraftMonster implements Enderman {
     }
 
     public void setCarriedMaterial(MaterialData data) {
-        getHandle().setCarried(CraftMagicNumbers.getBlock(data.getItemTypeId()));
+        getHandle().setCarried(CraftMagicNumbers.getBlock(data.getItemType()));
         getHandle().setCarriedData(data.getData());
     }
 

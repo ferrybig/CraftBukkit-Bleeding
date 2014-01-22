@@ -4,6 +4,8 @@ import net.minecraft.server.Block;
 import net.minecraft.server.World;
 
 import org.bukkit.BlockChangeDelegate;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
+import org.bukkit.material.MaterialData;
 
 public class CraftBlockChangeDelegate {
     private final BlockChangeDelegate delegate;
@@ -17,7 +19,7 @@ public class CraftBlockChangeDelegate {
     }
 
     public Block getType(int x, int y, int z) {
-        return Block.e(this.delegate.getTypeId(x, y, z));
+        return CraftMagicNumbers.getBlock(this.delegate.getType(x, y, z));
     }
 
     public void setTypeAndData(int x, int y, int z, Block block, int data, int updateFlag) {
@@ -25,7 +27,7 @@ public class CraftBlockChangeDelegate {
         if (delegate instanceof World) {
             ((World) delegate).setTypeAndData(x, y, z, block, data, 2);
         } else {
-            delegate.setRawTypeIdAndData(x, y, z, Block.b(block), data);
+            delegate.setRawTypeAndData(x, y, z, new MaterialData(CraftMagicNumbers.getMaterial(block), (byte) data));
         }
     }
 

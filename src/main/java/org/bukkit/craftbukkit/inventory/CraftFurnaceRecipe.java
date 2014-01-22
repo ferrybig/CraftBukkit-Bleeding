@@ -22,6 +22,6 @@ public class CraftFurnaceRecipe extends FurnaceRecipe implements CraftRecipe {
     public void addToCraftingManager() {
         ItemStack result = this.getResult();
         ItemStack input = this.getInput();
-        RecipesFurnace.getInstance().a(CraftMagicNumbers.getItem(input.getTypeId()), CraftItemStack.asNMSCopy(result), 0.1f);
+        RecipesFurnace.getInstance().a(CraftMagicNumbers.getItem(input.getType()), CraftItemStack.asNMSCopy(result), 0.1f);
     }
 }

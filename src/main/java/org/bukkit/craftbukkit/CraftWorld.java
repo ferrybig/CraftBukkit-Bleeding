@@ -11,16 +11,10 @@ import java.util.UUID;
 
 import net.minecraft.server.*;
 
+import net.minecraft.server.Chunk;
 import org.apache.commons.lang.Validate;
-import org.bukkit.BlockChangeDelegate;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
-import org.bukkit.Difficulty;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.TreeType;
+import org.bukkit.*;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -298,7 +292,7 @@ public class CraftWorld implements World {
 
     public org.bukkit.entity.Item dropItem(Location loc, ItemStack item) {
         Validate.notNull(item, "Cannot drop a Null item.");
-        Validate.isTrue(item.getTypeId() != 0, "Cannot drop AIR.");
+        Validate.isTrue(item.getType() != Material.AIR, "Cannot drop AIR.");
         EntityItem entity = new EntityItem(world, loc.getX(), loc.getY(), loc.getZ(), CraftItemStack.asNMSCopy(item));
         entity.pickupDelay = 10;
         world.addEntity(entity);
@@ -818,7 +812,7 @@ public class CraftWorld implements World {
         double y = location.getBlockY() + 0.5;
         double z = location.getBlockZ() + 0.5;
 
-        EntityFallingBlock entity = new EntityFallingBlock(world, x, y, z, net.minecraft.server.Block.e(material.getId()), data);
+        EntityFallingBlock entity = new EntityFallingBlock(world, x, y, z, CraftMagicNumbers.getBlock(material), data);
         entity.b = 1; // ticksLived
 
         world.addEntity(entity, SpawnReason.CUSTOM);
@@ -981,13 +975,13 @@ public class CraftWorld implements World {
         } else if (Hanging.class.isAssignableFrom(clazz)) {
             Block block = getBlockAt(location);
             BlockFace face = BlockFace.SELF;
-            if (block.getRelative(BlockFace.EAST).getTypeId() == 0) {
+            if (block.getRelative(BlockFace.EAST).getType() == Material.AIR) {
                 face = BlockFace.EAST;
-            } else if (block.getRelative(BlockFace.NORTH).getTypeId() == 0) {
+            } else if (block.getRelative(BlockFace.NORTH).getType() == Material.AIR) {
                 face = BlockFace.NORTH;
-            } else if (block.getRelative(BlockFace.WEST).getTypeId() == 0) {
+            } else if (block.getRelative(BlockFace.WEST).getType() == Material.AIR) {
                 face = BlockFace.WEST;
-            } else if (block.getRelative(BlockFace.SOUTH).getTypeId() == 0) {
+            } else if (block.getRelative(BlockFace.SOUTH).getType() == Material.AIR) {
                 face = BlockFace.SOUTH;
             }
             int dir;

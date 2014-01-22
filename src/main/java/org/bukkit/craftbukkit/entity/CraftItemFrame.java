@@ -4,6 +4,7 @@ import net.minecraft.server.EntityItemFrame;
 
 import org.apache.commons.lang.Validate;
 
+import org.bukkit.Material;
 import org.bukkit.Rotation;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
@@ -16,7 +17,7 @@ public class CraftItemFrame extends CraftHanging implements ItemFrame {
     }
 
     public void setItem(org.bukkit.inventory.ItemStack item) {
-        if (item == null || item.getTypeId() == 0) {
+        if (item == null || item.getType() == Material.AIR) {
             getHandle().getDataWatcher().a(2, 5);
             getHandle().getDataWatcher().h(2);
         } else {

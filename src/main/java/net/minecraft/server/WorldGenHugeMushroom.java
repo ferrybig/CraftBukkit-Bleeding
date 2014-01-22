@@ -169,8 +169,9 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                         this.setTypeAndData(world, j2, j1, k2, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), l2);
                                     } else {
                                         BlockState state = bukkitWorld.getBlockAt(j2, j1, k2).getState();
-                                        state.setTypeId(Block.b(Blocks.BIG_MUSHROOM_1) + l);
-                                        state.setData(new MaterialData(Block.b(Blocks.BIG_MUSHROOM_1) + l, (byte) l2));
+                                        org.bukkit.Material type = org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(l == 0 ? Blocks.BIG_MUSHROOM_1 : Blocks.BIG_MUSHROOM_2);
+                                        state.setType(type);
+                                        state.setData(new MaterialData(type, (byte) l2));
                                         event.getBlocks().add(state);
                                     }
                                     // CraftBukkit end
@@ -188,8 +189,9 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                 this.setTypeAndData(world, i, j + j1, k, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), 10);
                             } else {
                                 BlockState state = bukkitWorld.getBlockAt(i, j + j1, k).getState();
-                                state.setTypeId(Block.b(Blocks.BIG_MUSHROOM_1) + l);
-                                state.setData(new MaterialData(Block.b(Blocks.BIG_MUSHROOM_1) + l, (byte) 10));
+                                org.bukkit.Material type = org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(l == 0 ? Blocks.BIG_MUSHROOM_1 : Blocks.BIG_MUSHROOM_2);
+                                state.setType(type);
+                                state.setData(new MaterialData(type, (byte) 10));
                                 event.getBlocks().add(state);
                             }
                             // CraftBukkit end

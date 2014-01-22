@@ -142,7 +142,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     private TileEntity fixTileEntity(int x, int y, int z, Block type, TileEntity found) {
-        this.getServer().getLogger().severe("Block at " + x + "," + y + "," + z + " is " + org.bukkit.Material.getMaterial(Block.b(type)).toString() + " but has " + found + ". "
+        this.getServer().getLogger().severe("Block at " + x + "," + y + "," + z + " is " + CraftMagicNumbers.getMaterial(type).toString() + " but has " + found + ". "
                 + "Bukkit will attempt to fix this, but there may be additional damage that we cannot recover.");
 
         if (type instanceof IContainer) {

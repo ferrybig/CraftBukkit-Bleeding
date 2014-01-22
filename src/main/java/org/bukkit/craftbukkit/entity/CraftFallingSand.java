@@ -29,7 +29,7 @@ public class CraftFallingSand extends CraftEntity implements FallingSand {
     }
 
     public Material getMaterial() {
-        return Material.getMaterial(getBlockId());
+        return CraftMagicNumbers.getMaterial(getHandle().id);
     }
 
     public int getBlockId() {

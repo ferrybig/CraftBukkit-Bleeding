@@ -96,7 +96,7 @@ public final class CraftItemStack extends ItemStack {
     }
 
     private CraftItemStack(ItemStack item) {
-        this(item.getTypeId(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
+        this(item.getType(), item.getAmount(), item.getDurability(), item.hasItemMeta() ? item.getItemMeta() : null);
     }
 
     private CraftItemStack(Material type, int amount, short durability, ItemMeta itemMeta) {
@@ -104,11 +104,6 @@ public final class CraftItemStack extends ItemStack {
         setAmount(amount);
         setDurability(durability);
         setItemMeta(itemMeta);
-    }
-
-    private CraftItemStack(int typeId, int amount, short durability, ItemMeta itemMeta) {
-        this(Material.getMaterial(typeId), amount, durability, itemMeta);
-
     }
 
     @Override
@@ -347,8 +342,7 @@ public final class CraftItemStack extends ItemStack {
     }
 
     static Material getType(net.minecraft.server.ItemStack item) {
-        Material material = Material.getMaterial(item == null ? 0 : CraftMagicNumbers.getId(item.getItem()));
-        return material == null ? Material.AIR : material;
+        return CraftMagicNumbers.getMaterial(item.getItem());
     }
 
     @Override

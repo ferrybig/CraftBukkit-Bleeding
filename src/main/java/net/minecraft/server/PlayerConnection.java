@@ -1310,7 +1310,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     ItemStack cursor = this.player.inventory.getCarried();
                     action = InventoryAction.NOTHING;
                     // Quick check for if we have any of the item
-                    if (inventory.getTopInventory().contains(org.bukkit.Material.getMaterial(Item.b(cursor.getItem()))) || inventory.getBottomInventory().contains(org.bukkit.Material.getMaterial(Item.b(cursor.getItem())))) {
+                    if (inventory.getTopInventory().contains(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(cursor.getItem())) || inventory.getBottomInventory().contains(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(cursor.getItem()))) {
                         action = InventoryAction.COLLECT_TO_CURSOR;
                     }
                 }

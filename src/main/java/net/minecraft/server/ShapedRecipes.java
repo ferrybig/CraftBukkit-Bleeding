@@ -68,7 +68,7 @@ public class ShapedRecipes implements IRecipe {
         char c = 'a';
         for (ItemStack stack : this.items) {
             if (stack != null) {
-                recipe.setIngredient(c, org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(stack.getItem()), stack.getData());
+                recipe.setIngredient(c, new org.bukkit.material.MaterialData(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(stack.getItem()), (byte) stack.getData()));
             }
             c++;
         }

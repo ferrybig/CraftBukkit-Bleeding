@@ -151,7 +151,7 @@ public class EntityCreeper extends EntityMonster {
 
         // Drop a music disc?
         if (this.record != -1) {
-            loot.add(new org.bukkit.inventory.ItemStack(this.record, 1)); // TODO: Material
+            loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.getMaterial(this.record)));
             this.record = -1;
         }
 

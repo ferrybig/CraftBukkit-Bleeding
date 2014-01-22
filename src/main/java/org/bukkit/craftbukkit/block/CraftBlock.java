@@ -135,7 +135,7 @@ public class CraftBlock implements Block {
     }
 
     public Material getType() {
-        return Material.getMaterial(getTypeId());
+        return CraftMagicNumbers.getMaterial(getNMSBlock());
     }
 
     @Deprecated
@@ -379,7 +379,7 @@ public class CraftBlock implements Block {
 
     private boolean itemCausesDrops(ItemStack item) {
         net.minecraft.server.Block block = this.getNMSBlock();
-        net.minecraft.server.Item itemType = item != null ? net.minecraft.server.Item.d(item.getTypeId()) : null;
+        net.minecraft.server.Item itemType = item != null ? CraftMagicNumbers.getItem(item.getType()) : null;
         return block != null && (block.getMaterial().isAlwaysDestroyable() || (itemType != null && itemType.canDestroySpecialBlock(block)));
     }
 
@@ -394,7 +394,7 @@ public class CraftBlock implements Block {
             result = true;
         }
 
-        setTypeId(Material.AIR.getId());
+        setType(Material.AIR);
         return result;
     }
 

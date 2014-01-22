@@ -307,6 +307,7 @@ public class CraftEventFactory {
 
     public static void handleBlockSpreadEvent(Block block, Block source, net.minecraft.server.Block type, int data) {
         BlockState state = block.getState();
+        state.setData();
         state.setType(CraftMagicNumbers.getMaterial(type));
         state.setRawData((byte) data);
 
