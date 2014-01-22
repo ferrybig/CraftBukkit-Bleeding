@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // CraftBukkit start
+import org.bukkit.QuitReason;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.chunkio.ChunkIOExecutor;
@@ -271,13 +272,13 @@ public abstract class PlayerList {
         entityplayer.r().getPlayerChunkMap().movePlayer(entityplayer);
     }
 
-    public String disconnect(EntityPlayer entityplayer) { // CraftBukkit - return string
+    public String disconnect(EntityPlayer entityplayer, QuitReason reason) { // CraftBukkit - return string, add QuitReason
         entityplayer.a(StatisticList.f);
 
-        // CraftBukkit start - Quitting must be before we do final save of data, in case plugins need to modify it
+        // CraftBukkit start - Quitting must be before we do final save of data, in case plugins need to modify it. Reason
         org.bukkit.craftbukkit.event.CraftEventFactory.handleInventoryCloseEvent(entityplayer);
 
-        PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(this.cserver.getPlayer(entityplayer), "\u00A7e" + entityplayer.getName() + " left the game.");
+        PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(this.cserver.getPlayer(entityplayer), "\u00A7e" + entityplayer.getName() + " left the game.", reason);
         this.cserver.getPluginManager().callEvent(playerQuitEvent);
         entityplayer.getBukkitEntity().disconnect(playerQuitEvent.getQuitMessage());
         // CraftBukkit end
@@ -385,7 +386,7 @@ public abstract class PlayerList {
 
         while (iterator.hasNext()) {
             entityplayer = (EntityPlayer) iterator.next();
-            entityplayer.playerConnection.disconnect("You logged in from another location");
+            entityplayer.playerConnection.disconnect("You logged in from another location", QuitReason.LOGIN_LOCATION); // CraftBukkit - add QuitReason
         }
 
         /* CraftBukkit start
@@ -1097,7 +1098,7 @@ public abstract class PlayerList {
 
     public void r() {
         for (int i = 0; i < this.players.size(); ++i) {
-            ((EntityPlayer) this.players.get(i)).playerConnection.disconnect(this.server.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
+            ((EntityPlayer) this.players.get(i)).playerConnection.disconnect(this.server.server.getShutdownMessage(), QuitReason.SERVER_SHUTDOWN); // CraftBukkit - add custom shutdown message, add QuitReason
         }
     }
 

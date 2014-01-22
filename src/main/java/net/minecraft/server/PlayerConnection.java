@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.HashSet;
 
+import org.bukkit.QuitReason;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftInventoryView;
@@ -150,11 +151,11 @@ public class PlayerConnection implements PacketPlayInListener {
         return this.networkManager;
     }
 
-    public void disconnect(String s) {
+    public void disconnect(String s, QuitReason reason) { // CraftBukkit - add QuitReason
         // CraftBukkit start
         String leaveMessage = EnumChatFormat.YELLOW + this.player.getName() + " left the game.";
 
-        PlayerKickEvent event = new PlayerKickEvent(this.server.getPlayer(this.player), s, leaveMessage);
+        PlayerKickEvent event = new PlayerKickEvent(this.server.getPlayer(this.player), s, leaveMessage, reason);
 
         if (this.server.getServer().isRunning()) {
             this.server.getPluginManager().callEvent(event);
@@ -170,7 +171,7 @@ public class PlayerConnection implements PacketPlayInListener {
         ChatComponentText chatcomponenttext = new ChatComponentText(s);
 
         this.networkManager.handle(new PacketPlayOutKickDisconnect(chatcomponenttext), new GenericFutureListener[] { new PlayerConnectionFuture(this, chatcomponenttext)});
-        this.a(chatcomponenttext); // CraftBukkit - Process quit immediately
+        this.a(chatcomponenttext, reason); // CraftBukkit - Process quit immediately
         this.networkManager.g();
     }
 
@@ -323,13 +324,13 @@ public class PlayerConnection implements PacketPlayInListener {
                     d3 = packetplayinflying.e();
                     d4 = packetplayinflying.f() - packetplayinflying.d();
                     if (!this.player.isSleeping() && (d4 > 1.65D || d4 < 0.1D)) {
-                        this.disconnect("Illegal stance");
+                        this.disconnect("Illegal stance", QuitReason.ILLEGAL_STANCE); // CraftBukkit - add QuitReason
                         c.warn(this.player.getName() + " had an illegal stance: " + d4);
                         return;
                     }
 
                     if (Math.abs(packetplayinflying.c()) > 3.2E7D || Math.abs(packetplayinflying.e()) > 3.2E7D) {
-                        this.disconnect("Illegal position");
+                        this.disconnect("Illegal position", QuitReason.ILLEGAL_POSITION); // CraftBukkit - add QuitReason
                         return;
                     }
                 }
@@ -404,7 +405,7 @@ public class PlayerConnection implements PacketPlayInListener {
                         ++this.f;
                         if (this.f > 80) {
                             c.warn(this.player.getName() + " was kicked for floating too long!");
-                            this.disconnect("Flying is not enabled on this server");
+                            this.disconnect("Flying is not enabled on this server", QuitReason.ILLEGAL_FLIGHT); // CraftBukkit - add QuitReason
                             return;
                         }
                     }
@@ -486,7 +487,7 @@ public class PlayerConnection implements PacketPlayInListener {
                 this.dropCount++;
                 if (this.dropCount >= 20) {
                     this.c.warn(this.player.getName() + " dropped their items too quickly!");
-                    this.disconnect("You dropped your items too quickly (Hacking?)");
+                    this.disconnect("You dropped your items too quickly (Hacking?)", QuitReason.ILLEGAL_DROP_RATE); // CraftBukkit - add QuitReason
                     return;
                 }
             }
@@ -681,6 +682,12 @@ public class PlayerConnection implements PacketPlayInListener {
     }
 
     public void a(IChatBaseComponent ichatbasecomponent) {
+        // CraftBukkit start - leave this method to satisfy contract with PacketListener
+        this.a(ichatbasecomponent, QuitReason.UNKNOWN);
+        // CraftBukkit end
+    }
+
+    public void a(IChatBaseComponent ichatbasecomponent, QuitReason reason) { // CraftBukkit - add QuitReason
         // CraftBukkit start - Rarely it would send a disconnect line twice
         if (this.processedDisconnect) {
             return;
@@ -699,7 +706,7 @@ public class PlayerConnection implements PacketPlayInListener {
         */
 
         this.player.n();
-        String quitMessage = this.minecraftServer.getPlayerList().disconnect(this.player);
+        String quitMessage = this.minecraftServer.getPlayerList().disconnect(this.player, reason);
         if ((quitMessage != null) && (quitMessage.length() > 0)) {
             this.minecraftServer.getPlayerList().sendMessage(CraftChatMessage.fromString(quitMessage));
         }
@@ -762,7 +769,7 @@ public class PlayerConnection implements PacketPlayInListener {
             this.player.w();
         } else {
             c.warn(this.player.getName() + " tried to set an invalid carried item");
-            this.disconnect("Nope!"); // CraftBukkit
+            this.disconnect("Nope!", QuitReason.ILLEGAL_ITEM); // CraftBukkit - add QuitReason
         }
     }
 
@@ -785,7 +792,7 @@ public class PlayerConnection implements PacketPlayInListener {
                         Waitable waitable = new Waitable() {
                             @Override
                             protected Object evaluate() {
-                                PlayerConnection.this.disconnect("Illegal characters in chat");
+                                PlayerConnection.this.disconnect("Illegal characters in chat", QuitReason.ILLEGAL_CHAT_CHARACTER); // CraftBukkit - add QuitReason
                                 return null;
                             }
                         };
@@ -800,7 +807,7 @@ public class PlayerConnection implements PacketPlayInListener {
                             throw new RuntimeException(e);
                         }
                     } else {
-                        this.disconnect("Illegal characters in chat");
+                        this.disconnect("Illegal characters in chat", QuitReason.ILLEGAL_CHAT_CHARACTER); // CraftBukkit - add QuitReason
                     }
                     // CraftBukkit end
                     return;
@@ -837,7 +844,7 @@ public class PlayerConnection implements PacketPlayInListener {
             // this.chatThrottle += 20;
             if (chatSpamField.addAndGet(this, 20) > 200 && !this.minecraftServer.getPlayerList().isOp(this.player.getName())) {
                 // CraftBukkit end
-                this.disconnect("disconnect.spam");
+                this.disconnect("disconnect.spam", QuitReason.ILLEGAL_CHAT_RATE); // CraftBukkit - add QuitReason
             }
         }
     }
@@ -1084,7 +1091,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     // CraftBukkit end
                 } else if (packetplayinuseentity.c() == EnumEntityUseAction.ATTACK) {
                     if (entity instanceof EntityItem || entity instanceof EntityExperienceOrb || entity instanceof EntityArrow || entity == this.player) {
-                        this.disconnect("Attempting to attack an invalid entity");
+                        this.disconnect("Attempting to attack an invalid entity", QuitReason.ILLEGAL_ATTACK); // CraftBukkit - add QuitReason
                         this.minecraftServer.warning("Player " + this.player.getName() + " tried to attack an invalid entity");
                         return;
                     }
@@ -1111,14 +1118,14 @@ public class PlayerConnection implements PacketPlayInListener {
                 this.minecraftServer.getPlayerList().changeDimension(this.player, 0, PlayerTeleportEvent.TeleportCause.END_PORTAL); // CraftBukkit - reroute logic through custom portal management
             } else if (this.player.r().getWorldData().isHardcore()) {
                 if (this.minecraftServer.L() && this.player.getName().equals(this.minecraftServer.K())) {
-                    this.player.playerConnection.disconnect("You have died. Game over, man, it\'s game over!");
+                    this.player.playerConnection.disconnect("You have died. Game over, man, it\'s game over!", QuitReason.DIED_HARDCORE); // CraftBukkit - add QuitReason
                     this.minecraftServer.S();
                 } else {
                     BanEntry banentry = new BanEntry(this.player.getName());
 
                     banentry.setReason("Death in Hardcore");
                     this.minecraftServer.getPlayerList().getNameBans().add(banentry);
-                    this.player.playerConnection.disconnect("You have died. Game over, man, it\'s game over!");
+                    this.player.playerConnection.disconnect("You have died. Game over, man, it\'s game over!", QuitReason.DIED_HARDCORE); // CraftBukkit - add QuitReason
                 }
             } else {
                 if (this.player.getHealth() > 0.0F) {
@@ -1657,7 +1664,7 @@ public class PlayerConnection implements PacketPlayInListener {
                 // CraftBukkit start
             } catch (Exception exception) {
                 c.error("Couldn\'t handle book info", exception);
-                this.disconnect("Invalid book data!");
+                this.disconnect("Invalid book data!", QuitReason.ILLEGAL_BOOK_DATA); // CraftBukkit - add QuitReason
                 // CraftBukkit end
             }
         } else if ("MC|BSign".equals(packetplayincustompayload.c())) {
@@ -1674,7 +1681,7 @@ public class PlayerConnection implements PacketPlayInListener {
                 // CraftBukkit start
             } catch (Exception exception1) {
                 c.error("Couldn\'t sign book", exception1);
-                this.disconnect("Invalid book data!");
+                this.disconnect("Invalid book data!", QuitReason.ILLEGAL_BOOK_DATA); // CraftBukkit - add QuitReason
                 // CraftBukkit end
             }
         } else {
@@ -1693,7 +1700,7 @@ public class PlayerConnection implements PacketPlayInListener {
                 } catch (Exception exception2) {
                     // CraftBukkit start
                     c.error("Couldn\'t select trade", exception2);
-                    this.disconnect("Invalid trade data!");
+                    this.disconnect("Invalid trade data!", QuitReason.ILLEGAL_TRADE_DATA); // CraftBukkit - add QuitReason
                     // CraftBukkit end
                 }
             } else if ("MC|AdvCdm".equals(packetplayincustompayload.c())) {
@@ -1729,7 +1736,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     } catch (Exception exception3) {
                         // CraftBukkit start
                         c.error("Couldn\'t set command block", exception3);
-                        this.disconnect("Invalid CommandBlock data!");
+                        this.disconnect("Invalid CommandBlock data!", QuitReason.ILLEGAL_COMMAND_BLOCK_DATA); // CraftBukkit - add QuitReason
                         // CraftBukkit end
                     }
                 } else {
@@ -1755,7 +1762,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     } catch (Exception exception4) {
                         // CraftBukkit start
                         c.error("Couldn\'t set beacon", exception4);
-                        this.disconnect("Invalid beacon data!");
+                        this.disconnect("Invalid beacon data!", QuitReason.ILLEGAL_BEACON_DATA); // CraftBukkit - add QuitReason
                         // CraftBukkit end
                     }
                 }

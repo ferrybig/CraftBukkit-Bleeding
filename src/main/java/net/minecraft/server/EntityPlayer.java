@@ -231,7 +231,7 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
         }
 
         if (this.bY > 0L && this.server.aq() > 0 && MinecraftServer.ap() - this.bY > (long) (this.server.aq() * 1000 * 60)) {
-            this.playerConnection.disconnect("You have been idle for too long!");
+            this.playerConnection.disconnect("You have been idle for too long!", org.bukkit.QuitReason.TIMEOUT); // CraftBukkit - add QuitReason
         }
     }
 

@@ -232,7 +232,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
     public void kickPlayer(String message) {
         if (getHandle().playerConnection == null) return;
 
-        getHandle().playerConnection.disconnect(message == null ? "" : message);
+        getHandle().playerConnection.disconnect(message == null ? "" : message, QuitReason.KICKED);
     }
 
     @Override

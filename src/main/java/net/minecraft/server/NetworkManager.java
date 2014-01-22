@@ -21,6 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
+import org.bukkit.QuitReason; // CraftBukkit
+
 public class NetworkManager extends SimpleChannelInboundHandler {
 
     private static final Logger g = LogManager.getLogger();
@@ -38,6 +40,8 @@ public class NetworkManager extends SimpleChannelInboundHandler {
     private PacketListener m;
     private EnumProtocol n;
     private IChatBaseComponent o;
+
+    private QuitReason reason; // CraftBukkit - supporting QuitReason
 
     public NetworkManager(boolean flag) {
         this.h = flag;
@@ -59,11 +63,11 @@ public class NetworkManager extends SimpleChannelInboundHandler {
     }
 
     public void channelInactive(ChannelHandlerContext channelhandlercontext) {
-        this.a((IChatBaseComponent) (new ChatMessage("disconnect.endOfStream", new Object[0])));
+        this.a((IChatBaseComponent) (new ChatMessage("disconnect.endOfStream", new Object[0])), QuitReason.END_OF_STREAM); // CraftBukkit - add QuitReason
     }
 
     public void exceptionCaught(ChannelHandlerContext channelhandlercontext, Throwable throwable) {
-        this.a((IChatBaseComponent) (new ChatMessage("disconnect.genericReason", new Object[] { "Internal Exception: " + throwable})));
+        this.a((IChatBaseComponent) (new ChatMessage("disconnect.genericReason", new Object[] { "Internal Exception: " + throwable})), QuitReason.GENERIC_REASON); // CraftBukkit - add QuitReason
     }
 
     protected void a(ChannelHandlerContext channelhandlercontext, Packet packet) {
@@ -156,7 +160,7 @@ public class NetworkManager extends SimpleChannelInboundHandler {
         return this.l;
     }
 
-    public void a(IChatBaseComponent ichatbasecomponent) {
+    public void a(IChatBaseComponent ichatbasecomponent, QuitReason reason) { // CraftBukkit - add QuitReason
         if (this.k.isOpen()) {
             this.k.close();
             this.o = ichatbasecomponent;
