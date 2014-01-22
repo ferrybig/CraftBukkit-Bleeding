@@ -151,7 +151,7 @@ public class BlockFire extends Block {
                                                 org.bukkit.Server server = world.getServer();
                                                 org.bukkit.World bworld = world.getWorld();
                                                 org.bukkit.block.BlockState blockState = bworld.getBlockAt(i1, k1, j1).getState();
-                                                blockState.setTypeId(Block.b(this));
+                                                blockState.setType(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(this));
                                                 blockState.setData(new org.bukkit.material.MaterialData(Block.b(this), (byte) k2));
 
                                                 BlockSpreadEvent spreadEvent = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(i, j, k), blockState);

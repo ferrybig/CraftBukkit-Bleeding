@@ -80,7 +80,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                         this.setTypeAndData(world, i, j - 1, k, Blocks.DIRT, 0);
                     } else {
                         BlockState dirtState = bukkitWorld.getBlockAt(i, j - 1, k).getState();
-                        dirtState.setTypeId(Block.b(Blocks.DIRT));
+                        dirtState.setType(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(Blocks.DIRT));
                         event.getBlocks().add(dirtState);
                     }
                     // CraftBukkit end

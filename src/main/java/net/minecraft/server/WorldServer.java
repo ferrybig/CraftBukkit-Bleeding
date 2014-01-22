@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 // CraftBukkit start
 import org.bukkit.WeatherType;
 import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.util.LongHash;
 
 import org.bukkit.event.block.BlockFormEvent;
@@ -348,7 +349,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 if (this.s(j1 + k, l1 - 1, k1 + l)) {
                     // CraftBukkit start
                     BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1 - 1, k1 + l).getState();
-                    blockState.setTypeId(Block.b(Blocks.ICE));
+                    blockState.setType(CraftMagicNumbers.getMaterial(Blocks.ICE));
 
                     BlockFormEvent iceBlockForm = new BlockFormEvent(blockState.getBlock(), blockState);
                     this.getServer().getPluginManager().callEvent(iceBlockForm);
@@ -361,7 +362,7 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 if (this.P() && this.e(j1 + k, l1, k1 + l, true)) {
                     // CraftBukkit start
                     BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1, k1 + l).getState();
-                    blockState.setTypeId(Block.b(Blocks.SNOW));
+                    blockState.setType(CraftMagicNumbers.getMaterial(Blocks.SNOW));
 
                     BlockFormEvent snow = new BlockFormEvent(blockState.getBlock(), blockState);
                     this.getServer().getPluginManager().callEvent(snow);

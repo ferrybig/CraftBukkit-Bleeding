@@ -31,28 +31,28 @@ public class CraftChest extends CraftBlockState implements Chest {
         int z = getZ();
         // The logic here is basically identical to the logic in BlockChest.interact
         CraftInventory inventory = new CraftInventory(chest);
-        int id;
-        if (world.getBlockTypeIdAt(x, y, z) == Material.CHEST.getId()) {
-            id = Material.CHEST.getId();
-        } else if (world.getBlockTypeIdAt(x, y, z) == Material.TRAPPED_CHEST.getId()) {
-            id = Material.TRAPPED_CHEST.getId();
+        Material material;
+        if (world.getBlockTypeAt(x, y, z) == Material.CHEST) {
+            material = Material.CHEST;
+        } else if (world.getBlockTypeAt(x, y, z) == Material.TRAPPED_CHEST) {
+            material = Material.TRAPPED_CHEST;
         } else {
             throw new IllegalStateException("CraftChest is not a chest but is instead " + world.getBlockAt(x, y, z));
         }
 
-        if (world.getBlockTypeIdAt(x - 1, y, z) == id) {
+        if (world.getBlockTypeAt(x - 1, y, z) == material) {
             CraftInventory left = new CraftInventory((TileEntityChest)world.getHandle().getTileEntity(x - 1, y, z));
             inventory = new CraftInventoryDoubleChest(left, inventory);
         }
-        if (world.getBlockTypeIdAt(x + 1, y, z) == id) {
+        if (world.getBlockTypeAt(x + 1, y, z) == material) {
             CraftInventory right = new CraftInventory((TileEntityChest) world.getHandle().getTileEntity(x + 1, y, z));
             inventory = new CraftInventoryDoubleChest(inventory, right);
         }
-        if (world.getBlockTypeIdAt(x, y, z - 1) == id) {
+        if (world.getBlockTypeAt(x, y, z - 1) == material) {
             CraftInventory left = new CraftInventory((TileEntityChest) world.getHandle().getTileEntity(x, y, z - 1));
             inventory = new CraftInventoryDoubleChest(left, inventory);
         }
-        if (world.getBlockTypeIdAt(x, y, z + 1) == id) {
+        if (world.getBlockTypeAt(x, y, z + 1) == material) {
             CraftInventory right = new CraftInventory((TileEntityChest) world.getHandle().getTileEntity(x, y, z + 1));
             inventory = new CraftInventoryDoubleChest(inventory, right);
         }
