@@ -21,6 +21,7 @@ import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.weather.LightningStrikeEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
+import org.bukkit.material.MaterialData;
 
 public class WorldServer extends World implements org.bukkit.BlockChangeDelegate {
     // CraftBukkit end
@@ -983,24 +984,50 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
     }
 
     // CraftBukkit start - Compatibility methods for BlockChangeDelegate
+    @Deprecated
     public boolean setRawTypeId(int x, int y, int z, int typeId) {
         return this.setTypeAndData(x, y, z, Block.e(typeId), 0, 4);
     }
 
+    public boolean setRawType(int x, int y, int z, org.bukkit.Material type) {
+        return this.setTypeAndData(x, y, z, CraftMagicNumbers.getBlock(type), 0, 4);
+    }
+
+    @Deprecated
     public boolean setRawTypeIdAndData(int x, int y, int z, int typeId, int data) {
         return this.setTypeAndData(x, y, z, Block.e(typeId), data, 4);
     }
 
+    public boolean setRawTypeAndData(int x, int y, int z, MaterialData data) {
+        return this.setTypeAndData(x, y, z, CraftMagicNumbers.getBlock(data.getItemType()), data.getData(), 4);
+    }
+
+    @Deprecated
     public boolean setTypeId(int x, int y, int z, int typeId) {
         return this.setTypeAndData(x, y, z, Block.e(typeId), 0, 3);
     }
 
+    public boolean setType(int x, int y, int z, org.bukkit.Material type) {
+        return this.setTypeAndData(x, y, z, CraftMagicNumbers.getBlock(type), 0, 3);
+    }
+
+    @Deprecated
     public boolean setTypeIdAndData(int x, int y, int z, int typeId, int data) {
         return this.setTypeAndData(x, y, z, Block.e(typeId), data, 3);
     }
 
+    public boolean setTypeAndData(int x, int y, int z, MaterialData data) {
+        return this.setTypeAndData(x, y, z, CraftMagicNumbers.getBlock(data.getItemType()), data.getData(), 3);
+    }
+
+    @Deprecated
     public int getTypeId(int x, int y, int z) {
         return Block.b(getType(x, y, z));
     }
+
+    public org.bukkit.Material getMaterialType(int x, int y, int z) {
+        return CraftMagicNumbers.getMaterial(getType(x, y, z));
+    }
+
     // CraftBukkit end
 }
