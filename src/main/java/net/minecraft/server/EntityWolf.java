@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import org.bukkit.event.entity.EntityDyeEvent;
+
 public class EntityWolf extends EntityTameableAnimal {
 
     private float bq;
@@ -221,6 +223,17 @@ public class EntityWolf extends EntityTameableAnimal {
                     int i = BlockCloth.b(itemstack.getData());
 
                     if (i != this.getCollarColor()) {
+                        // CraftBukkit start - call EntityDyeEvent
+                        EntityDyeEvent event = new EntityDyeEvent(this.getBukkitEntity(), entityhuman.getBukkitEntity(), org.bukkit.DyeColor.getByWoolData((byte) i));
+                        this.world.getServer().getPluginManager().callEvent(event);
+
+                        if (event.isCancelled()) {
+                            return false;
+                        }
+
+                        i = event.getColor().getWoolData();
+                        // CraftBukkit end
+
                         this.setCollarColor(i);
                         if (!entityhuman.abilities.canInstantlyBuild && --itemstack.count <= 0) {
                             entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, (ItemStack) null);
