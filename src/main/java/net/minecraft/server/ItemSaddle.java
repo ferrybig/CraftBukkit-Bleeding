@@ -15,6 +15,7 @@ public class ItemSaddle extends Item {
                 entitypig.setSaddle(true);
                 entitypig.world.makeSound(entitypig, "mob.horse.leather", 0.5F, 1.0F);
                 --itemstack.count;
+                entitypig.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((org.bukkit.entity.Vehicle) entitypig.getBukkitEntity())); // CraftBukkit - call VehicleCreateEvent
             }
 
             return true;

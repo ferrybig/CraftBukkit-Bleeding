@@ -5,7 +5,10 @@ import java.util.List;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.vehicle.VehicleCreateEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
 // CraftBukkit end
 
 public class EntityHorse extends EntityAnimal implements IInventoryListener {
@@ -56,6 +59,7 @@ public class EntityHorse extends EntityAnimal implements IInventoryListener {
         this.goalSelector.a(7, new PathfinderGoalLookAtPlayer(this, EntityHuman.class, 6.0F));
         this.goalSelector.a(8, new PathfinderGoalRandomLookaround(this));
         this.loadChest();
+        this.world.getServer().getPluginManager().callEvent(new VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit - call VehicleCreateEvent
     }
 
     protected void c() {
@@ -669,6 +673,15 @@ public class EntityHorse extends EntityAnimal implements IInventoryListener {
         this.o(false);
         this.p(false);
         if (!this.world.isStatic) {
+            // CraftBukkit start
+            VehicleEnterEvent enterEvent = new VehicleEnterEvent((Vehicle) this.getBukkitEntity(), entityhuman.getBukkitEntity());
+            this.world.getServer().getPluginManager().callEvent(enterEvent);
+
+            if (enterEvent.isCancelled()) {
+                return;
+            }
+            // CraftBukkit end
+
             entityhuman.mount(this);
         }
     }

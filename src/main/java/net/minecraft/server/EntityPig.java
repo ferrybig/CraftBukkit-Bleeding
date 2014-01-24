@@ -3,6 +3,8 @@ package net.minecraft.server;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
+import org.bukkit.entity.Vehicle;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
 // CraftBukkit end
 
 public class EntityPig extends EntityAnimal {
@@ -80,6 +82,15 @@ public class EntityPig extends EntityAnimal {
         if (super.a(entityhuman)) {
             return true;
         } else if (this.hasSaddle() && !this.world.isStatic && (this.passenger == null || this.passenger == entityhuman)) {
+            // CraftBukkit start
+            VehicleEnterEvent enterEvent = new VehicleEnterEvent((Vehicle) this.getBukkitEntity(), entityhuman.getBukkitEntity());
+            this.world.getServer().getPluginManager().callEvent(enterEvent);
+
+            if (enterEvent.isCancelled()) {
+                return false;
+            }
+            // CraftBukkit end
+
             entityhuman.mount(this);
             return true;
         } else {
