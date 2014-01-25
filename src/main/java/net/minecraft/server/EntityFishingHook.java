@@ -389,7 +389,7 @@ public class EntityFishingHook extends Entity {
             } else if (this.ax > 0) {
                 EntityItem entityitem = new EntityItem(this.world, this.locX, this.locY, this.locZ, this.f());
                 // CraftBukkit start
-                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), entityitem.getBukkitEntity(), (Fish) this.getBukkitEntity(), PlayerFishEvent.State.CAUGHT_FISH);
+                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), entityitem.getBukkitEntity(), (Fish) this.getBukkitEntity(), ((org.bukkit.entity.Item) entityitem.getBukkitEntity()).getItemStack().getType() == org.bukkit.Material.RAW_FISH ? PlayerFishEvent.State.CAUGHT_FISH : PlayerFishEvent.State.CAUGHT_ITEM);
                 playerFishEvent.setExpToDrop(this.random.nextInt(6) + 1);
                 this.world.getServer().getPluginManager().callEvent(playerFishEvent);
 
