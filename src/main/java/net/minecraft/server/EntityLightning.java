@@ -12,6 +12,7 @@ public class EntityLightning extends EntityWeather {
 
     // CraftBukkit start
     public boolean isEffect = false;
+    public List<Entity> hasDamaged = new java.util.ArrayList<Entity>();
 
     public EntityLightning(World world, double d0, double d1, double d2) {
         this(world, d0, d1, d2, false);
