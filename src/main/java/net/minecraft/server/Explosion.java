@@ -200,13 +200,16 @@ public class Explosion {
         int k;
         Block block;
 
-        if (this.b) {
-            // CraftBukkit start
-            org.bukkit.World bworld = this.world.getWorld();
-            org.bukkit.entity.Entity explode = this.source == null ? null : this.source.getBukkitEntity();
-            Location location = new Location(bworld, this.posX, this.posY, this.posZ);
+        // CraftBukkit start
+        org.bukkit.World bworld = this.world.getWorld();
+        org.bukkit.entity.Entity explode = this.source == null ? null : this.source.getBukkitEntity();
+        Location location = new Location(bworld, this.posX, this.posY, this.posZ);
 
-            List<org.bukkit.block.Block> blockList = new ArrayList<org.bukkit.block.Block>();
+        List<org.bukkit.block.Block> blockList = new ArrayList<org.bukkit.block.Block>();
+        // CraftBukkit end
+
+        if (this.b){
+            // CraftBukkit start
             for (int i1 = this.blocks.size() - 1; i1 >= 0; i1--) {
                 ChunkPosition cpos = (ChunkPosition) this.blocks.get(i1);
                 org.bukkit.block.Block bblock = bworld.getBlockAt(cpos.x, cpos.y, cpos.z);
@@ -214,62 +217,62 @@ public class Explosion {
                     blockList.add(bblock);
                 }
             }
+        }
 
-            EntityExplodeEvent event = new EntityExplodeEvent(explode, location, blockList, 0.3F);
-            this.world.getServer().getPluginManager().callEvent(event);
+        EntityExplodeEvent event = new EntityExplodeEvent(explode, location, blockList, this.b ? 0.3F : 0.0F);
+        this.world.getServer().getPluginManager().callEvent(event);
 
-            this.blocks.clear();
+        this.blocks.clear();
 
-            for (org.bukkit.block.Block bblock : event.blockList()) {
-                ChunkPosition coords = new ChunkPosition(bblock.getX(), bblock.getY(), bblock.getZ());
-                blocks.add(coords);
+        for (org.bukkit.block.Block bblock : event.blockList()) {
+            ChunkPosition coords = new ChunkPosition(bblock.getX(), bblock.getY(), bblock.getZ());
+            this.blocks.add(coords);
+        }
+
+        if (event.isCancelled()) {
+            this.wasCanceled = true;
+            return;
+        }
+        // CraftBukkit end
+
+        iterator = this.blocks.iterator();
+
+        while (iterator.hasNext()) {
+            chunkposition = (ChunkPosition) iterator.next();
+            i = chunkposition.x;
+            j = chunkposition.y;
+            k = chunkposition.z;
+            block = this.world.getType(i, j, k);
+            if (flag) {
+                double d0 = (double) ((float) i + this.world.random.nextFloat());
+                double d1 = (double) ((float) j + this.world.random.nextFloat());
+                double d2 = (double) ((float) k + this.world.random.nextFloat());
+                double d3 = d0 - this.posX;
+                double d4 = d1 - this.posY;
+                double d5 = d2 - this.posZ;
+                double d6 = (double) MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5);
+
+                d3 /= d6;
+                d4 /= d6;
+                d5 /= d6;
+                double d7 = 0.5D / (d6 / (double) this.size + 0.1D);
+
+                d7 *= (double) (this.world.random.nextFloat() * this.world.random.nextFloat() + 0.3F);
+                d3 *= d7;
+                d4 *= d7;
+                d5 *= d7;
+                this.world.addParticle("explode", (d0 + this.posX * 1.0D) / 2.0D, (d1 + this.posY * 1.0D) / 2.0D, (d2 + this.posZ * 1.0D) / 2.0D, d3, d4, d5);
+                this.world.addParticle("smoke", d0, d1, d2, d3, d4, d5);
             }
 
-            if (event.isCancelled()) {
-                this.wasCanceled = true;
-                return;
-            }
-            // CraftBukkit end
-
-            iterator = this.blocks.iterator();
-
-            while (iterator.hasNext()) {
-                chunkposition = (ChunkPosition) iterator.next();
-                i = chunkposition.x;
-                j = chunkposition.y;
-                k = chunkposition.z;
-                block = this.world.getType(i, j, k);
-                if (flag) {
-                    double d0 = (double) ((float) i + this.world.random.nextFloat());
-                    double d1 = (double) ((float) j + this.world.random.nextFloat());
-                    double d2 = (double) ((float) k + this.world.random.nextFloat());
-                    double d3 = d0 - this.posX;
-                    double d4 = d1 - this.posY;
-                    double d5 = d2 - this.posZ;
-                    double d6 = (double) MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5);
-
-                    d3 /= d6;
-                    d4 /= d6;
-                    d5 /= d6;
-                    double d7 = 0.5D / (d6 / (double) this.size + 0.1D);
-
-                    d7 *= (double) (this.world.random.nextFloat() * this.world.random.nextFloat() + 0.3F);
-                    d3 *= d7;
-                    d4 *= d7;
-                    d5 *= d7;
-                    this.world.addParticle("explode", (d0 + this.posX * 1.0D) / 2.0D, (d1 + this.posY * 1.0D) / 2.0D, (d2 + this.posZ * 1.0D) / 2.0D, d3, d4, d5);
-                    this.world.addParticle("smoke", d0, d1, d2, d3, d4, d5);
+            if (block.getMaterial() != Material.AIR) {
+                if (block.a(this)) {
+                    // CraftBukkit - add yield
+                    block.dropNaturally(this.world, i, j, k, this.world.getData(i, j, k), event.getYield(), 0);
                 }
 
-                if (block.getMaterial() != Material.AIR) {
-                    if (block.a(this)) {
-                        // CraftBukkit - add yield
-                        block.dropNaturally(this.world, i, j, k, this.world.getData(i, j, k), event.getYield(), 0);
-                    }
-
-                    this.world.setTypeAndData(i, j, k, Blocks.AIR, 0, 3);
-                    block.wasExploded(this.world, i, j, k, this);
-                }
+                this.world.setTypeAndData(i, j, k, Blocks.AIR, 0, 3);
+                block.wasExploded(this.world, i, j, k, this);
             }
         }
 
