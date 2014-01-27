@@ -26,6 +26,7 @@ import org.bukkit.craftbukkit.CraftChunk;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
@@ -127,6 +128,18 @@ public class CraftBlock implements Block {
             return chunk.getHandle().world.setTypeAndData(x, y, z, getNMSBlock(type), data, 3);
         } else {
             boolean success = chunk.getHandle().world.setTypeAndData(x, y, z, getNMSBlock(type), data, 2);
+            if (success) {
+                chunk.getHandle().world.notify(x, y, z);
+            }
+            return success;
+        }
+    }
+
+    public boolean setData(final MaterialData data, final boolean applyPhysics) {
+        if (applyPhysics) {
+            return chunk.getHandle().world.setTypeAndData(x, y, z, getNMSBlock(data.getItemTypeId()), data.getData(), 3);
+        } else {
+            boolean success = chunk.getHandle().world.setTypeAndData(x, y, z, getNMSBlock(data.getItemTypeId()), data.getData(), 2);
             if (success) {
                 chunk.getHandle().world.notify(x, y, z);
             }

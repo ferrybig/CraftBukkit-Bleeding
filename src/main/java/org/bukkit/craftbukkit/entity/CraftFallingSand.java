@@ -7,6 +7,7 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.FallingSand;
+import org.bukkit.material.MaterialData;
 
 public class CraftFallingSand extends CraftEntity implements FallingSand {
 
@@ -32,12 +33,23 @@ public class CraftFallingSand extends CraftEntity implements FallingSand {
         return CraftMagicNumbers.getMaterial(getHandle().id);
     }
 
+    @Deprecated
     public int getBlockId() {
         return CraftMagicNumbers.getId(getHandle().id);
     }
 
+    @Deprecated
     public byte getBlockData() {
         return (byte) getHandle().data;
+    }
+
+    public MaterialData getData() {
+        return new MaterialData(getMaterial(), getBlockData());
+    }
+
+    public void setData(MaterialData data) {
+        getHandle().id = CraftMagicNumbers.getBlock(data.getItemType());
+        getHandle().data = data.getData();
     }
 
     public boolean getDropItem() {

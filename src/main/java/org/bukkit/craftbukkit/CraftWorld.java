@@ -39,6 +39,7 @@ import org.bukkit.event.world.SpawnChangeEvent;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.messaging.StandardMessenger;
@@ -803,6 +804,7 @@ public class CraftWorld implements World {
         return spawn(location, clazz, SpawnReason.CUSTOM);
     }
 
+    @Deprecated
     public FallingBlock spawnFallingBlock(Location location, org.bukkit.Material material, byte data) throws IllegalArgumentException {
         Validate.notNull(location, "Location cannot be null");
         Validate.notNull(material, "Material cannot be null");
@@ -819,8 +821,13 @@ public class CraftWorld implements World {
         return (FallingBlock) entity.getBukkitEntity();
     }
 
+    @Deprecated
     public FallingBlock spawnFallingBlock(Location location, int blockId, byte blockData) throws IllegalArgumentException {
         return spawnFallingBlock(location, org.bukkit.Material.getMaterial(blockId), blockData);
+    }
+
+    public FallingBlock spawnFallingBlock(Location location, MaterialData data) throws IllegalArgumentException {
+        return spawnFallingBlock(location, data.getItemType(), data.getData());
     }
 
     @SuppressWarnings("unchecked")
