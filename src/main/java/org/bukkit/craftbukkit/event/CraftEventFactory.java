@@ -69,6 +69,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.material.MaterialData;
 
 public class CraftEventFactory {
     public static final DamageSource MELTING = CraftDamageSource.copyOf(DamageSource.BURN);
@@ -522,7 +523,7 @@ public class CraftEventFactory {
     }
 
     public static EntityChangeBlockEvent callEntityChangeBlockEvent(org.bukkit.entity.Entity entity, Block block, Material material, int data, boolean cancelled) {
-        EntityChangeBlockEvent event = new EntityChangeBlockEvent(entity, block, material, (byte) data);
+        EntityChangeBlockEvent event = new EntityChangeBlockEvent(entity, block, new MaterialData(material, (byte) data));
         event.setCancelled(cancelled);
         entity.getServer().getPluginManager().callEvent(event);
         return event;
