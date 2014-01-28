@@ -276,6 +276,8 @@ public class CraftBlock implements Block {
             return new CraftCommandBlock(this);
         case BEACON:
             return new CraftBeacon(this);
+        case FLOWER_POT:
+            return new CraftFlowerPot(this);
         default:
             return new CraftBlockState(this);
         }
