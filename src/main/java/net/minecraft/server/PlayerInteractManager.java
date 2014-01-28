@@ -378,6 +378,10 @@ public class PlayerInteractManager {
                     boolean bottom = (world.getData(i, j, k) & 8) == 0;
                     ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j + (bottom ? 1 : -1), k, world));
                 }
+                // If we denied a pot from having a plant placed in it, we need to send a correcting update to the client, as it has already placed the plant.
+                if (block == Blocks.FLOWER_POT) {
+                    ((EntityPlayer) entityhuman).playerConnection.sendPacket(((TileEntityFlowerPot) (world.getTileEntity(i,j,k))).getUpdatePacket());
+                }
                 result = (event.useItemInHand() != Event.Result.ALLOW);
             } else if (!entityhuman.isSneaking() || itemstack == null) {
                 result = block.interact(world, i, j, k, entityhuman, l, f, f1, f2);
