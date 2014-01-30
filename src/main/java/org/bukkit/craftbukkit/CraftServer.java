@@ -71,11 +71,11 @@ import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.conversations.Conversable;
+import org.bukkit.craftbukkit.command.CraftCommandMap;
 import org.bukkit.craftbukkit.help.SimpleHelpMap;
 import org.bukkit.craftbukkit.inventory.CraftFurnaceRecipe;
 import org.bukkit.craftbukkit.inventory.CraftInventoryCustom;
@@ -151,10 +151,10 @@ public final class CraftServer implements Server {
     private final Logger logger = Logger.getLogger("Minecraft");
     private final ServicesManager servicesManager = new SimpleServicesManager();
     private final CraftScheduler scheduler = new CraftScheduler();
-    private final SimpleCommandMap commandMap = new SimpleCommandMap(this);
+    private final CraftCommandMap commandMap;
     private final SimpleHelpMap helpMap = new SimpleHelpMap(this);
     private final StandardMessenger messenger = new StandardMessenger();
-    private final PluginManager pluginManager = new SimplePluginManager(this, commandMap);
+    private final PluginManager pluginManager;
     protected final MinecraftServer console;
     protected final DedicatedPlayerList playerList;
     private final Map<String, World> worlds = new LinkedHashMap<String, World>();
@@ -212,7 +212,13 @@ public final class CraftServer implements Server {
         configuration = YamlConfiguration.loadConfiguration(getConfigFile());
         configuration.options().copyDefaults(true);
         configuration.setDefaults(YamlConfiguration.loadConfiguration(getClass().getClassLoader().getResourceAsStream("configurations/bukkit.yml")));
+        ConfigurationSection section = configuration.getConfigurationSection("commands");
+        if (section == null) {
+            section = configuration.createSection("commands");
+        }
+        commandMap = new CraftCommandMap(this, section);
         saveConfig();
+        pluginManager = new SimplePluginManager(this, commandMap);
         ((SimplePluginManager) pluginManager).useTimings(configuration.getBoolean("settings.plugin-profiling"));
         monsterSpawn = configuration.getInt("spawn-limits.monsters");
         animalSpawn = configuration.getInt("spawn-limits.animals");
@@ -599,7 +605,14 @@ public final class CraftServer implements Server {
         }
 
         pluginManager.clearPlugins();
+
+        ConfigurationSection section = configuration.getConfigurationSection("commands");
+        if (section == null) {
+            section = configuration.createSection("commands");
+        }
         commandMap.clearCommands();
+        commandMap.buildVanillaCommands(section);
+
         resetRecipes();
 
         int pollCount = 0;
@@ -1322,7 +1335,7 @@ public final class CraftServer implements Server {
         return helpMap;
     }
 
-    public SimpleCommandMap getCommandMap() {
+    public CraftCommandMap getCommandMap() {
         return commandMap;
     }
 
