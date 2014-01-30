@@ -6,6 +6,7 @@ import java.util.Date;
 // CraftBukkit start
 import java.util.ArrayList;
 import org.apache.logging.log4j.Level;
+import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import com.google.common.base.Joiner;
 // CraftBukkit end
 
@@ -95,7 +96,8 @@ public abstract class CommandBlockListenerAbstract implements ICommandListener {
             }
 
             // Make sure this is a valid command
-            if (commandMap.getCommand(args[0]) == null) {
+            org.bukkit.command.Command bukkitCommand = commandMap.getCommand(args[0]);
+            if (bukkitCommand == null) {
                 this.b = 0;
                 return;
             }
@@ -103,6 +105,12 @@ public abstract class CommandBlockListenerAbstract implements ICommandListener {
             // If the world has no players don't run
             if (this.getWorld().players.isEmpty()) {
                 this.b = 0;
+                return;
+            }
+
+            // Handle vanilla commands
+            if (bukkitCommand instanceof VanillaCommandWrapper) {
+                this.b = ((VanillaCommandWrapper) bukkitCommand).dispatchVanillaCommandBlock(this, this.e);
                 return;
             }
 
