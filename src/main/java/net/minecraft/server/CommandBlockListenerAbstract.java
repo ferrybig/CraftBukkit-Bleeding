@@ -6,6 +6,7 @@ import java.util.Date;
 // CraftBukkit start
 import java.util.ArrayList;
 import org.apache.logging.log4j.Level;
+import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import com.google.common.base.Joiner;
 // CraftBukkit end
 
@@ -77,7 +78,7 @@ public abstract class CommandBlockListenerAbstract implements ICommandListener {
 
         if (minecraftserver != null && minecraftserver.getEnableCommandBlock()) {
             // CraftBukkit start - Handle command block commands using Bukkit dispatcher
-            org.bukkit.command.SimpleCommandMap commandMap = minecraftserver.server.getCommandMap();
+            org.bukkit.craftbukkit.command.CraftCommandMap commandMap = minecraftserver.server.getCommandMap();
             Joiner joiner = Joiner.on(" ");
             String command = this.e;
             if (this.e.startsWith("/")) {
@@ -94,14 +95,21 @@ public abstract class CommandBlockListenerAbstract implements ICommandListener {
                 return;
             }
 
-            // Make sure this is a valid command
-            if (commandMap.getCommand(args[0]) == null) {
+            // If the world has no players don't run
+            if (this.getWorld().players.isEmpty()) {
                 this.b = 0;
                 return;
             }
 
-            // If the world has no players don't run
-            if (this.getWorld().players.isEmpty()) {
+            // Handle vanilla commands
+            VanillaCommandWrapper commandBlockCommand = commandMap.getCommandBlockCommand(args[0]); 
+            if (commandBlockCommand != null) {
+                this.b = commandBlockCommand.dispatchVanillaCommandBlock(this, this.e);
+                return;
+            }
+
+            // Make sure this is a valid command
+            if (commandMap.getCommand(args[0]) == null) {
                 this.b = 0;
                 return;
             }

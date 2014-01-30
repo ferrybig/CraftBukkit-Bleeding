@@ -3,10 +3,12 @@ package org.bukkit.craftbukkit.help;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+
 import org.bukkit.command.*;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.command.defaults.VanillaCommand;
 import org.bukkit.craftbukkit.CraftServer;
+import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
 import org.bukkit.help.*;
 
 import java.util.*;
@@ -131,7 +133,8 @@ public class SimpleHelpMap implements HelpMap {
                 continue;
             }
             for (String alias : command.getAliases()) {
-                if (!helpTopics.containsKey("/" + alias)) {
+                // Only register if this command owns the alias
+                if (server.getCommandMap().getCommand(alias) == command) {
                     addTopic(new CommandAliasHelpTopic("/" + alias, "/" + command.getLabel(), this));
                 }
             }
@@ -186,6 +189,9 @@ public class SimpleHelpMap implements HelpMap {
     }
 
     private String getCommandPluginName(Command command) {
+        if (command instanceof VanillaCommandWrapper) {
+            return "Minecraft";
+        }
         if (command instanceof BukkitCommand || command instanceof VanillaCommand) {
             return "Bukkit";
         }

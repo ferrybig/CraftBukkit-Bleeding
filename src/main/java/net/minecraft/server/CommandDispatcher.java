@@ -62,7 +62,7 @@ public class CommandDispatcher extends CommandHandler implements ICommandDispatc
     public void a(ICommandListener icommandlistener, int i, String s, Object... aobject) {
         boolean flag = true;
 
-        if (icommandlistener instanceof CommandBlockListenerAbstract && !MinecraftServer.getServer().worldServer[0].getGameRules().getBoolean("commandBlockOutput")) {
+        if (icommandlistener instanceof CommandBlockListenerAbstract && !icommandlistener.getWorld().getGameRules().getBoolean("commandBlockOutput")) { // CraftBukkit - Check correct world
             flag = false;
         }
 
