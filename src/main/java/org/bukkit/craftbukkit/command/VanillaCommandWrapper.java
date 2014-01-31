@@ -79,6 +79,7 @@ public class VanillaCommandWrapper extends VanillaCommand {
     public static final String BUKKIT = "bukkit";
     public static final String MOJANG = "mojang";
     public static final String COMMAND_BLOCKS = "command-blocks";
+    private static final Set<VanillaCommand> vanillaCommands = new HashSet<VanillaCommand>();
     protected final CommandAbstract vanillaCommand;
 
     public VanillaCommandWrapper(CommandAbstract vanillaCommand) {
@@ -224,7 +225,7 @@ public class VanillaCommandWrapper extends VanillaCommand {
     }
 
     public static Set<VanillaCommand> buildCommands(ConfigurationSection section) {
-        Set<VanillaCommand> vanillaCommands = new HashSet<VanillaCommand>();
+        vanillaCommands.clear();
         vanillaCommands.add(buildCommand(section, new CommandAchievement(), new AchievementCommand(), "/achievement give <stat_name> [player]"));
         vanillaCommands.add(buildCommand(section, new CommandBan(), new BanCommand(), "/ban <playername> [reason]"));
         vanillaCommands.add(buildCommand(section, new CommandBanIp(), new BanIpCommand(), "/ban-ip <ip-address|playername>"));

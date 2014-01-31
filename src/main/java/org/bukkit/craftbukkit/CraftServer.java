@@ -589,6 +589,12 @@ public final class CraftServer implements Server {
         chunkGCLoadThresh = configuration.getInt("chunk-gc.load-threshold");
         loadIcon();
 
+        ConfigurationSection section = configuration.getConfigurationSection("commands");
+        if (section == null) {
+            section = configuration.createSection("commands");
+        }
+        VanillaCommandWrapper.buildCommands(section);
+
         playerList.getIPBans().load();
         playerList.getNameBans().load();
 
