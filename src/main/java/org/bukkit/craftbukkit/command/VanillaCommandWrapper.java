@@ -98,18 +98,20 @@ public class VanillaCommandWrapper extends VanillaCommand {
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
         if (!testPermission(sender)) return true;
+
         ICommandListener icommandlistener = getListener(sender);
         try {
             vanillaCommand.b(icommandlistener, args);
-            return true;
         } catch (ExceptionUsage exceptionusage) {
-            return false;
+            ChatMessage chatmessage = new ChatMessage("commands.generic.usage", new Object[] {new ChatMessage(exceptionusage.getMessage(), exceptionusage.a())});
+            chatmessage.b().setColor(EnumChatFormat.RED);
+            icommandlistener.sendMessage(chatmessage);
         } catch (CommandException commandexception) {
             ChatMessage chatmessage = new ChatMessage(commandexception.getMessage(), commandexception.a());
             chatmessage.b().setColor(EnumChatFormat.RED);
             icommandlistener.sendMessage(chatmessage);
-            return false;
         }
+        return true;
     }
 
     @Override
