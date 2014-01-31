@@ -78,7 +78,7 @@ public class VanillaCommandWrapper extends VanillaCommand {
     public static final String DEFAULT = "default";
     public static final String BUKKIT = "bukkit";
     public static final String MOJANG = "mojang";
-    public static final String COMMAND_BLOCKS = "command-blocks";
+    public static final String COMMAND_BLOCK = "command-block";
     private static final Set<VanillaCommand> vanillaCommands = new HashSet<VanillaCommand>();
     protected final CommandAbstract vanillaCommand;
 
@@ -279,7 +279,7 @@ public class VanillaCommandWrapper extends VanillaCommand {
         }
         if ((DEFAULT.equals(type) || BUKKIT.equals(type)) && bukkitCommand != null) {
             return bukkitCommand;
-        } else if (COMMAND_BLOCKS.equals(type) && bukkitCommand != null) {
+        } else if (COMMAND_BLOCK.equals(type) && bukkitCommand != null) {
             return new CommandBlockVanillaCommandWrapper(nmsCommand, bukkitCommand);
         } else {
             if (!MOJANG.equals(type)) {
