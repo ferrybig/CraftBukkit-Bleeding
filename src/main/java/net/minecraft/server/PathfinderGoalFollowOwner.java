@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+// CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.entity.EntityTargetEvent;
+// CraftBukkit end
+
 public class PathfinderGoalFollowOwner extends PathfinderGoal {
 
     private EntityTameableAnimal d;
@@ -32,8 +37,17 @@ public class PathfinderGoalFollowOwner extends PathfinderGoal {
         } else if (this.d.e(entityliving) < (double) (this.c * this.c)) {
             return false;
         } else {
+            // CraftBukkit start - call EntityTargetEvent
+            org.bukkit.event.entity.EntityTargetLivingEntityEvent event = CraftEventFactory.callEntityTargetLivingEvent(this.d, entityliving, EntityTargetEvent.TargetReason.FOLLOW);
+
+            if (event.isCancelled()) {
+                return false;
+            }
+
+            entityliving = event.getTarget() == null ? null : ((org.bukkit.craftbukkit.entity.CraftLivingEntity) event.getTarget()).getHandle();
             this.e = entityliving;
-            return true;
+            return this.e != null;
+            // CraftBukkit end
         }
     }
 
@@ -48,6 +62,10 @@ public class PathfinderGoalFollowOwner extends PathfinderGoal {
     }
 
     public void d() {
+        // CraftBukkit start
+        EntityTargetEvent.TargetReason reason = this.e.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        CraftEventFactory.callEntityTargetEvent(this.e, null, reason);
+        // CraftBukkit end
         this.e = null;
         this.g.h();
         this.d.getNavigation().a(this.i);
