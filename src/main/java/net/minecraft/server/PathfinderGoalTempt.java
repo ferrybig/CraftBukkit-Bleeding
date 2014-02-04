@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+// CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.entity.EntityTargetEvent;
+// CraftBukkit end
+
 public class PathfinderGoalTempt extends PathfinderGoal {
 
     private EntityCreature a;
@@ -9,7 +14,7 @@ public class PathfinderGoalTempt extends PathfinderGoal {
     private double e;
     private double f;
     private double g;
-    private EntityHuman h;
+    private Entity h; // CraftBukkit - changed to Entity
     private int i;
     private boolean j;
     private Item k;
@@ -33,9 +38,22 @@ public class PathfinderGoalTempt extends PathfinderGoal {
             if (this.h == null) {
                 return false;
             } else {
-                ItemStack itemstack = this.h.bD();
+                ItemStack itemstack = ((EntityHuman) this.h).bD(); // CraftBukkit - cast to EntityHuman
 
-                return itemstack == null ? false : itemstack.getItem() == this.k;
+                // CraftBukkit start - call EntityTargetEvent
+                if (itemstack == null || itemstack.getItem() != this.k) {
+                    return false;
+                } else {
+                    EntityTargetEvent event = CraftEventFactory.callEntityTargetEvent(this.a, this.h, EntityTargetEvent.TargetReason.LURED);
+
+                    if (event.isCancelled()) {
+                        return false;
+                    }
+
+                    this.h = event.getTarget() == null ? null : ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
+                    return this.h != null;
+                }
+                // CraftBukkit end
             }
         }
     }
@@ -73,6 +91,10 @@ public class PathfinderGoalTempt extends PathfinderGoal {
     }
 
     public void d() {
+        // CraftBukkit start
+        EntityTargetEvent.TargetReason reason = this.h.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        CraftEventFactory.callEntityTargetEvent(this.a, null, reason);
+        // CraftBukkit end
         this.h = null;
         this.a.getNavigation().h();
         this.i = 100;
