@@ -181,7 +181,7 @@ public class EntityZombie extends EntityMonster {
                         if (this.world.b(entityzombie.boundingBox) && this.world.getCubes(entityzombie, entityzombie.boundingBox).isEmpty() && !this.world.containsLiquid(entityzombie.boundingBox)) {
                             this.world.addEntity(entityzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.REINFORCEMENTS); // CraftBukkit
                             // CraftBukkit start - call EntityTargetEvent
-                            org.bukkit.event.entity.EntityTargetLivingEntityEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetLivingEvent(entityzombie, entityliving, org.bukkit.event.entity.EntityTargetEvent.TargetReason.PIG_ZOMBIE_TARGET);
+                            org.bukkit.event.entity.EntityTargetLivingEntityEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetLivingEvent(entityzombie, entityliving, org.bukkit.event.entity.EntityTargetEvent.TargetReason.TARGET_ATTACKED_HORDE);
                             entityliving = ((org.bukkit.craftbukkit.entity.CraftLivingEntity) event.getTarget()).getHandle();
                             if (!event.isCancelled()) {
                                 entityzombie.setGoalTarget(entityliving);

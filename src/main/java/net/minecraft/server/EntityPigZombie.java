@@ -96,20 +96,20 @@ public class EntityPigZombie extends EntityZombie {
 
     private void c(Entity entity) {
         // CraftBukkit start
-        org.bukkit.entity.Entity bukkitTarget = entity == null ? null : entity.getBukkitEntity();
+        EntityTargetEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(this, entity, EntityTargetEvent.TargetReason.TARGET_ATTACKED_HORDE);
+        EntityTargetEvent oldEvent = new EntityTargetEvent(this.getBukkitEntity(), event.getTarget(), EntityTargetEvent.TargetReason.PIG_ZOMBIE_TARGET);
+        oldEvent.setCancelled(event.isCancelled());
+        this.world.getServer().getPluginManager().callEvent(oldEvent);
 
-        EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), bukkitTarget, EntityTargetEvent.TargetReason.PIG_ZOMBIE_TARGET);
-        this.world.getServer().getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
+        if (event.isCancelled() || oldEvent.isCancelled()) {
             return;
         }
 
-        if (event.getTarget() == null) {
+        if (oldEvent.getTarget() == null) {
             this.target = null;
             return;
         }
-        entity = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
+        entity = ((org.bukkit.craftbukkit.entity.CraftEntity) oldEvent.getTarget()).getHandle();
         // CraftBukkit end
 
         this.target = entity;
