@@ -32,7 +32,13 @@ public class PathfinderGoalHurtByTarget extends PathfinderGoalTarget {
                 EntityCreature entitycreature = (EntityCreature) iterator.next();
 
                 if (this.c != entitycreature && entitycreature.getGoalTarget() == null && !entitycreature.c(this.c.getLastDamager())) {
-                    entitycreature.setGoalTarget(this.c.getLastDamager());
+                    // CraftBukkit start - call EntityTargetEvent
+                    org.bukkit.event.entity.EntityTargetLivingEntityEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetLivingEvent(entitycreature, this.c.getLastDamager(), org.bukkit.event.entity.EntityTargetEvent.TargetReason.PIG_ZOMBIE_TARGET);
+                    if (event.isCancelled()) {
+                        continue;
+                    }
+                    entitycreature.setGoalTarget(event.getTarget() == null ? null : ((org.bukkit.craftbukkit.entity.CraftLivingEntity) event.getTarget()).getHandle());
+                    // CraftBukkit end
                 }
             }
         }
