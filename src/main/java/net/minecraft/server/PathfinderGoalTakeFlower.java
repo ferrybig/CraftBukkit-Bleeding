@@ -3,6 +3,11 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
+// CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.entity.EntityTargetEvent;
+// CraftBukkit end
+
 public class PathfinderGoalTakeFlower extends PathfinderGoal {
 
     private EntityVillager a;
@@ -32,6 +37,21 @@ public class PathfinderGoalTakeFlower extends PathfinderGoal {
                     EntityIronGolem entityirongolem = (EntityIronGolem) iterator.next();
 
                     if (entityirongolem.bZ() > 0) {
+                        // CraftBukkit start - call EntityTargetEvent
+                        org.bukkit.event.entity.EntityTargetLivingEntityEvent event = CraftEventFactory.callEntityTargetLivingEvent(this.a, this.b, EntityTargetEvent.TargetReason.LURED);
+
+                        if (event.isCancelled()) {
+                            return false;
+                        } else if (event.getTarget() == null) {
+                            entityirongolem = null;
+                        } else {
+                            EntityLiving target = ((org.bukkit.craftbukkit.entity.CraftLivingEntity) event.getTarget()).getHandle();
+
+                            if (target instanceof EntityIronGolem) {
+                                entityirongolem = (EntityIronGolem) target;
+                            }
+                        }
+                        // CraftBukkit end
                         this.b = entityirongolem;
                         break;
                     }
@@ -53,6 +73,10 @@ public class PathfinderGoalTakeFlower extends PathfinderGoal {
     }
 
     public void d() {
+        // CraftBukkit start
+        EntityTargetEvent.TargetReason reason = this.b.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        CraftEventFactory.callEntityTargetEvent(this.b, null, reason);
+        // CraftBukkit end
         this.b = null;
         this.a.getNavigation().h();
     }
