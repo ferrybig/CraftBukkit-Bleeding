@@ -1,5 +1,10 @@
 package net.minecraft.server;
 
+// CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.entity.EntityTargetEvent;
+// CraftBukkit end
+
 public class PathfinderGoalBeg extends PathfinderGoal {
 
     private EntityWolf a;
@@ -17,7 +22,27 @@ public class PathfinderGoalBeg extends PathfinderGoal {
 
     public boolean a() {
         this.b = this.c.findNearbyPlayer(this.a, (double) this.d);
-        return this.b == null ? false : this.a(this.b);
+        // CraftBukkit start - call EntityTargetEvent
+        if (this.b == null || !this.a(this.b)) {
+            return false;
+        }
+
+        org.bukkit.event.entity.EntityTargetLivingEntityEvent event = CraftEventFactory.callEntityTargetLivingEvent(this.a, this.b, EntityTargetEvent.TargetReason.LURED);
+
+        if (event.isCancelled()) {
+            return false;
+        } else if (event.getTarget() == null) {
+            this.b = null;
+        } else {
+            EntityLiving target = ((org.bukkit.craftbukkit.entity.CraftLivingEntity) event.getTarget()).getHandle();
+
+            if (target instanceof EntityHuman) {
+                this.b = (EntityHuman) target;
+            }
+        }
+
+        return this.b != null;
+        // CraftBukkit end
     }
 
     public boolean b() {
@@ -31,6 +56,10 @@ public class PathfinderGoalBeg extends PathfinderGoal {
 
     public void d() {
         this.a.m(false);
+        // CraftBukkit start
+        EntityTargetEvent.TargetReason reason = this.b.isAlive() ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
+        CraftEventFactory.callEntityTargetEvent(this.b, null, reason);
+        // CraftBukkit end
         this.b = null;
     }
 
