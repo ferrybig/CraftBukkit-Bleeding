@@ -17,6 +17,7 @@ members:
   "org/bukkit/entity/Minecart _INVALID_setDamage (I)V": setDamage
   "org/bukkit/entity/Projectile _INVALID_getShooter ()Lorg/bukkit/entity/LivingEntity;": getShooter
   "org/bukkit/entity/Projectile _INVALID_setShooter (Lorg/bukkit/entity/LivingEntity;)V": setShooter
+  "org/bukkit/event/entity/EntityTargetLivingEntityEvent _INVALID_setTarget(Lorg/bukkit/entity/Entity;)V": setTarget
 flags:
   "org/bukkit/craftbukkit/v${minecraft_version}/entity/CraftLivingEntity getHealth ()I": 0x1001
   "org/bukkit/craftbukkit/v${minecraft_version}/entity/CraftEnderDragonPart getHealth ()I": 0x1001
