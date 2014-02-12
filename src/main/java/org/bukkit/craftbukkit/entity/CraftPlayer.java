@@ -1285,4 +1285,8 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
         }
         collection.add(new AttributeModifiable(getHandle().bb(), (new AttributeRanged("generic.maxHealth", scaledHealth ? healthScale : getMaxHealth(), 0.0D, Float.MAX_VALUE)).a("Max Health").a(true)));
     }
+
+    public long getIdleTime() {
+        return MinecraftServer.aq() - getHandle().bX;
+    }
 }
