@@ -3,14 +3,19 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
+// CraftBukkit start
+import org.bukkit.event.village.VillageSiegeStartEvent;
+import org.bukkit.event.village.VillageSiegeEndEvent;
+// CraftBukkit end
+
 public class VillageSiege {
 
     private World world;
-    private boolean b;
+    public boolean b; // CraftBukkit - private -> public
     private int c = -1;
     private int d;
     private int e;
-    private Village f;
+    public Village f; // CraftBukkit - private -> public
     private int g;
     private int h;
     private int i;
@@ -37,6 +42,11 @@ public class VillageSiege {
                 return;
             }
 
+            // CraftBukkit start - return if still in initial state (see MC-7432)
+            if (this.c == -1) {
+                return;
+            }
+            // CraftBukkit end
             if (this.c == 0) {
                 float f = this.world.c(0.0F);
 
@@ -45,7 +55,14 @@ public class VillageSiege {
                 }
 
                 this.c = this.world.random.nextInt(10) == 0 ? 1 : 2;
-                this.b = false;
+                // CraftBukkit start
+                VillageSiegeEndEvent event = new VillageSiegeEndEvent(this.f.getVillage());
+                world.getServer().getPluginManager().callEvent(event);
+
+                if (!event.isCancelled()) {
+                    this.b = false;
+                }
+                // CraftBukkit end
                 if (this.c == 2) {
                     return;
                 }
@@ -57,7 +74,14 @@ public class VillageSiege {
                 return;
             }
 
-            this.b = true;
+            // CraftBukkit start
+            VillageSiegeStartEvent event = new VillageSiegeStartEvent(this.f.getVillage());
+            world.getServer().getPluginManager().callEvent(event);
+
+            if (!event.isCancelled()) {
+                this.b = true;
+            }
+            // CraftBukkit end
         }
 
         if (this.e > 0) {
@@ -89,9 +113,12 @@ public class VillageSiege {
 
                 while (true) {
                     if (i < 10) {
-                        this.g = chunkcoordinates.x + (int) ((double) (MathHelper.cos(this.world.random.nextFloat() * 3.1415927F * 2.0F) * f) * 0.9D);
+                        // CraftBukkit start - use same angle for calculating spawn point (See MC-7488)
+                        float angle = this.world.random.nextFloat() * (float) Math.PI * 2.0F;
+                        this.g = chunkcoordinates.x + (int) ((double) (MathHelper.cos(angle) * f) * 0.9D);
                         this.h = chunkcoordinates.y;
-                        this.i = chunkcoordinates.z + (int) ((double) (MathHelper.sin(this.world.random.nextFloat() * 3.1415927F * 2.0F) * f) * 0.9D);
+                        this.i = chunkcoordinates.z + (int) ((double) (MathHelper.sin(angle) * f) * 0.9D);
+                        // CraftBukkit end
                         flag = false;
                         Iterator iterator1 = this.world.villages.getVillages().iterator();
 

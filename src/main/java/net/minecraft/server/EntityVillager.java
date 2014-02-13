@@ -6,12 +6,20 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
+// CraftBukkit start
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
+import org.bukkit.event.village.VillageNoBreedEvent;
+import org.bukkit.event.village.VillagePopularityChangeEvent;
+// CraftBukkit end
+
 public class EntityVillager extends EntityAgeable implements IMerchant, NPC {
 
     private int profession;
     private boolean br;
     private boolean bs;
-    Village village;
+    public Village village; // CraftBukkit - made public
     private EntityHuman tradingPlayer;
     private MerchantRecipeList bu;
     private int bv;
@@ -97,7 +105,14 @@ public class EntityVillager extends EntityAgeable implements IMerchant, NPC {
                     this.bw = false;
                     if (this.village != null && this.by != null) {
                         this.world.broadcastEntityEffect(this, (byte) 14);
-                        this.village.a(this.by, 1);
+                        // CraftBukkit start
+                        VillagePopularityChangeEvent event = new VillagePopularityChangeEvent(this.village.getVillage(), (LivingEntity) this.getBukkitEntity(), world.getServer().getPlayer(this.by), VillagePopularityChangeEvent.ChangeReason.TRADING, 1);
+                        world.getServer().getPluginManager().callEvent(event);
+
+                        if (!event.isCancelled()) {
+                            this.village.a(this.by, event.getPopularityChange());
+                        }
+                        // CraftBukkit end
                     }
                 }
 
@@ -200,7 +215,16 @@ public class EntityVillager extends EntityAgeable implements IMerchant, NPC {
                     b0 = -3;
                 }
 
-                this.village.a(entityliving.getName(), b0);
+                // CraftBukkit start
+                VillagePopularityChangeEvent popularityEvent = new VillagePopularityChangeEvent(this.village.getVillage(), (LivingEntity) this.getBukkitEntity(), (Player) entityliving.getBukkitEntity(), VillagePopularityChangeEvent.ChangeReason.ATTACKING_VILLAGER, b0);
+                world.getServer().getPluginManager().callEvent(popularityEvent);
+
+                if (popularityEvent.isCancelled()) {
+                    return;
+                }
+
+                this.village.a(entityliving.getName(), popularityEvent.getPopularityChange());
+                // CraftBukkit end
                 if (this.isAlive()) {
                     this.world.broadcastEntityEffect(this, (byte) 13);
                 }
@@ -214,15 +238,36 @@ public class EntityVillager extends EntityAgeable implements IMerchant, NPC {
 
             if (entity != null) {
                 if (entity instanceof EntityHuman) {
-                    this.village.a(entity.getName(), -2);
+                    // CraftBukkit start
+                    VillagePopularityChangeEvent event = new VillagePopularityChangeEvent(this.village.getVillage(), (LivingEntity) this.getBukkitEntity(), (Player) entity.getBukkitEntity(), VillagePopularityChangeEvent.ChangeReason.KILLING_VILLAGER, -2);
+                    world.getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled()) {
+                        this.village.a(entity.getName(), event.getPopularityChange());
+                    }
+                    // CraftBukkit end
                 } else if (entity instanceof IMonster) {
-                    this.village.h();
+                    // CraftBukkit start
+                    VillageNoBreedEvent event = new VillageNoBreedEvent(this.village.getVillage(), (Villager) this.getBukkitEntity(), (LivingEntity) entity.getBukkitEntity());
+                    world.getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled()) {
+                        this.village.h();
+                    }
+                    // CraftBukkit end
                 }
             } else if (entity == null) {
                 EntityHuman entityhuman = this.world.findNearbyPlayer(this, 16.0D);
 
                 if (entityhuman != null) {
-                    this.village.h();
+                    // CraftBukkit start
+                    VillageNoBreedEvent event = new VillageNoBreedEvent(this.village.getVillage(), (Villager) this.getBukkitEntity(), entityhuman.getBukkitEntity());
+                    world.getServer().getPluginManager().callEvent(event);
+
+                    if (!event.isCancelled()) {
+                        this.village.h();
+                    }
+                    // CraftBukkit end
                 }
             }
         }

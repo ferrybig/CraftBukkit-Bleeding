@@ -54,7 +54,7 @@ public abstract class World implements IBlockAccess {
     public boolean isLoading;
     public PersistentCollection worldMaps;
     public final PersistentVillage villages;
-    protected final VillageSiege siegeManager = new VillageSiege(this);
+    public final VillageSiege siegeManager = new VillageSiege(this); // CraftBukkit - protected -> public
     public final MethodProfiler methodProfiler;
     private final Vec3DPool J = new Vec3DPool(300, 2000);
     private final Calendar K = Calendar.getInstance();

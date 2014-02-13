@@ -1,10 +1,10 @@
 package net.minecraft.server;
 
-class VillageAggressor {
+public class VillageAggressor { // CraftBukkit - made public
 
     public EntityLiving a;
     public int b;
-    final Village c;
+    public final Village c; // CraftBukkit - made public
 
     VillageAggressor(Village village, EntityLiving entityliving, int i) {
         this.c = village;

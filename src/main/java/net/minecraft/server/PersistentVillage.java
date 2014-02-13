@@ -4,11 +4,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+// CraftBukkit start
+import org.bukkit.craftbukkit.village.CraftVillage;
+import org.bukkit.craftbukkit.village.CraftVillageDoor;
+import org.bukkit.event.village.VillageAbandonEvent;
+import org.bukkit.event.village.VillageAddDoorEvent;
+import org.bukkit.event.village.VillageCreateEvent;
+// CraftBukkit end
+
 public class PersistentVillage extends PersistentBase {
 
     private World world;
     private final List b = new ArrayList();
-    private final List c = new ArrayList();
+    private final List c = new ArrayList(); //should be doors
     private final List villages = new ArrayList();
     private int time;
 
@@ -66,6 +74,16 @@ public class PersistentVillage extends PersistentBase {
             Village village = (Village) iterator.next();
 
             if (village.isAbandoned()) {
+                // CraftBukkit start
+                VillageAbandonEvent event = new VillageAbandonEvent(village.getVillage());
+                world.getServer().getPluginManager().callEvent(event);
+
+                if (event.isCancelled()) {
+                    continue;
+                }
+
+                world.getWorld().getVillageManager().removeVillage(village);
+                // CraftBukkit end
                 iterator.remove();
                 this.c();
             }
@@ -122,6 +140,17 @@ public class PersistentVillage extends PersistentBase {
                         continue;
                     }
 
+                    // CraftBukkit start
+                    CraftVillageDoor door = new CraftVillageDoor(villagedoor, village);
+                    VillageAddDoorEvent event = new VillageAddDoorEvent(village.getVillage(), door);
+                    world.getServer().getPluginManager().callEvent(event);
+
+                    if (event.isCancelled()) {
+                        continue;
+                    }
+
+                    world.getWorld().getVillageManager().addDoor(door);
+                    // CraftBukkit end
                     village.addDoor(villagedoor);
                     flag = true;
                 }
@@ -129,8 +158,30 @@ public class PersistentVillage extends PersistentBase {
                 if (!flag) {
                     Village village1 = new Village(this.world);
 
-                    village1.addDoor(villagedoor);
+                    // CraftBukkit start
+                    CraftVillage craftVillage = new CraftVillage(village1);
+                    VillageCreateEvent createEvent = new VillageCreateEvent(craftVillage);
+                    world.getServer().getPluginManager().callEvent(createEvent);
+
+                    if (createEvent.isCancelled()) {
+                        continue;
+                    }
+
                     this.villages.add(village1);
+                    world.getWorld().getVillageManager().addVillage(craftVillage);
+
+                    CraftVillageDoor door = new CraftVillageDoor(villagedoor, village1);
+                    VillageAddDoorEvent addDoorEvent = new VillageAddDoorEvent(craftVillage, new CraftVillageDoor(villagedoor, village1));
+                    world.getServer().getPluginManager().callEvent(addDoorEvent);
+
+                    if (addDoorEvent.isCancelled()) {
+                        continue;
+                    }
+
+                    world.getWorld().getVillageManager().addDoor(door);
+                    // CraftBukkit end
+                    village1.addDoor(villagedoor);
+                    /* this.villages.add(village1); */ // CraftBukkit - moved up
                     this.c();
                 }
 
@@ -268,6 +319,7 @@ public class PersistentVillage extends PersistentBase {
 
             village.a(nbttagcompound1);
             this.villages.add(village);
+            world.getWorld().getVillageManager().addVillage(village); // CraftBukkit - add to VillageManager
         }
     }
 

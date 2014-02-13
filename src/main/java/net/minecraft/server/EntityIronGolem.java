@@ -1,11 +1,14 @@
 package net.minecraft.server;
 
-import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
+// CraftBukkit start
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
+import org.bukkit.event.village.VillagePopularityChangeEvent;
+// CraftBukkit end
 
 public class EntityIronGolem extends EntityGolem {
 
     private int bq;
-    Village bp;
+    public Village bp; // CraftBukkit - made public
     private int br;
     private int bs;
 
@@ -180,7 +183,14 @@ public class EntityIronGolem extends EntityGolem {
 
     public void die(DamageSource damagesource) {
         if (!this.isPlayerCreated() && this.killer != null && this.bp != null) {
-            this.bp.a(this.killer.getName(), -5);
+            // CraftBukkit start
+            VillagePopularityChangeEvent event = new VillagePopularityChangeEvent(this.bp.getVillage(), (org.bukkit.entity.LivingEntity) this.getBukkitEntity(), (org.bukkit.entity.Player) this.killer.getBukkitEntity(), org.bukkit.event.village.VillagePopularityChangeEvent.ChangeReason.KILLING_GOLEM, -5);
+            world.getServer().getPluginManager().callEvent(event);
+
+            if (!event.isCancelled()) {
+                this.bp.a(this.killer.getName(), event.getPopularityChange());
+            }
+            // CraftBukkit end
         }
 
         super.die(damagesource);

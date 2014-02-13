@@ -30,6 +30,7 @@ import org.bukkit.craftbukkit.entity.*;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.metadata.BlockMetadataStore;
 import org.bukkit.craftbukkit.util.LongHash;
+import org.bukkit.craftbukkit.village.CraftVillageManager;
 import org.bukkit.entity.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
@@ -58,6 +59,7 @@ public class CraftWorld implements World {
     private final ChunkGenerator generator;
     private final List<BlockPopulator> populators = new ArrayList<BlockPopulator>();
     private final BlockMetadataStore blockMetadata = new BlockMetadataStore(this);
+    private final CraftVillageManager villageManager;
     private int monsterSpawn = -1;
     private int animalSpawn = -1;
     private int waterAnimalSpawn = -1;
@@ -72,6 +74,8 @@ public class CraftWorld implements World {
         this.generator = gen;
 
         environment = env;
+
+        villageManager = new CraftVillageManager(world);
 
         if (server.chunkGCPeriod > 0) {
             chunkGCTickCount = rand.nextInt(server.chunkGCPeriod);
@@ -1279,5 +1283,9 @@ public class CraftWorld implements World {
             // Add unload request
             cps.queueUnload(chunk.locX, chunk.locZ);
         }
+    }
+
+    public CraftVillageManager getVillageManager() {
+        return villageManager;
     }
 }

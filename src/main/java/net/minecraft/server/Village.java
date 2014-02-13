@@ -5,20 +5,36 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
+// CraftBukkit start
+import org.bukkit.Location;
+import org.bukkit.craftbukkit.village.CraftVillageAggressor;
+import org.bukkit.event.village.VillageAddAggressorEvent;
+import org.bukkit.event.village.VillageCenterChangeEvent;
+import org.bukkit.event.village.VillagePopularityChangeEvent;
+import org.bukkit.event.village.VillageRemoveAggressorEvent;
+import org.bukkit.event.village.VillageRemoveDoorEvent;
+// CraftBukkit end
+
 public class Village {
 
-    private World world;
+    public World world; // CraftBukkit - private -> public
     private final List doors = new ArrayList();
     private final ChunkCoordinates c = new ChunkCoordinates(0, 0, 0);
     private final ChunkCoordinates center = new ChunkCoordinates(0, 0, 0);
     private int size;
     private int f;
-    private int time;
+    public int time; // CraftBukkit - private -> public
     private int population;
-    private int noBreedTicks;
-    private TreeMap playerStandings = new TreeMap();
-    private List aggressors = new ArrayList();
-    private int ironGolemCount;
+    public int noBreedTicks; // CraftBukkit - private -> public
+    public TreeMap playerStandings = new TreeMap(); // CraftBukkit - private -> public
+    public List aggressors = new ArrayList(); // CraftBukkit - private -> public
+    public int ironGolemCount; // CraftBukkit - private -> public
+
+    // CraftBukkit start
+    public int doorIdleTime = 1200;
+    public int breedWaitTime = 3600;
+    public int maxAggressionTicks = 300;
+    // CraftBukkit end
 
     public Village() {}
 
@@ -57,7 +73,7 @@ public class Village {
         }
     }
 
-    private Vec3D a(int i, int j, int k, int l, int i1, int j1) {
+    public Vec3D a(int i, int j, int k, int l, int i1, int j1) { // CraftBukkit - private -> public
         for (int k1 = 0; k1 < 10; ++k1) {
             int l1 = i + this.world.random.nextInt(16) - 8;
             int i2 = j + this.world.random.nextInt(6) - 3;
@@ -210,21 +226,45 @@ public class Village {
         return this.doors.isEmpty();
     }
 
-    public void a(EntityLiving entityliving) {
+    // CraftBukkit start
+    public void a(EntityLiving entityLiving) {
+        this.a(null, entityLiving);
+    }
+
+    public void a(EntityVillager villager, EntityLiving entityliving) {
+    // CraftBukkit end
         Iterator iterator = this.aggressors.iterator();
 
         VillageAggressor villageaggressor;
 
         do {
             if (!iterator.hasNext()) {
-                this.aggressors.add(new VillageAggressor(this, entityliving, this.time));
+                // CraftBukkit start
+                CraftVillageAggressor craftAggressor = new CraftVillageAggressor(new VillageAggressor(this, entityliving, this.time));
+                VillageAddAggressorEvent event = new VillageAddAggressorEvent(villager == null ? null : (org.bukkit.entity.Villager) villager.getBukkitEntity(), craftAggressor);
+                world.getServer().getPluginManager().callEvent(event);
+
+                if (!event.isCancelled()) {
+                    craftAggressor.setAggressionTicks(event.getAggressionTicks());
+                    this.aggressors.add(craftAggressor.getHandle());
+                }
+                // CraftBukkit end
                 return;
             }
 
             villageaggressor = (VillageAggressor) iterator.next();
         } while (villageaggressor.a != entityliving);
 
-        villageaggressor.b = this.time;
+        // CraftBukkit start
+        CraftVillageAggressor craftAggressor = new CraftVillageAggressor(villageaggressor);
+        VillageAddAggressorEvent event = new VillageAddAggressorEvent(villager == null ? null : (org.bukkit.entity.Villager) villager.getBukkitEntity(), craftAggressor);
+        world.getServer().getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            return;
+        }
+        villageaggressor.b = this.time - (maxAggressionTicks - event.getAggressionTicks());
+        // CraftBukkit end
     }
 
     public EntityLiving b(EntityLiving entityliving) {
@@ -275,7 +315,15 @@ public class Village {
         while (iterator.hasNext()) {
             VillageAggressor villageaggressor = (VillageAggressor) iterator.next();
 
-            if (!villageaggressor.a.isAlive() || Math.abs(this.time - villageaggressor.b) > 300) {
+            if (!villageaggressor.a.isAlive() || Math.abs(this.time - villageaggressor.b) > maxAggressionTicks) { // CraftBukkit - 300 -> maxAggressionTicks
+                // CraftBukkit start
+                VillageRemoveAggressorEvent event = new VillageRemoveAggressorEvent(new CraftVillageAggressor(villageaggressor));
+                world.getServer().getPluginManager().callEvent(event);
+
+                if (event.isCancelled() && villageaggressor.a.isAlive()) { // only allow cancelling if the entity is alive
+                    continue;
+                }
+                // CraftBukkit end
                 iterator.remove();
             }
         }
@@ -293,7 +341,17 @@ public class Village {
                 villagedoor.d();
             }
 
-            if (!this.isDoor(villagedoor.locX, villagedoor.locY, villagedoor.locZ) || Math.abs(this.time - villagedoor.addedTime) > 1200) {
+            if (!this.isDoor(villagedoor.locX, villagedoor.locY, villagedoor.locZ) || Math.abs(this.time - villagedoor.addedTime) > doorIdleTime) { // CraftBukkit - 1200 -> doorIdleTime
+                // CraftBukkit start
+                VillageRemoveDoorEvent event = new VillageRemoveDoorEvent(this.getVillage(), new org.bukkit.craftbukkit.village.CraftVillageDoor(villagedoor, this));
+                world.getServer().getPluginManager().callEvent(event);
+
+                if (event.isCancelled() && this.isDoor(villagedoor.locX, villagedoor.locY, villagedoor.locZ)) { // only allow cancelling if the door exists
+                    continue;
+                }
+
+                world.getWorld().getVillageManager().removeDoor(villagedoor);
+                // CraftBukkit end
                 this.c.x -= villagedoor.locX;
                 this.c.y -= villagedoor.locY;
                 this.c.z -= villagedoor.locZ;
@@ -314,6 +372,11 @@ public class Village {
 
     private void n() {
         int i = this.doors.size();
+        // CraftBukkit start
+        VillageCenterChangeEvent event;
+        Location oldLocation = new Location(this.world.getWorld(), this.center.x, this.center.y, this.center.z);
+        int oldSize = this.size;
+        // CraftBukkit end
 
         if (i == 0) {
             this.center.b(0, 0, 0);
@@ -330,13 +393,14 @@ public class Village {
 
             this.size = Math.max(32, (int) Math.sqrt((double) j) + 1);
         }
+        world.getServer().getPluginManager().callEvent(new VillageCenterChangeEvent(this.getVillage(), oldLocation, new Location(this.world.getWorld(), this.center.x, this.center.y, this.center.z), oldSize, this.size)); // CraftBukkit
     }
 
     public int a(String s) {
         Integer integer = (Integer) this.playerStandings.get(s);
 
         return integer != null ? integer.intValue() : 0;
-    }
+}
 
     public int a(String s, int i) {
         int j = this.a(s);
@@ -431,7 +495,7 @@ public class Village {
     }
 
     public boolean i() {
-        return this.noBreedTicks == 0 || this.time - this.noBreedTicks >= 3600;
+        return this.noBreedTicks == 0 || this.time - this.noBreedTicks >= breedWaitTime; // CraftBukkit - 3600 -> breedWaitTime
     }
 
     public void b(int i) {
@@ -440,7 +504,19 @@ public class Village {
         while (iterator.hasNext()) {
             String s = (String) iterator.next();
 
-            this.a(s, i);
+            // CraftBukkit start
+            VillagePopularityChangeEvent event = new VillagePopularityChangeEvent(this.getVillage(), null, world.getServer().getPlayer(s), i);
+
+            if (!event.isCancelled()) {
+                this.a(s, event.getPopularityChange());
+            }
+            // CraftBukkit end
         }
     }
+
+    // CraftBukkit start
+    public org.bukkit.craftbukkit.village.CraftVillage getVillage() {
+        return world.getWorld().getVillageManager().getVillage(this);
+    }
+    // CraftBukkit end
 }
