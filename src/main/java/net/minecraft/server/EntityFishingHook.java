@@ -25,7 +25,7 @@ public class EntityFishingHook extends Entity {
     private int av;
     private int aw;
     private int ax;
-    private int ay;
+    public int ay; // CraftBukkit - private -> public
     private int az;
     private float aA;
     public Entity hooked;

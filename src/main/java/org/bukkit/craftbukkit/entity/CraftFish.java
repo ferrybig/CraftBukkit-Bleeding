@@ -46,6 +46,7 @@ public class CraftFish extends AbstractProjectile implements Fish {
         return EntityType.FISHING_HOOK;
     }
 
+    @Deprecated
     public double getBiteChance() {
         EntityFishingHook hook = getHandle();
 
@@ -58,9 +59,18 @@ public class CraftFish extends AbstractProjectile implements Fish {
         return this.biteChance;
     }
 
+    @Deprecated
     public void setBiteChance(double chance) {
         Validate.isTrue(chance >= 0 && chance <= 1, "The bite chance must be between 0 and 1.");
         this.biteChance = chance;
+    }
+
+    public int getBiteTicks() {
+        return getHandle().ay;
+    }
+
+    public void setBiteTicks(int ticks) {
+        getHandle().ay = ticks;
     }
 
     @Deprecated
