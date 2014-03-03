@@ -1,9 +1,6 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.ExplosionPrimeEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntityCreeper extends EntityMonster {
 
@@ -11,7 +8,7 @@ public class EntityCreeper extends EntityMonster {
     private int fuseTicks;
     private int maxFuseTicks = 30;
     private int explosionRadius = 3;
-    private int record = -1; // CraftBukkit
+    public Item record = null; // CraftBukkit
 
     public EntityCreeper(World world) {
         super(world);
@@ -123,41 +120,13 @@ public class EntityCreeper extends EntityMonster {
             int j = Item.b(Items.RECORD_12);
             int k = i + this.random.nextInt(j - i + 1);
 
-            // this.a(Item.d(k), 1); // CraftBukkit
-            this.record = k;
+            // this.a(Item.d(k), 1);
+            this.record = Item.d(k);
         }
 
         super.die(damagesource);
         // CraftBukkit end
     }
-
-    // CraftBukkit start - Whole method
-    protected void dropDeathLoot(boolean flag, int i) {
-        Item j = this.getLoot();
-
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-
-        if (j != null) {
-            int k = this.random.nextInt(3);
-
-            if (i > 0) {
-                k += this.random.nextInt(i + 1);
-            }
-
-            if (k > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(j), k));
-            }
-        }
-
-        // Drop a music disc?
-        if (this.record != -1) {
-            loot.add(new org.bukkit.inventory.ItemStack(this.record, 1)); // TODO: Material
-            this.record = -1;
-        }
-
-        CraftEventFactory.callEntityDeathEvent(this, loot); // raise event even for those times when the entity does not drop loot
-    }
-    // CraftBukkit end
 
     public boolean n(Entity entity) {
         return true;
@@ -185,17 +154,8 @@ public class EntityCreeper extends EntityMonster {
         if (CraftEventFactory.callCreeperPowerEvent(this, entitylightning, org.bukkit.event.entity.CreeperPowerEvent.PowerCause.LIGHTNING).isCancelled()) {
             return;
         }
-
-        this.setPowered(true);
-    }
-
-    public void setPowered(boolean powered) {
-        if (!powered) {
-            this.datawatcher.watch(17, Byte.valueOf((byte) 0));
-        } else {
-            this.datawatcher.watch(17, Byte.valueOf((byte) 1));
-        }
         // CraftBukkit end
+        this.datawatcher.watch(17, Byte.valueOf((byte) 1));
     }
 
     protected boolean a(EntityHuman entityhuman) {
@@ -218,18 +178,19 @@ public class EntityCreeper extends EntityMonster {
         if (!this.world.isStatic) {
             boolean flag = this.world.getGameRules().getBoolean("mobGriefing");
 
-            // CraftBukkit start
-            float radius = this.isPowered() ? 6.0F : 3.0F;
-
-            ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), radius, false);
-            this.world.getServer().getPluginManager().callEvent(event);
-            if (!event.isCancelled()) {
-                this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), flag);
-                this.die();
+            /* CraftBukkit start - handled in event processing
+            if (this.isPowered()) {
+                this.world.explode(this, this.locX, this.locY, this.locZ, (float) (this.explosionRadius * 2), flag);
             } else {
+                this.world.explode(this, this.locX, this.locY, this.locZ, (float) this.explosionRadius, flag);
+            } */
+            if (!CraftEventFactory.handleExplosionPrimeEvent(this, this.locX, this.locY, this.locZ, this.isPowered() ? this.explosionRadius * 2 : this.explosionRadius, false, flag)) {
                 this.fuseTicks = 0;
+                return;
             }
             // CraftBukkit end
+
+            this.die();
         }
     }
 

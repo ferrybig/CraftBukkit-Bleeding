@@ -49,14 +49,9 @@ public class BlockStationary extends BlockFluids {
                 if (block.material == Material.AIR) {
                     if (this.o(world, i - 1, j, k) || this.o(world, i + 1, j, k) || this.o(world, i, j, k - 1) || this.o(world, i, j, k + 1) || this.o(world, i, j - 1, k) || this.o(world, i, j + 1, k)) {
                         // CraftBukkit start - Prevent lava putting something on fire
-                        if (world.getType(i, j, k) != Blocks.FIRE) {
-                            if (CraftEventFactory.callBlockIgniteEvent(world, i, j, k, x, y, z).isCancelled()) {
-                                continue;
-                            }
-                        }
+                        /* world.setTypeUpdate(i, j, k, Blocks.FIRE); */
+                        CraftEventFactory.handleBlockIgniteEvent(world, i, j, k, x, y, z);
                         // CraftBukkit end
-
-                        world.setTypeUpdate(i, j, k, Blocks.FIRE);
                         return;
                     }
                 } else if (block.material.isSolid()) {
@@ -73,14 +68,9 @@ public class BlockStationary extends BlockFluids {
                     k = j1 + random.nextInt(3) - 1;
                     if (world.isEmpty(i, j + 1, k) && this.o(world, i, j, k)) {
                         // CraftBukkit start - Prevent lava putting something on fire
-                        if (world.getType(i, j + 1, k) != Blocks.FIRE) {
-                            if (CraftEventFactory.callBlockIgniteEvent(world, i, j + 1, k, x, y, z).isCancelled()) {
-                                continue;
-                            }
-                        }
+                        /* world.setTypeUpdate(i, j + 1, k, Blocks.FIRE); */
+                        CraftEventFactory.handleBlockIgniteEvent(world, i, j + 1, k, x, y, z);
                         // CraftBukkit end
-
-                        world.setTypeUpdate(i, j + 1, k, Blocks.FIRE);
                     }
                 }
             }

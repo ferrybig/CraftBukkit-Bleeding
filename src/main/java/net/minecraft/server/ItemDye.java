@@ -1,10 +1,5 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.entity.Player;
-import org.bukkit.event.entity.SheepDyeWoolEvent;
-// CraftBukkit end
-
 public class ItemDye extends Item {
 
     public static final String[] a = new String[] { "black", "red", "green", "brown", "blue", "purple", "cyan", "silver", "gray", "pink", "lime", "yellow", "lightBlue", "magenta", "orange", "white"};
@@ -24,7 +19,7 @@ public class ItemDye extends Item {
     }
 
     public boolean interactWith(ItemStack itemstack, EntityHuman entityhuman, World world, int i, int j, int k, int l, float f, float f1, float f2) {
-        final int clickedX = i, clickedY = j, clickedZ = k; // CraftBukkit
+        final int clickedX = i, clickedZ = k; // CraftBukkit
         if (!entityhuman.a(i, j, k, l, itemstack)) {
             return false;
         } else {
@@ -70,7 +65,7 @@ public class ItemDye extends Item {
 
                         // CraftBukkit start - fire BlockPlaceEvent
                         // world.setTypeAndData(i, j, k, Blocks.COCOA, j1, 2);
-                        if (!ItemBlock.processBlockPlace(world, entityhuman, itemstack, i, j, k, Blocks.COCOA, j1, clickedX, clickedY, clickedZ)) {
+                        if (!ItemBlock.processBlockPlace(world, entityhuman, itemstack, i, j, k, Blocks.COCOA, j1, clickedX, j, clickedZ)) {
                             return false;
                         }
                         // CraftBukkit end
@@ -104,11 +99,9 @@ public class ItemDye extends Item {
                     if (iblockfragileplantelement.a(world, world.random, i, j, k)) {
                         // CraftBukkit start - Special case BlockSapling and BlockMushroom to use our methods
                         if (block instanceof BlockSapling) {
-                            Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                            ((BlockSapling) block).grow(world, i, j, k, world.random, true, player, null);
+                            ((BlockSapling) block).grow(world, i, j, k, world.random, true, entityhuman);
                         } else if (block instanceof BlockMushroom) {
-                            Player player = (entityhuman instanceof EntityPlayer) ? (Player) entityhuman.getBukkitEntity() : null;
-                            ((BlockMushroom) block).grow(world, i, j, k, world.random, true, player, null);
+                            ((BlockMushroom) block).grow(world, i, j, k, world.random, true, entityhuman);
                         } else {
                             iblockfragileplantelement.b(world, world.random, i, j, k);
                         }
@@ -133,15 +126,13 @@ public class ItemDye extends Item {
 
             if (!entitysheep.isSheared() && entitysheep.getColor() != i) {
                 // CraftBukkit start
-                byte bColor = (byte) i;
-                SheepDyeWoolEvent event = new SheepDyeWoolEvent((org.bukkit.entity.Sheep) entitysheep.getBukkitEntity(), org.bukkit.DyeColor.getByData(bColor));
-                entitysheep.world.getServer().getPluginManager().callEvent(event);
+                org.bukkit.event.entity.SheepDyeWoolEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callSheepDyeWoolEvent(entitysheep, (byte) i);
 
                 if (event.isCancelled()) {
                     return false;
                 }
 
-                i = (byte) event.getColor().getWoolData();
+                i = event.getColor().getWoolData();
                 // CraftBukkit end
                 entitysheep.setColor(i);
                 --itemstack.count;

@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockRedstoneWire extends Block {
 
     private boolean a = true;
@@ -112,10 +110,7 @@ public class BlockRedstoneWire extends Block {
 
         // CraftBukkit start
         if (k1 != l1) {
-            BlockRedstoneEvent event = new BlockRedstoneEvent(world.getWorld().getBlockAt(i, j, k), k1, l1);
-            world.getServer().getPluginManager().callEvent(event);
-
-            l1 = event.getNewCurrent();
+            l1 = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, k1, l1).getNewCurrent();
         }
         // CraftBukkit end
         if (k1 != l1) {

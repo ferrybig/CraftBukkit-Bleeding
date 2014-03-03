@@ -127,8 +127,7 @@ public class EntityOcelot extends EntityTameableAnimal {
             }
 
             if (!this.world.isStatic) {
-                // CraftBukkit - added event call and isCancelled check
-                if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, entityhuman).isCancelled()) {
+                if (this.random.nextInt(3) == 0 && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this, entityhuman).isCancelled()) { // CraftBukkit - added event call
                     this.setTamed(true);
                     this.setCatType(1 + this.world.random.nextInt(3));
                     this.setOwnerUUID(entityhuman.getUniqueID().toString());

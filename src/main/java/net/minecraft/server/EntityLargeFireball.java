@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import org.bukkit.event.entity.ExplosionPrimeEvent; // CraftBukkit
-
 public class EntityLargeFireball extends EntityFireball {
 
     public int yield = 1;
@@ -21,15 +19,9 @@ public class EntityLargeFireball extends EntityFireball {
             }
 
             // CraftBukkit start - fire ExplosionPrimeEvent
-            ExplosionPrimeEvent event = new ExplosionPrimeEvent((org.bukkit.entity.Explosive) org.bukkit.craftbukkit.entity.CraftEntity.getEntity(this.world.getServer(), this));
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                // give 'this' instead of (Entity) null so we know what causes the damage
-                this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), this.world.getGameRules().getBoolean("mobGriefing"));
-            }
+            /* this.world.createExplosion((Entity) null, this.locX, this.locY, this.locZ, (float) this.yield, true, this.world.getGameRules().getBoolean("mobGriefing")); */
+            org.bukkit.craftbukkit.event.CraftEventFactory.handleExplosionPrimeEvent(this, this.locX, this.locY, this.locZ, (float) this.yield, this.isIncendiary, this.world.getGameRules().getBoolean("mobGriefing"));
             // CraftBukkit end
-
             this.die();
         }
     }

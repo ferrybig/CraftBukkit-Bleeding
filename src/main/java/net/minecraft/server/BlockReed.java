@@ -25,7 +25,10 @@ public class BlockReed extends Block {
                     int i1 = world.getData(i, j, k);
 
                     if (i1 == 15) {
-                        org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j + 1, k, this, 0); // CraftBukkit
+                        // CraftBukkit start
+                        /* world.setTypeUpdate(i, j + 1, k, this); */
+                        org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j + 1, k, this, 0);
+                        // CraftBukkit end
                         world.setData(i, j, k, 0, 4);
                     } else {
                         world.setData(i, j, k, i1 + 1, 4);

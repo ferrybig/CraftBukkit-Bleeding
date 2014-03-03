@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason; // CraftBukkit
+
 public class ItemMonsterEgg extends Item {
 
     public ItemMonsterEgg() {
@@ -94,10 +96,10 @@ public class ItemMonsterEgg extends Item {
 
     public static Entity a(World world, int i, double d0, double d1, double d2) {
         // CraftBukkit start - delegate to spawnCreature
-        return spawnCreature(world, i, d0, d1, d2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.SPAWNER_EGG);
+        return spawnCreature(world, i, d0, d1, d2, SpawnReason.SPAWNER_EGG);
     }
 
-    public static Entity spawnCreature(World world, int i, double d0, double d1, double d2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) {
+    public static Entity spawnCreature(World world, int i, double d0, double d1, double d2, SpawnReason spawnReason) {
         // CraftBukkit end
         if (!EntityTypes.eggInfo.containsKey(Integer.valueOf(i))) {
             return null;

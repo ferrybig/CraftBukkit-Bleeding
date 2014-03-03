@@ -4,10 +4,11 @@ import java.util.List;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.craftbukkit.inventory.CraftInventoryDoubleChest;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryMoveItemEvent;
-import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.inventory.Inventory;
 // CraftBukkit end
 
@@ -251,20 +252,19 @@ public class TileEntityHopper extends TileEntity implements IHopper {
                         Inventory destinationInventory;
                         // Have to special case large chests as they work oddly
                         if (iinventory instanceof InventoryLargeChest) {
-                            destinationInventory = new org.bukkit.craftbukkit.inventory.CraftInventoryDoubleChest((InventoryLargeChest) iinventory);
+                            destinationInventory = new CraftInventoryDoubleChest((InventoryLargeChest) iinventory);
                         } else {
                             destinationInventory = iinventory.getOwner().getInventory();
                         }
 
-                        InventoryMoveItemEvent event = new InventoryMoveItemEvent(this.getOwner().getInventory(), oitemstack.clone(), destinationInventory, true);
-                        this.getWorld().getServer().getPluginManager().callEvent(event);
+                        InventoryMoveItemEvent event = CraftEventFactory.callInventoryMoveItemEvent(this.getOwner().getInventory(), oitemstack.clone(), destinationInventory, true);
+
                         if (event.isCancelled()) {
                             this.setItem(j, itemstack);
                             this.c(8); // Delay hopper checks
                             return false;
                         }
                         ItemStack itemstack1 = addItem(iinventory, CraftItemStack.asNMSCopy(event.getItem()), i);
-
                         if (itemstack1 == null || itemstack1.count == 0) {
                             if (event.getItem().equals(oitemstack)) {
                                 iinventory.update();
@@ -384,14 +384,13 @@ public class TileEntityHopper extends TileEntity implements IHopper {
             Inventory sourceInventory;
             // Have to special case large chests as they work oddly
             if (iinventory instanceof InventoryLargeChest) {
-                sourceInventory = new org.bukkit.craftbukkit.inventory.CraftInventoryDoubleChest((InventoryLargeChest) iinventory);
+                sourceInventory = new CraftInventoryDoubleChest((InventoryLargeChest) iinventory);
             } else {
                 sourceInventory = iinventory.getOwner().getInventory();
             }
 
-            InventoryMoveItemEvent event = new InventoryMoveItemEvent(sourceInventory, oitemstack.clone(), ihopper.getOwner().getInventory(), false);
+            InventoryMoveItemEvent event = CraftEventFactory.callInventoryMoveItemEvent(sourceInventory, oitemstack.clone(), ihopper.getOwner().getInventory(), false);
 
-            ihopper.getWorld().getServer().getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 iinventory.setItem(i, itemstack1);
 
@@ -429,9 +428,7 @@ public class TileEntityHopper extends TileEntity implements IHopper {
             return false;
         } else {
             // CraftBukkit start
-            InventoryPickupItemEvent event = new InventoryPickupItemEvent(iinventory.getOwner().getInventory(), (org.bukkit.entity.Item) entityitem.getBukkitEntity());
-            entityitem.world.getServer().getPluginManager().callEvent(event);
-            if (event.isCancelled()) {
+            if (CraftEventFactory.callInventoryPickupItemEvent(iinventory, entityitem).isCancelled()) {
                 return false;
             }
             // CraftBukkit end

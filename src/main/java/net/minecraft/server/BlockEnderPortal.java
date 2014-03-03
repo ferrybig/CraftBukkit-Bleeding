@@ -3,8 +3,6 @@ package net.minecraft.server;
 import java.util.List;
 import java.util.Random;
 
-import org.bukkit.event.entity.EntityPortalEnterEvent; // CraftBukkit
-
 public class BlockEnderPortal extends BlockContainer {
 
     public static boolean a;
@@ -40,10 +38,7 @@ public class BlockEnderPortal extends BlockContainer {
 
     public void a(World world, int i, int j, int k, Entity entity) {
         if (entity.vehicle == null && entity.passenger == null && !world.isStatic) {
-            // CraftBukkit start - Entity in portal
-            EntityPortalEnterEvent event = new EntityPortalEnterEvent(entity.getBukkitEntity(), new org.bukkit.Location(world.getWorld(), i, j, k));
-            world.getServer().getPluginManager().callEvent(event);
-            // CraftBukkit end
+            org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPortalEnterEvent(entity, world, i, j, k); // CraftBukkit
             entity.b(1);
         }
     }

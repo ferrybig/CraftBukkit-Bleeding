@@ -41,6 +41,7 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftSound;
 import org.bukkit.craftbukkit.CraftStatistic;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.map.CraftMapView;
 import org.bukkit.craftbukkit.map.RenderData;
 import org.bukkit.craftbukkit.scoreboard.CraftScoreboard;
@@ -48,10 +49,7 @@ import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerRegisterChannelEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.player.PlayerUnregisterChannelEvent;
 import org.bukkit.inventory.InventoryView.Property;
 import org.bukkit.map.MapView;
 import org.bukkit.metadata.MetadataValue;
@@ -462,25 +460,18 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
             return false;
         }
 
-        // From = Players current Location
-        Location from = this.getLocation();
-        // To = Players new Location if Teleport is Successful
-        Location to = location;
         // Create & Call the Teleport Event.
-        PlayerTeleportEvent event = new PlayerTeleportEvent(this, from, to, cause);
-        server.getPluginManager().callEvent(event);
+        PlayerTeleportEvent event = CraftEventFactory.callPlayerTeleportEvent(this, location, cause);
 
         // Return False to inform the Plugin that the Teleport was unsuccessful/cancelled.
         if (event.isCancelled()) {
             return false;
         }
 
-        // Update the From Location
-        from = event.getFrom();
         // Grab the new To Location dependent on whether the event was cancelled.
-        to = event.getTo();
+        Location to = event.getTo();
         // Grab the To and From World Handles.
-        WorldServer fromWorld = ((CraftWorld) from.getWorld()).getHandle();
+        WorldServer fromWorld = ((CraftWorld) event.getFrom().getWorld()).getHandle();
         WorldServer toWorld = ((CraftWorld) to.getWorld()).getHandle();
 
         // Close any foreign inventory
@@ -766,16 +757,16 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     @Override
     public void setGameMode(GameMode mode) {
-        if (getHandle().playerConnection == null) return;
+        if (getHandle().playerConnection == null) {
+            return;
+        }
 
         if (mode == null) {
             throw new IllegalArgumentException("Mode cannot be null");
         }
 
         if (mode != getGameMode()) {
-            PlayerGameModeChangeEvent event = new PlayerGameModeChangeEvent(this, mode);
-            server.getPluginManager().callEvent(event);
-            if (event.isCancelled()) {
+            if (CraftEventFactory.callPlayerGameModeChangeEvent(this, mode).isCancelled()) {
                 return;
             }
 
@@ -1049,13 +1040,13 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
 
     public void addChannel(String channel) {
         if (channels.add(channel)) {
-            server.getPluginManager().callEvent(new PlayerRegisterChannelEvent(this, channel));
+            CraftEventFactory.callPlayerChannelEvent(this, channel, true);
         }
     }
 
     public void removeChannel(String channel) {
         if (channels.remove(channel)) {
-            server.getPluginManager().callEvent(new PlayerUnregisterChannelEvent(this, channel));
+            CraftEventFactory.callPlayerChannelEvent(this, channel, false);
         }
     }
 

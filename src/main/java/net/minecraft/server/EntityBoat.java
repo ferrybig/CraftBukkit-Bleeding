@@ -3,13 +3,8 @@ package net.minecraft.server;
 import java.util.List;
 
 // CraftBukkit start
-import org.bukkit.Location;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.entity.Vehicle;
-import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
-import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
-import org.bukkit.event.vehicle.VehicleMoveEvent;
 // CraftBukkit end
 
 public class EntityBoat extends Entity {
@@ -31,12 +26,7 @@ public class EntityBoat extends Entity {
 
     @Override
     public void collide(Entity entity) {
-        org.bukkit.entity.Entity hitEntity = (entity == null) ? null : entity.getBukkitEntity();
-
-        VehicleEntityCollisionEvent event = new VehicleEntityCollisionEvent((Vehicle) this.getBukkitEntity(), hitEntity);
-        this.world.getServer().getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
+        if (CraftEventFactory.callVehicleEntityCollisionEvent(this, entity).isCancelled()) {
             return;
         }
 
@@ -84,8 +74,7 @@ public class EntityBoat extends Entity {
         this.lastX = d0;
         this.lastY = d1;
         this.lastZ = d2;
-
-        this.world.getServer().getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleCreateEvent((Vehicle) this.getBukkitEntity())); // CraftBukkit
+        CraftEventFactory.callVehicleCreateEvent(this); // CraftBukkit
     }
 
     public double ad() {
@@ -96,19 +85,15 @@ public class EntityBoat extends Entity {
         if (this.isInvulnerable()) {
             return false;
         } else if (!this.world.isStatic && !this.dead) {
-            // CraftBukkit start
-            Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-            org.bukkit.entity.Entity attacker = (damagesource.getEntity() == null) ? null : damagesource.getEntity().getBukkitEntity();
-
-            VehicleDamageEvent event = new VehicleDamageEvent(vehicle, attacker, (double) f);
-            this.world.getServer().getPluginManager().callEvent(event);
+            // CraftBukkit start - fire VehicleDamageEvent
+            org.bukkit.event.vehicle.VehicleDamageEvent event = CraftEventFactory.callVehicleDamageEvent(this, damagesource.getEntity(), f);
 
             if (event.isCancelled()) {
                 return true;
             }
-            // f = event.getDamage(); // TODO Why don't we do this?
-            // CraftBukkit end
 
+            f = (float) event.getDamage();
+            // CraftBukkit end
             this.c(-this.i());
             this.a(10);
             this.setDamage(this.getDamage() + f * 10.0F);
@@ -117,15 +102,13 @@ public class EntityBoat extends Entity {
 
             if (flag || this.getDamage() > 40.0F) {
                 // CraftBukkit start
-                VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, attacker);
-                this.world.getServer().getPluginManager().callEvent(destroyEvent);
+                VehicleDestroyEvent destroyEvent = CraftEventFactory.callVehicleDestroyEvent(this, damagesource.getEntity());
 
                 if (destroyEvent.isCancelled()) {
-                    this.setDamage(40F); // Maximize damage so this doesn't get triggered again right away
+                    this.setDamage(40.0F); // Maximize damage so this doesn't get triggered again right away
                     return true;
                 }
                 // CraftBukkit end
-
                 if (this.passenger != null) {
                     this.passenger.mount(this);
                 }
@@ -331,9 +314,8 @@ public class EntityBoat extends Entity {
             if (this.positionChanged && d3 > 0.2D) {
                 if (!this.world.isStatic && !this.dead) {
                     // CraftBukkit start
-                    Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-                    VehicleDestroyEvent destroyEvent = new VehicleDestroyEvent(vehicle, null);
-                    this.world.getServer().getPluginManager().callEvent(destroyEvent);
+                    VehicleDestroyEvent destroyEvent = CraftEventFactory.callVehicleDestroyEvent(this, null);
+
                     if (!destroyEvent.isCancelled()) {
                         this.die();
 
@@ -373,23 +355,7 @@ public class EntityBoat extends Entity {
 
             this.yaw = (float) ((double) this.yaw + d12);
             this.b(this.yaw, this.pitch);
-
-            // CraftBukkit start
-            org.bukkit.Server server = this.world.getServer();
-            org.bukkit.World bworld = this.world.getWorld();
-
-            Location from = new Location(bworld, prevX, prevY, prevZ, prevYaw, prevPitch);
-            Location to = new Location(bworld, this.locX, this.locY, this.locZ, this.yaw, this.pitch);
-            Vehicle vehicle = (Vehicle) this.getBukkitEntity();
-
-            server.getPluginManager().callEvent(new org.bukkit.event.vehicle.VehicleUpdateEvent(vehicle));
-
-            if (!from.equals(to)) {
-                VehicleMoveEvent event = new VehicleMoveEvent(vehicle, from, to);
-                server.getPluginManager().callEvent(event);
-            }
-            // CraftBukkit end
-
+            CraftEventFactory.handleVehicleMoveAndUpdateEvent(this, prevX, prevY, prevZ, prevYaw, prevPitch); // CraftBukkit
             if (!this.world.isStatic) {
                 List list = this.world.getEntities(this, this.boundingBox.grow(0.20000000298023224D, 0.0D, 0.20000000298023224D));
 

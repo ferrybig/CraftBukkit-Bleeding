@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 
 // CraftBukkit start
-import java.util.HashMap;
-
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.LivingEntity;
 // CraftBukkit end
@@ -68,11 +66,9 @@ public class EntityPotion extends EntityProjectile {
                 AxisAlignedBB axisalignedbb = this.boundingBox.grow(4.0D, 2.0D, 4.0D);
                 List list1 = this.world.a(EntityLiving.class, axisalignedbb);
 
-                if (list1 != null) { // CraftBukkit - Run code even if there are no entities around
+                if (list1 != null /*&& !list1.isEmpty()*/) { // CraftBukkit - Run code even if there are no entities around
                     Iterator iterator = list1.iterator();
-
-                    // CraftBukkit
-                    HashMap<LivingEntity, Double> affected = new HashMap<LivingEntity, Double>();
+                    java.util.Map<LivingEntity, Double> affected = new java.util.HashMap<LivingEntity, Double>(); // CraftBukkit
 
                     while (iterator.hasNext()) {
                         EntityLiving entityliving = (EntityLiving) iterator.next();
@@ -110,13 +106,14 @@ public class EntityPotion extends EntityProjectile {
                                 // CraftBukkit start - Abide by PVP settings - for players only!
                                 if (!this.world.pvpMode && this.getShooter() instanceof EntityPlayer && entityliving instanceof EntityPlayer && entityliving != this.getShooter()) {
                                     // Block SLOWER_MOVEMENT, SLOWER_DIG, HARM, BLINDNESS, HUNGER, WEAKNESS and POISON potions
-                                    if (i == 2 || i == 4 || i == 7 || i == 15 || i == 17 || i == 18 || i == 19) continue;
+                                    if (i == 2 || i == 4 || i == 7 || i == 15 || i == 17 || i == 18 || i == 19) {
+                                        continue;
+                                    }
                                 }
                                 // CraftBukkit end
 
                                 if (MobEffectList.byId[i].isInstant()) {
-                                    // CraftBukkit - Added 'this'
-                                    MobEffectList.byId[i].applyInstantEffect(this.getShooter(), entityliving, mobeffect.getAmplifier(), d1, this);
+                                    MobEffectList.byId[i].applyInstantEffect(this.getShooter(), entityliving, mobeffect.getAmplifier(), d1, this); // CraftBukkit - Added 'this'
                                 } else {
                                     int j = (int) (d1 * (double) mobeffect.getDuration() + 0.5D);
 

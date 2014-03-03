@@ -140,22 +140,27 @@ public class EntityIronGolem extends EntityGolem {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         int j = this.random.nextInt(3);
 
         int k;
 
-        if (j > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Item.getItemOf(Blocks.RED_ROSE), j));
+        /* CraftBukkit start
+        for (k = 0; k < j; ++k) {
+            this.a(Item.getItemOf(Blocks.RED_ROSE), 1, 0.0F);
         }
+        */
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        loot.add(CraftItemStack.asNewCraftStack(Item.getItemOf(Blocks.RED_ROSE), j));
+        // CraftBukkit end
 
         k = 3 + this.random.nextInt(3);
 
-        if (k > 0) {
-            loot.add(CraftItemStack.asNewCraftStack(Items.IRON_INGOT, k));
+        /* CraftBukkit start
+        for (int l = 0; l < k; ++l) {
+            this.a(Items.IRON_INGOT, 1);
         }
-
+        */
+        loot.add(CraftItemStack.asNewCraftStack(Items.IRON_INGOT, k));
         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }

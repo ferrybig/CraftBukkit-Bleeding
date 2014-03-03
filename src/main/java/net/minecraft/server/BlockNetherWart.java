@@ -25,7 +25,10 @@ public class BlockNetherWart extends BlockPlant {
 
         if (l < 3 && random.nextInt(10) == 0) {
             ++l;
-            org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l); // CraftBukkit
+            // CraftBukkit start
+            /* world.setData(i, j, k, l, 2); */
+            org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l);
+            // CraftBukkit end
         }
 
         super.a(world, i, j, k, random);

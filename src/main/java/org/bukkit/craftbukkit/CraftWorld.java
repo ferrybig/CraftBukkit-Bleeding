@@ -27,6 +27,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.craftbukkit.entity.*;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.metadata.BlockMetadataStore;
 import org.bukkit.craftbukkit.util.LongHash;
@@ -38,9 +39,6 @@ import org.bukkit.entity.minecart.PoweredMinecart;
 import org.bukkit.entity.minecart.SpawnerMinecart;
 import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
-import org.bukkit.event.weather.ThunderChangeEvent;
-import org.bukkit.event.weather.WeatherChangeEvent;
-import org.bukkit.event.world.SpawnChangeEvent;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
@@ -105,8 +103,7 @@ public class CraftWorld implements World {
             world.worldData.setSpawn(x, y, z);
 
             // Notify anyone who's listening.
-            SpawnChangeEvent event = new SpawnChangeEvent(this, previousLocation);
-            server.getPluginManager().callEvent(event);
+            CraftEventFactory.callSpawnChangeEvent(this, previousLocation);
 
             return true;
         } catch (Exception e) {
@@ -691,11 +688,7 @@ public class CraftWorld implements World {
     }
 
     public void setStorm(boolean hasStorm) {
-        CraftServer server = world.getServer();
-
-        WeatherChangeEvent weather = new WeatherChangeEvent(this, hasStorm);
-        server.getPluginManager().callEvent(weather);
-        if (!weather.isCancelled()) {
+        if (!CraftEventFactory.callWeatherChangeEvent(this, hasStorm).isCancelled()) {
             world.worldData.setStorm(hasStorm);
 
             // These numbers are from Minecraft
@@ -720,12 +713,11 @@ public class CraftWorld implements World {
     }
 
     public void setThundering(boolean thundering) {
-        if (thundering && !hasStorm()) setStorm(true);
-        CraftServer server = world.getServer();
+        if (thundering && !hasStorm()) {
+            setStorm(true);
+        }
 
-        ThunderChangeEvent thunder = new ThunderChangeEvent(this, thundering);
-        server.getPluginManager().callEvent(thunder);
-        if (!thunder.isCancelled()) {
+        if (!CraftEventFactory.callThunderChangeEvent(this, thundering).isCancelled()) {
             world.worldData.setThundering(thundering);
 
             // These numbers are from Minecraft

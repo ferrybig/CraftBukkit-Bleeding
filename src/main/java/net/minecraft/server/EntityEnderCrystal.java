@@ -36,9 +36,8 @@ public class EntityEnderCrystal extends Entity {
 
         if (this.world.worldProvider instanceof WorldProviderTheEnd && this.world.getType(i, j, k) != Blocks.FIRE) {
             // CraftBukkit start
-            if (!CraftEventFactory.callBlockIgniteEvent(this.world, i, j, k, this).isCancelled()) {
-                this.world.setTypeUpdate(i, j, k, Blocks.FIRE);
-            }
+            /* this.world.setTypeUpdate(i, j, k, Blocks.FIRE); */
+            CraftEventFactory.handleBlockIgniteEvent(this.world, i, j, k, this);
             // CraftBukkit end
         }
     }

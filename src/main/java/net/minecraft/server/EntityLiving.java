@@ -10,7 +10,7 @@ import java.util.UUID;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 // CraftBukkit end
 
 public abstract class EntityLiving extends Entity {
@@ -587,19 +587,14 @@ public abstract class EntityLiving extends Entity {
 
     // CraftBukkit start - Delegate so we can handle providing a reason for health being regained
     public void heal(float f) {
-        heal(f, EntityRegainHealthEvent.RegainReason.CUSTOM);
+        heal(f, RegainReason.CUSTOM);
     }
 
-    public void heal(float f, EntityRegainHealthEvent.RegainReason regainReason) {
+    public void heal(float f, RegainReason regainReason) {
         float f1 = this.getHealth();
 
         if (f1 > 0.0F) {
-            EntityRegainHealthEvent event = new EntityRegainHealthEvent(this.getBukkitEntity(), f, regainReason);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                this.setHealth((float) (this.getHealth() + event.getAmount()));
-            }
+            this.setHealth(f1 + CraftEventFactory.handleEntityRegainHealthEvent(this, f, regainReason));
         }
     }
 
@@ -861,9 +856,6 @@ public abstract class EntityLiving extends Entity {
             }
 
             i = (float) event.getDamage();
-            if (i > 0) {
-                this.getBukkitEntity().setLastDamageCause(event);
-            }
         }
         // CraftBukkit end
 

@@ -4,7 +4,7 @@ import net.minecraft.server.Chunk;
 import net.minecraft.server.ChunkRegionLoader;
 import net.minecraft.server.NBTTagCompound;
 
-import org.bukkit.Server;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.util.AsynchronousExecutor;
 import org.bukkit.craftbukkit.util.LongHash;
 
@@ -43,9 +43,8 @@ class ChunkIOProvider implements AsynchronousExecutor.CallBackProvider<QueuedChu
             queuedChunk.provider.chunkProvider.recreateStructures(queuedChunk.x, queuedChunk.z);
         }
 
-        Server server = queuedChunk.provider.world.getServer();
-        if (server != null) {
-            server.getPluginManager().callEvent(new org.bukkit.event.world.ChunkLoadEvent(chunk.bukkitChunk, false));
+        if (queuedChunk.provider.world.getServer() != null) {
+            CraftEventFactory.callChunkLoadEvent(chunk, false);
         }
 
         chunk.a(queuedChunk.provider, queuedChunk.provider, queuedChunk.x, queuedChunk.z);

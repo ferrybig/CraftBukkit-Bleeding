@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import org.bukkit.event.entity.EntityTargetEvent; // CraftBukkit
-
 public abstract class EntityMonster extends EntityCreature implements IMonster {
 
     public EntityMonster(World world) {
@@ -49,21 +47,7 @@ public abstract class EntityMonster extends EntityCreature implements IMonster {
 
             if (this.passenger != entity && this.vehicle != entity) {
                 if (entity != this) {
-                    // CraftBukkit start - We still need to call events for entities without goals
-                    if (entity != this.target && (this instanceof EntityBlaze || this instanceof EntityEnderman || this instanceof EntitySpider || this instanceof EntityGiantZombie || this instanceof EntitySilverfish)) {
-                        EntityTargetEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(this, entity, EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY);
-
-                        if (!event.isCancelled()) {
-                            if (event.getTarget() == null) {
-                                this.target = null;
-                            } else {
-                                this.target = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
-                            }
-                        }
-                    } else {
-                        this.target = entity;
-                    }
-                    // CraftBukkit end
+                    this.target = (this instanceof EntityBlaze || this instanceof EntityEnderman || this instanceof EntitySpider || this instanceof EntityGiantZombie || this instanceof EntitySilverfish) ? org.bukkit.craftbukkit.event.CraftEventFactory.handleEntityTargetEvent(this, this.target, entity, org.bukkit.event.entity.EntityTargetEvent.TargetReason.TARGET_ATTACKED_ENTITY) : entity; // CraftBukkit - call events for entities without goals
                 }
 
                 return true;

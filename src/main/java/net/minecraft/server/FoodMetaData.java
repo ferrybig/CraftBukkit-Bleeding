@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+
 public class FoodMetaData {
 
     // CraftBukkit start - All made public
@@ -27,15 +29,8 @@ public class FoodMetaData {
 
     public void a(ItemFood itemfood, ItemStack itemstack) {
         // CraftBukkit start
-        int oldFoodLevel = foodLevel;
-
-        org.bukkit.event.entity.FoodLevelChangeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callFoodLevelChangeEvent(entityhuman, itemfood.getNutrition(itemstack) + oldFoodLevel);
-
-        if (!event.isCancelled()) {
-            this.eat(event.getFoodLevel() - oldFoodLevel, itemfood.getSaturationModifier(itemstack));
-        }
-
-        ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutUpdateHealth(((EntityPlayer) entityhuman).getBukkitEntity().getScaledHealth(), entityhuman.getFoodData().foodLevel, entityhuman.getFoodData().saturationLevel));
+        /* this.eat(itemfood.getNutrition(itemstack), itemfood.getSaturationModifier(itemstack)); */
+        CraftEventFactory.handleFoodLevelChangeEvent(entityhuman, itemfood.getNutrition(itemstack), itemfood.getSaturationModifier(itemstack), true);
         // CraftBukkit end
     }
 
@@ -49,13 +44,8 @@ public class FoodMetaData {
                 this.saturationLevel = Math.max(this.saturationLevel - 1.0F, 0.0F);
             } else if (enumdifficulty != EnumDifficulty.PEACEFUL) {
                 // CraftBukkit start
-                org.bukkit.event.entity.FoodLevelChangeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callFoodLevelChangeEvent(entityhuman, Math.max(this.foodLevel - 1, 0));
-
-                if (!event.isCancelled()) {
-                    this.foodLevel = event.getFoodLevel();
-                }
-
-                ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutUpdateHealth(((EntityPlayer) entityhuman).getBukkitEntity().getScaledHealth(), this.foodLevel, this.saturationLevel));
+                /* this.foodLevel = Math.max(this.foodLevel - 1, 0); */
+                CraftEventFactory.handleFoodLevelChangeEvent(entityhuman, Math.max(this.foodLevel - 1, 0), this.saturationLevel, false);
                 // CraftBukkit end
             }
         }
@@ -63,8 +53,7 @@ public class FoodMetaData {
         if (entityhuman.world.getGameRules().getBoolean("naturalRegeneration") && this.foodLevel >= 18 && entityhuman.bQ()) {
             ++this.foodTickTimer;
             if (this.foodTickTimer >= 80) {
-                // CraftBukkit - added RegainReason
-                entityhuman.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED);
+                entityhuman.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.SATIATED); // CraftBukkit - added RegainReason
                 this.a(3.0F);
                 this.foodTickTimer = 0;
             }

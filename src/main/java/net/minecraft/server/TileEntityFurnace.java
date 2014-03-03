@@ -3,10 +3,9 @@ package net.minecraft.server;
 // CraftBukkit start
 import java.util.List;
 
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.inventory.FurnaceBurnEvent;
-import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 // CraftBukkit end
 
@@ -190,10 +189,7 @@ public class TileEntityFurnace extends TileEntity implements IWorldInventory {
             if (this.burnTime != 0 || this.items[1] != null && this.items[0] != null) {
                 // CraftBukkit start - Handle multiple elapsed ticks
                 if (this.burnTime <= 0 && this.canBurn()) { // CraftBukkit - == to <=
-                    CraftItemStack fuel = CraftItemStack.asCraftMirror(this.items[1]);
-
-                    FurnaceBurnEvent furnaceBurnEvent = new FurnaceBurnEvent(this.world.getWorld().getBlockAt(this.x, this.y, this.z), fuel, fuelTime(this.items[1]));
-                    this.world.getServer().getPluginManager().callEvent(furnaceBurnEvent);
+                    org.bukkit.event.inventory.FurnaceBurnEvent furnaceBurnEvent = CraftEventFactory.callFurnaceBurnEvent(this.world, this.x, this.y, this.z, this.items[1]);
 
                     if (furnaceBurnEvent.isCancelled()) {
                         return;
@@ -256,17 +252,13 @@ public class TileEntityFurnace extends TileEntity implements IWorldInventory {
             ItemStack itemstack = RecipesFurnace.getInstance().getResult(this.items[0]);
 
             // CraftBukkit start - fire FurnaceSmeltEvent
-            CraftItemStack source = CraftItemStack.asCraftMirror(this.items[0]);
-            org.bukkit.inventory.ItemStack result = CraftItemStack.asBukkitCopy(itemstack);
-
-            FurnaceSmeltEvent furnaceSmeltEvent = new FurnaceSmeltEvent(this.world.getWorld().getBlockAt(this.x, this.y, this.z), source, result);
-            this.world.getServer().getPluginManager().callEvent(furnaceSmeltEvent);
+            org.bukkit.event.inventory.FurnaceSmeltEvent furnaceSmeltEvent = CraftEventFactory.callFurnaceSmeltEvent(this.world, this.x, this.y, this.z, this.items[0], itemstack);
 
             if (furnaceSmeltEvent.isCancelled()) {
                 return;
             }
 
-            result = furnaceSmeltEvent.getResult();
+            org.bukkit.inventory.ItemStack result = furnaceSmeltEvent.getResult();
             itemstack = CraftItemStack.asNMSCopy(result);
 
             if (itemstack != null) {

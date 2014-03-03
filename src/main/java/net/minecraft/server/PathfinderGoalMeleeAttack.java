@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-import org.bukkit.event.entity.EntityTargetEvent; // CraftBukkit
+import org.bukkit.event.entity.EntityTargetEvent.TargetReason; // CraftBukkit start
 
 public class PathfinderGoalMeleeAttack extends PathfinderGoal {
 
@@ -48,9 +48,9 @@ public class PathfinderGoalMeleeAttack extends PathfinderGoal {
         EntityLiving entityliving = this.b.getGoalTarget();
 
         // CraftBukkit start
-        EntityTargetEvent.TargetReason reason = this.b.getGoalTarget() == null ? EntityTargetEvent.TargetReason.FORGOT_TARGET : EntityTargetEvent.TargetReason.TARGET_DIED;
-        if (this.b.getGoalTarget() == null || (this.b.getGoalTarget() != null && !this.b.getGoalTarget().isAlive())) {
-            org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(b, null, reason);
+        TargetReason reason = entityliving == null ? TargetReason.FORGOT_TARGET : (!entityliving.isAlive() ? TargetReason.TARGET_DIED : null);
+        if (reason != null) {
+            org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTargetEvent(this.b, null, reason);
         }
         // CraftBukkit end
 

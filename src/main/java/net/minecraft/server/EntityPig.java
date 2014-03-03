@@ -2,6 +2,7 @@ package net.minecraft.server;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 // CraftBukkit end
 
@@ -92,24 +93,28 @@ public class EntityPig extends EntityAnimal {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         int j = this.random.nextInt(3) + 1 + this.random.nextInt(1 + i);
 
-        if (j > 0) {
+        // CraftBukkit start
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        // for (int k = 0; k < j; ++k) {
             if (this.isBurning()) {
-                loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.GRILLED_PORK), j));
+                /* this.a(Items.GRILLED_PORK, 1); */
+                loot.add(CraftItemStack.asNewCraftStack(Items.GRILLED_PORK, j));
             } else {
-                loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.PORK), j));
+                /* this.a(Items.PORK, 1); */
+                loot.add(CraftItemStack.asNewCraftStack(Items.PORK, j));
             }
-        }
+        // }
+        // CraftBukkit end
 
         if (this.hasSaddle()) {
+            // CraftBukkit start
+            /* this.a(Items.SADDLE, 1); */
             loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.SADDLE), 1));
+            // CraftBukkit end
         }
-
-        CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     public boolean hasSaddle() {
@@ -136,8 +141,7 @@ public class EntityPig extends EntityAnimal {
 
             entitypigzombie.setEquipment(0, new ItemStack(Items.GOLD_SWORD));
             entitypigzombie.setPositionRotation(this.locX, this.locY, this.locZ, this.yaw, this.pitch);
-            // CraftBukkit - added a reason for spawning this creature
-            this.world.addEntity(entitypigzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING);
+            this.world.addEntity(entitypigzombie, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.LIGHTNING); // CraftBukkit - added a reason for spawning this creature
             this.die();
         }
     }

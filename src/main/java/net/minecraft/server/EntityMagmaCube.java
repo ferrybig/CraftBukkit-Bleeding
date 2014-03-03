@@ -37,8 +37,7 @@ public class EntityMagmaCube extends EntitySlime {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start - Whole method
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(); // CraftBukkit
         Item item = this.getLoot();
 
         if (item != null && this.getSize() > 1) {
@@ -48,13 +47,15 @@ public class EntityMagmaCube extends EntitySlime {
                 j += this.random.nextInt(i + 1);
             }
 
-            if (j > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(item), j));
+            /* CraftBukkit start
+            for (int k = 0; k < j; ++k) {
+                this.a(item, 1);
             }
+            */
+            loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asNewCraftStack(item, j));
+            // CraftBukkit end
         }
-
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     public boolean isBurning() {

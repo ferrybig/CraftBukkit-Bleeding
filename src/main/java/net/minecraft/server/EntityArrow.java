@@ -3,9 +3,8 @@ package net.minecraft.server;
 import java.util.List;
 
 // CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.entity.EntityCombustByEntityEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
 // CraftBukkit end
 
 public class EntityArrow extends Entity implements IProjectile {
@@ -209,7 +208,7 @@ public class EntityArrow extends Entity implements IProjectile {
             float f3;
 
             if (movingobjectposition != null) {
-                org.bukkit.craftbukkit.event.CraftEventFactory.callProjectileHitEvent(this); // CraftBukkit - Call event
+                CraftEventFactory.callProjectileHitEvent(this); // CraftBukkit - Call event
 
                 if (movingobjectposition.entity != null) {
                     f2 = MathHelper.sqrt(this.motX * this.motX + this.motY * this.motY + this.motZ * this.motZ);
@@ -227,19 +226,18 @@ public class EntityArrow extends Entity implements IProjectile {
                         damagesource = DamageSource.arrow(this, this.shooter);
                     }
 
-                    // CraftBukkit start - Moved damage call
-                    if (movingobjectposition.entity.damageEntity(damagesource, k)) {
-                    if (this.isBurning() && !(movingobjectposition.entity instanceof EntityEnderman) && (!(movingobjectposition.entity instanceof EntityPlayer) || !(this.shooter instanceof EntityPlayer) || this.world.pvpMode)) { // CraftBukkit - abide by pvp setting if destination is a player
-                        EntityCombustByEntityEvent combustEvent = new EntityCombustByEntityEvent(this.getBukkitEntity(), entity.getBukkitEntity(), 5);
-                        org.bukkit.Bukkit.getPluginManager().callEvent(combustEvent);
+                    // CraftBukkit start - moved down
+                    /* if (this.isBurning() && !(movingobjectposition.entity instanceof EntityEnderman)) {
+                        movingobjectposition.entity.setOnFire(5);
+                    } */
+                    // CraftBukkit end
 
-                        if (!combustEvent.isCancelled()) {
-                            movingobjectposition.entity.setOnFire(combustEvent.getDuration());
+                    if (movingobjectposition.entity.damageEntity(damagesource, k)) {
+                        // CraftBukkit start
+                        if (this.isBurning() && !(movingobjectposition.entity instanceof EntityEnderman) && (!(movingobjectposition.entity instanceof EntityPlayer) || !(this.shooter instanceof EntityPlayer) || this.world.pvpMode)) { // abide by pvp setting if destination is a player
+                            movingobjectposition.entity.setOnFire(CraftEventFactory.handleEntityCombustByEntityEvent(this, entity, 5)); // call combust event
                         }
                         // CraftBukkit end
-                    }
-
-                    // if (movingobjectposition.entity.damageEntity(damagesource, (float) k)) { // CraftBukkit - moved up
                         if (movingobjectposition.entity instanceof EntityLiving) {
                             EntityLiving entityliving = (EntityLiving) movingobjectposition.entity;
 
@@ -391,12 +389,8 @@ public class EntityArrow extends Entity implements IProjectile {
         if (!this.world.isStatic && this.inGround && this.shake <= 0) {
             // CraftBukkit start
             ItemStack itemstack = new ItemStack(Items.ARROW);
-            if (this.fromPlayer == 1 && entityhuman.inventory.canHold(itemstack) > 0) {
-                EntityItem item = new EntityItem(this.world, this.locX, this.locY, this.locZ, itemstack);
-
-                PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), new org.bukkit.craftbukkit.entity.CraftItem(this.world.getServer(), this, item), 0);
-                // event.setCancelled(!entityhuman.canPickUpLoot); TODO
-                this.world.getServer().getPluginManager().callEvent(event);
+            if ((this.fromPlayer == 2 && entityhuman.abilities.canInstantlyBuild) || (this.fromPlayer == 1 && entityhuman.inventory.canHold(itemstack) > 0)) {
+                org.bukkit.event.player.PlayerPickupItemEvent event = CraftEventFactory.callPlayerPickupItemEvent(entityhuman, new org.bukkit.craftbukkit.entity.CraftItem(this.world.getServer(), this, new EntityItem(this.world, this.locX, this.locY, this.locZ, itemstack)), 0);
 
                 if (event.isCancelled()) {
                     return;

@@ -2,11 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.CraftBlockChangeDelegate;
-import org.bukkit.block.BlockState;
-import org.bukkit.material.MaterialData;
-// CraftBukkit end
+import org.bukkit.craftbukkit.CraftBlockChangeDelegate; // CraftBukkit
 
 public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling.TreeGenerator { // CraftBukkit - add interface
 
@@ -23,14 +19,10 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
 
     public boolean a(World world, Random random, int i, int j, int k) {
         // CraftBukkit start - Moved to generate
-        return grow(new CraftBlockChangeDelegate((org.bukkit.BlockChangeDelegate) world), random, i, j, k, null, null, null);
+        return generate(new CraftBlockChangeDelegate((org.bukkit.BlockChangeDelegate) world), random, i, j, k);
     }
 
     public boolean generate(CraftBlockChangeDelegate world, Random random, int i, int j, int k) {
-        return grow(world, random, i, j, k, null, null, null);
-    }
-
-    public boolean grow(CraftBlockChangeDelegate world, Random random, int i, int j, int k, org.bukkit.event.world.StructureGrowEvent event, ItemStack itemstack, org.bukkit.craftbukkit.CraftWorld bukkitWorld) {
         // CraftBukkit end
         int l = random.nextInt(2);
 
@@ -75,16 +67,6 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                 if (block1 != Blocks.DIRT && block1 != Blocks.GRASS && block1 != Blocks.MYCEL) {
                     return false;
                 } else {
-                    // CraftBukkit start
-                    if (event == null) {
-                        this.setTypeAndData(world, i, j - 1, k, Blocks.DIRT, 0);
-                    } else {
-                        BlockState dirtState = bukkitWorld.getBlockAt(i, j - 1, k).getState();
-                        dirtState.setTypeId(Block.b(Blocks.DIRT));
-                        event.getBlocks().add(dirtState);
-                    }
-                    // CraftBukkit end
-
                     int i2 = j + i1;
 
                     if (l == 1) {
@@ -164,16 +146,7 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                                 }
 
                                 if ((l2 != 0 || j >= j + i1 - 1) && !world.getType(j2, j1, k2).j()) {
-                                    // CraftBukkit start
-                                    if (event == null) {
-                                        this.setTypeAndData(world, j2, j1, k2, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), l2);
-                                    } else {
-                                        BlockState state = bukkitWorld.getBlockAt(j2, j1, k2).getState();
-                                        state.setTypeId(Block.b(Blocks.BIG_MUSHROOM_1) + l);
-                                        state.setData(new MaterialData(Block.b(Blocks.BIG_MUSHROOM_1) + l, (byte) l2));
-                                        event.getBlocks().add(state);
-                                    }
-                                    // CraftBukkit end
+                                    this.setTypeAndData(world, j2, j1, k2, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), l2);
                                 }
                             }
                         }
@@ -183,28 +156,10 @@ public class WorldGenHugeMushroom extends WorldGenerator implements BlockSapling
                         Block block2 = world.getType(i, j + j1, k);
 
                         if (!block2.j()) {
-                            // CraftBukkit start
-                            if (event == null) {
-                                this.setTypeAndData(world, i, j + j1, k, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), 10);
-                            } else {
-                                BlockState state = bukkitWorld.getBlockAt(i, j + j1, k).getState();
-                                state.setTypeId(Block.b(Blocks.BIG_MUSHROOM_1) + l);
-                                state.setData(new MaterialData(Block.b(Blocks.BIG_MUSHROOM_1) + l, (byte) 10));
-                                event.getBlocks().add(state);
-                            }
-                            // CraftBukkit end
+                            this.setTypeAndData(world, i, j + j1, k, Block.e(Block.b(Blocks.BIG_MUSHROOM_1) + l), 10);
                         }
                     }
-                    // CraftBukkit start
-                    if (event != null) {
-                        org.bukkit.Bukkit.getPluginManager().callEvent(event);
-                        if (!event.isCancelled()) {
-                            for (BlockState state : event.getBlocks()) {
-                                state.update(true);
-                            }
-                        }
-                    }
-                    // CraftBukkit end
+
                     return true;
                 }
             }

@@ -28,17 +28,9 @@ public class EntityThrownExpBottle extends EntityProjectile {
 
     protected void a(MovingObjectPosition movingobjectposition) {
         if (!this.world.isStatic) {
-            // CraftBukkit - moved to after event
-            // this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), 0);
+            /* this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), 0); */ // CraftBukkit - moved to event processing
             int i = 3 + this.world.random.nextInt(5) + this.world.random.nextInt(5);
-
-            // CraftBukkit start
-            org.bukkit.event.entity.ExpBottleEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callExpBottleEvent(this, i);
-            i = event.getExperience();
-            if (event.getShowEffect()) {
-                this.world.triggerEffect(2002, (int) Math.round(this.locX), (int) Math.round(this.locY), (int) Math.round(this.locZ), 0);
-            }
-            // CraftBukkit end
+            i = org.bukkit.craftbukkit.event.CraftEventFactory.handleExpBottleEvent(this, i); // CraftBukkit
 
             while (i > 0) {
                 int j = EntityExperienceOrb.getOrbValue(i);

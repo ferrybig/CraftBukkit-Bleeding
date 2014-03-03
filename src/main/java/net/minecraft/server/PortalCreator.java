@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import org.bukkit.event.world.PortalCreateEvent; // CraftBukkit
-
 public class PortalCreator {
 
     private final World a;
@@ -155,10 +153,7 @@ public class PortalCreator {
             }
         }
 
-        PortalCreateEvent event = new PortalCreateEvent(blocks, bworld, PortalCreateEvent.CreateReason.FIRE);
-        this.a.getServer().getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
+        if (org.bukkit.craftbukkit.event.CraftEventFactory.callPortalCreateEvent(blocks, bworld, org.bukkit.event.world.PortalCreateEvent.CreateReason.FIRE).isCancelled()) {
             return false;
         }
         // CraftBukkit end

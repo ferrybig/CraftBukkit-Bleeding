@@ -16,9 +16,7 @@ public class ItemMinecart extends Item {
         if (BlockMinecartTrackAbstract.a(world.getType(i, j, k))) {
             if (!world.isStatic) {
                 // CraftBukkit start - Minecarts
-                org.bukkit.event.player.PlayerInteractEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent(entityhuman, org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
-
-                if (event.isCancelled()) {
+                if (org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent(entityhuman, org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack).isCancelled()) {
                     return false;
                 }
                 // CraftBukkit end

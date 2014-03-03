@@ -3,8 +3,7 @@ package net.minecraft.server;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerBucketEvent;
 // CraftBukkit end
 
 public class ItemBucket extends Item {
@@ -43,8 +42,7 @@ public class ItemBucket extends Item {
 
                     if (material == Material.WATER && l == 0) {
                         // CraftBukkit start
-                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, i, j, k, -1, itemstack, Items.WATER_BUCKET);
-
+                        PlayerBucketEvent event = CraftEventFactory.handlePlayerBucketEvent(entityhuman, i, j, k, -1, itemstack, Items.WATER_BUCKET);
                         if (event.isCancelled()) {
                             return itemstack;
                         }
@@ -55,8 +53,7 @@ public class ItemBucket extends Item {
 
                     if (material == Material.LAVA && l == 0) {
                         // CraftBukkit start
-                        PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, i, j, k, -1, itemstack, Items.LAVA_BUCKET);
-
+                        PlayerBucketEvent event = CraftEventFactory.handlePlayerBucketEvent(entityhuman, i, j, k, -1, itemstack, Items.LAVA_BUCKET);
                         if (event.isCancelled()) {
                             return itemstack;
                         }
@@ -67,12 +64,10 @@ public class ItemBucket extends Item {
                 } else {
                     if (this.a == Blocks.AIR) {
                         // CraftBukkit start
-                        PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(entityhuman, i, j, k, movingobjectposition.face, itemstack);
-
+                        PlayerBucketEvent event = CraftEventFactory.handlePlayerBucketEvent(entityhuman, i, j, k, movingobjectposition.face, itemstack, Items.BUCKET);
                         if (event.isCancelled()) {
                             return itemstack;
                         }
-
                         return CraftItemStack.asNMSCopy(event.getItemStack());
                     }
 
@@ -108,8 +103,7 @@ public class ItemBucket extends Item {
                     }
 
                     // CraftBukkit start
-                    PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent(entityhuman, clickedX, clickedY, clickedZ, movingobjectposition.face, itemstack);
-
+                    PlayerBucketEvent event = CraftEventFactory.handlePlayerBucketEvent(entityhuman, clickedX, clickedY, clickedZ, movingobjectposition.face, itemstack, Items.BUCKET);
                     if (event.isCancelled()) {
                         return itemstack;
                     }

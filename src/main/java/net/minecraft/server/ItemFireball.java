@@ -46,7 +46,6 @@ public class ItemFireball extends Item {
                         return false;
                     }
                     // CraftBukkit end
-
                     world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, g.nextFloat() * 0.4F + 0.8F);
                     world.setTypeUpdate(i, j, k, Blocks.FIRE);
                 }

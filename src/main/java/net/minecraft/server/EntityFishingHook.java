@@ -5,8 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 // CraftBukkit start
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Fish;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.player.PlayerFishEvent;
 // CraftBukkit end
 
@@ -364,12 +363,10 @@ public class EntityFishingHook extends Entity {
         } else {
             byte b0 = 0;
 
+
             if (this.hooked != null) {
                 // CraftBukkit start
-                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), this.hooked.getBukkitEntity(), (Fish) this.getBukkitEntity(), PlayerFishEvent.State.CAUGHT_ENTITY);
-                this.world.getServer().getPluginManager().callEvent(playerFishEvent);
-
-                if (playerFishEvent.isCancelled()) {
+                if (CraftEventFactory.callPlayerFishEvent(this.owner, this.hooked, this, PlayerFishEvent.State.CAUGHT_ENTITY, 0).isCancelled()) {
                     this.die();
                     this.owner.hookedFish = null;
                     return 0;
@@ -389,10 +386,7 @@ public class EntityFishingHook extends Entity {
             } else if (this.ax > 0) {
                 EntityItem entityitem = new EntityItem(this.world, this.locX, this.locY, this.locZ, this.f());
                 // CraftBukkit start
-                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), entityitem.getBukkitEntity(), (Fish) this.getBukkitEntity(), PlayerFishEvent.State.CAUGHT_FISH);
-                playerFishEvent.setExpToDrop(this.random.nextInt(6) + 1);
-                this.world.getServer().getPluginManager().callEvent(playerFishEvent);
-
+                PlayerFishEvent playerFishEvent = CraftEventFactory.callPlayerFishEvent(this.owner, entityitem, this, PlayerFishEvent.State.CAUGHT_FISH, this.random.nextInt(6) + 1);
                 if (playerFishEvent.isCancelled()) {
                     this.die();
                     this.owner.hookedFish = null;
@@ -410,17 +404,13 @@ public class EntityFishingHook extends Entity {
                 entityitem.motY = d6 * d9 + (double) MathHelper.sqrt(d8) * 0.08D;
                 entityitem.motZ = d7 * d9;
                 this.world.addEntity(entityitem);
-                // CraftBukkit - this.random.nextInt(6) + 1 -> playerFishEvent.getExpToDrop()
-                this.owner.world.addEntity(new EntityExperienceOrb(this.owner.world, this.owner.locX, this.owner.locY + 0.5D, this.owner.locZ + 0.5D, playerFishEvent.getExpToDrop()));
+                this.owner.world.addEntity(new EntityExperienceOrb(this.owner.world, this.owner.locX, this.owner.locY + 0.5D, this.owner.locZ + 0.5D, playerFishEvent.getExpToDrop())); // CraftBukkit - this.random.nextInt(6) + 1 -> playerFishEvent.getExpToDrop()
                 b0 = 1;
             }
 
             if (this.au) {
                 // CraftBukkit start
-                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), null, (Fish) this.getBukkitEntity(), PlayerFishEvent.State.IN_GROUND);
-                this.world.getServer().getPluginManager().callEvent(playerFishEvent);
-
-                if (playerFishEvent.isCancelled()) {
+                if (CraftEventFactory.callPlayerFishEvent(this.owner, null, this, PlayerFishEvent.State.IN_GROUND, 0).isCancelled()) {
                     this.die();
                     this.owner.hookedFish = null;
                     return 0;
@@ -432,8 +422,7 @@ public class EntityFishingHook extends Entity {
 
             // CraftBukkit start
             if (b0 == 0) {
-                PlayerFishEvent playerFishEvent = new PlayerFishEvent((Player) this.owner.getBukkitEntity(), null, (Fish) this.getBukkitEntity(), PlayerFishEvent.State.FAILED_ATTEMPT);
-                this.world.getServer().getPluginManager().callEvent(playerFishEvent);
+                CraftEventFactory.callPlayerFishEvent(this.owner, null, this, PlayerFishEvent.State.FAILED_ATTEMPT, 0);
             }
             // CraftBukkit end
 

@@ -3,7 +3,6 @@ package net.minecraft.server;
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 // CraftBukkit end
 
 public class EntityCow extends EntityAnimal {
@@ -57,22 +56,31 @@ public class EntityCow extends EntityAnimal {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start - Whole method
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         int j = this.random.nextInt(3) + this.random.nextInt(1 + i);
 
         int k;
 
-        if (j > 0) {
-            loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.LEATHER), j));
+        /* CraftBukkit start
+        for (k = 0; k < j; ++k) {
+            this.a(Items.LEATHER, 1);
         }
+        */
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        loot.add(CraftItemStack.asNewCraftStack(Items.LEATHER, j));
+        // CraftBukkit end
 
         j = this.random.nextInt(3) + 1 + this.random.nextInt(1 + i);
 
-        if (j > 0) {
-            loot.add(new org.bukkit.inventory.ItemStack(this.isBurning() ? CraftMagicNumbers.getMaterial(Items.COOKED_BEEF) : CraftMagicNumbers.getMaterial(Items.RAW_BEEF), j));
-        }
-
+        // CraftBukkit start
+        // for (k = 0; k < j; ++k) {
+            if (this.isBurning()) {
+                /* this.a(Items.COOKED_BEEF, 1); */
+                loot.add(CraftItemStack.asNewCraftStack(Items.COOKED_BEEF, j));
+            } else {
+                /* this.a(Items.RAW_BEEF, 1); */
+                loot.add(CraftItemStack.asNewCraftStack(Items.RAW_BEEF, j));
+            }
+        // }
         CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
     }
@@ -83,7 +91,7 @@ public class EntityCow extends EntityAnimal {
         if (itemstack != null && itemstack.getItem() == Items.BUCKET && !entityhuman.abilities.canInstantlyBuild) {
             // CraftBukkit start - Got milk?
             org.bukkit.Location loc = this.getBukkitEntity().getLocation();
-            org.bukkit.event.player.PlayerBucketFillEvent event = CraftEventFactory.callPlayerBucketFillEvent(entityhuman, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), -1, itemstack, Items.MILK_BUCKET);
+            org.bukkit.event.player.PlayerBucketEvent event = CraftEventFactory.handlePlayerBucketEvent(entityhuman, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), -1, itemstack, Items.MILK_BUCKET);
 
             if (event.isCancelled()) {
                 return false;
@@ -91,7 +99,7 @@ public class EntityCow extends EntityAnimal {
 
             if (--itemstack.count <= 0) {
                 entityhuman.inventory.setItem(entityhuman.inventory.itemInHandIndex, CraftItemStack.asNMSCopy(event.getItemStack()));
-            } else if (!entityhuman.inventory.pickup(new ItemStack(Items.MILK_BUCKET))) {
+            } else if (!entityhuman.inventory.pickup(CraftItemStack.asNMSCopy(event.getItemStack()))) {
                 entityhuman.drop(CraftItemStack.asNMSCopy(event.getItemStack()), false);
             }
             // CraftBukkit end

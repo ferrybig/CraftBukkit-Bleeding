@@ -18,7 +18,6 @@ import java.io.PrintStream;
 import org.apache.logging.log4j.Level;
 
 import org.bukkit.craftbukkit.LoggerOutputStream;
-import org.bukkit.event.server.ServerCommandEvent;
 // CraftBukkit end
 
 public class DedicatedServer extends MinecraftServer implements IMinecraftServer {
@@ -288,12 +287,8 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
             ServerCommand servercommand = (ServerCommand) this.j.remove(0);
 
             // CraftBukkit start - ServerCommand for preprocessing
-            ServerCommandEvent event = new ServerCommandEvent(this.console, servercommand.command);
-            this.server.getPluginManager().callEvent(event);
-            servercommand = new ServerCommand(event.getCommand(), servercommand.source);
-
             // this.getCommandHandler().a(servercommand.source, servercommand.command); // Called in dispatchServerCommand
-            this.server.dispatchServerCommand(this.console, servercommand);
+            this.server.dispatchServerCommand(this.console, org.bukkit.craftbukkit.event.CraftEventFactory.handleServerCommandEvent(this.console, servercommand));
             // CraftBukkit end
         }
     }

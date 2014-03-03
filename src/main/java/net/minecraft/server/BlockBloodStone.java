@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockBloodStone extends Block {
 
     public BlockBloodStone() {
@@ -15,12 +13,10 @@ public class BlockBloodStone extends Block {
 
     // CraftBukkit start
     public void doPhysics(World world, int i, int j, int k, int l) {
-        if (net.minecraft.server.Block.e(l) != null && net.minecraft.server.Block.e(l).isPowerSource()) {
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-            int power = block.getBlockPower();
+        Block block = Block.e(l);
 
-            BlockRedstoneEvent event = new BlockRedstoneEvent(block, power, power);
-            world.getServer().getPluginManager().callEvent(event);
+        if (block != null && block.isPowerSource()) {
+            org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k);
         }
     }
     // CraftBukkit end

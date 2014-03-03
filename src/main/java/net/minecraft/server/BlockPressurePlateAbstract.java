@@ -2,8 +2,6 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public abstract class BlockPressurePlateAbstract extends Block {
 
     private String a;
@@ -94,15 +92,9 @@ public abstract class BlockPressurePlateAbstract extends Block {
         boolean flag1 = i1 > 0;
 
         // CraftBukkit start - Interact Pressure Plate
-        org.bukkit.World bworld = world.getWorld();
-        org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
-
         if (flag != flag1) {
-            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(bworld.getBlockAt(i, j, k), l, i1);
-            manager.callEvent(eventRedstone);
-
-            flag1 = eventRedstone.getNewCurrent() > 0;
-            i1 = eventRedstone.getNewCurrent();
+            i1 = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, l, i1).getNewCurrent();
+            flag1 = i1 > 0;
         }
         // CraftBukkit end
 

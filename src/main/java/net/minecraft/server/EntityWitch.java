@@ -129,9 +129,7 @@ public class EntityWitch extends EntityMonster implements IRangedEntity {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-
+        List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(); // CraftBukkit
         int j = this.random.nextInt(3) + 1;
 
         for (int k = 0; k < j; ++k) {
@@ -142,13 +140,15 @@ public class EntityWitch extends EntityMonster implements IRangedEntity {
                 l += this.random.nextInt(i + 1);
             }
 
-            if (l > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(item), l));
+            /* CraftBukkit start
+            for (int i1 = 0; i1 < l; ++i1) {
+                this.a(item, 1);
             }
+            */
+            loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asNewCraftStack(item, l));
+            // CraftBukkit end
         }
-
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     public void a(EntityLiving entityliving, float f) {

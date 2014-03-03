@@ -4,14 +4,10 @@ import java.util.Iterator;
 import java.util.List;
 
 // CraftBukkit start
-import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.util.BlockStateListPopulator;
-import org.bukkit.event.entity.EntityCreatePortalEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityRegainHealthEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.Bukkit;
+import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 // CraftBukkit end
 
 public class EntityEnderDragon extends EntityInsentient implements IComplex, IMonster {
@@ -303,11 +299,9 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
             if (this.bC.dead) {
                 if (!this.world.isStatic) {
                     // CraftBukkit start
-                    EntityDamageEvent event = new EntityDamageEvent(this.getBukkitEntity(), org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_EXPLOSION, 10.0F);
-                    Bukkit.getPluginManager().callEvent(event);
+                    EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(null, this, EntityDamageEvent.DamageCause.ENTITY_EXPLOSION, 10.0F);
 
                     if (!event.isCancelled()) {
-                        getBukkitEntity().setLastDamageCause(event);
                         this.a(this.bq, DamageSource.explosion((Explosion) null), (float) event.getDamage());
                     }
                     // CraftBukkit end
@@ -315,14 +309,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
 
                 this.bC = null;
             } else if (this.ticksLived % 10 == 0 && this.getHealth() < this.getMaxHealth()) {
-                // CraftBukkit start
-                EntityRegainHealthEvent event = new EntityRegainHealthEvent(this.getBukkitEntity(), 1.0D, EntityRegainHealthEvent.RegainReason.ENDER_CRYSTAL);
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
-                    this.setHealth((float) (this.getHealth() + event.getAmount()));
-                }
-                // CraftBukkit end
+                this.setHealth(this.getHealth() + CraftEventFactory.handleEntityRegainHealthEvent(this, 1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.ENDER_CRYSTAL)); // CraftBukkit
             }
         }
 
@@ -378,19 +365,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
     private void bQ() {
         this.bz = false;
         if (this.random.nextInt(2) == 0 && !this.world.players.isEmpty()) {
-            // CraftBukkit start
-            Entity target = (Entity) this.world.players.get(this.random.nextInt(this.world.players.size()));
-            EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), target.getBukkitEntity(), EntityTargetEvent.TargetReason.RANDOM_TARGET);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                if (event.getTarget() == null) {
-                    this.bD = null;
-                } else {
-                    this.bD = ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
-                }
-            }
-            // CraftBukkit end
+            this.bD = CraftEventFactory.handleEntityTargetEvent(this, this.bD, (Entity) this.world.players.get(this.random.nextInt(this.world.players.size())), TargetReason.RANDOM_TARGET); // CraftBukkit
         } else {
             boolean flag = false;
 
@@ -407,7 +382,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
                 flag = d0 * d0 + d1 * d1 + d2 * d2 > 100.0D;
             } while (!flag);
 
-            this.bD = null;
+            this.bD = CraftEventFactory.handleEntityTargetEvent(this, this.bD, null, TargetReason.FORGOT_TARGET); // CraftBukkit
         }
     }
 
@@ -452,9 +427,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
 
         if (flag1) {
             // CraftBukkit start - Set off an EntityExplodeEvent for the dragon exploding all these blocks
-            org.bukkit.entity.Entity bukkitEntity = this.getBukkitEntity();
-            EntityExplodeEvent event = new EntityExplodeEvent(bukkitEntity, bukkitEntity.getLocation(), destroyedBlocks, 0F);
-            Bukkit.getPluginManager().callEvent(event);
+            org.bukkit.event.entity.EntityExplodeEvent event = CraftEventFactory.callEntityExplodeEvent(this, this.world, this.locX, this.locY, this.locZ, destroyedBlocks, 0.0F);
             if (event.isCancelled()) {
                 // This flag literally means 'Dragon hit something hard' (Obsidian, White Stone or Bedrock) and will cause the dragon to slow down.
                 // We should consider adding an event extension for it, or perhaps returning true if the event is cancelled.
@@ -508,7 +481,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
         this.h = this.locX + (double) (f2 * 5.0F) + (double) ((this.random.nextFloat() - 0.5F) * 2.0F);
         this.i = this.locY + (double) (this.random.nextFloat() * 3.0F) + 1.0D;
         this.bm = this.locZ - (double) (f3 * 5.0F) + (double) ((this.random.nextFloat() - 0.5F) * 2.0F);
-        this.bD = null;
+        this.bD = CraftEventFactory.handleEntityTargetEvent(this, this.bD, null, TargetReason.FORGOT_TARGET); // CraftBukkit
         if (damagesource.getEntity() instanceof EntityHuman || damagesource.isExplosion()) {
             this.dealDamage(damagesource, f);
         }
@@ -613,24 +586,7 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
         world.setType(i, b0 + 3, j, Blocks.BEDROCK);
         world.setType(i, b0 + 4, j, Blocks.DRAGON_EGG);
 
-        EntityCreatePortalEvent event = new EntityCreatePortalEvent((org.bukkit.entity.LivingEntity) this.getBukkitEntity(), java.util.Collections.unmodifiableList(world.getList()), org.bukkit.PortalType.ENDER);
-        this.world.getServer().getPluginManager().callEvent(event);
-
-        if (!event.isCancelled()) {
-            for (BlockState state : event.getBlocks()) {
-                state.update(true);
-            }
-        } else {
-            for (BlockState state : event.getBlocks()) {
-                PacketPlayOutBlockChange packet = new PacketPlayOutBlockChange(state.getX(), state.getY(), state.getZ(), this.world);
-                for (Iterator it = this.world.players.iterator(); it.hasNext();) {
-                    EntityHuman entity = (EntityHuman) it.next();
-                    if (entity instanceof EntityPlayer) {
-                        ((EntityPlayer) entity).playerConnection.sendPacket(packet);
-                    }
-                }
-            }
-        }
+        CraftEventFactory.handleEntityCreatePortalEvent(this, java.util.Collections.unmodifiableList(world.getList()), org.bukkit.PortalType.ENDER);
         // CraftBukkit end
 
         BlockEnderPortal.a = false;

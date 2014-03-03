@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockRedstoneTorch extends BlockTorch {
 
@@ -100,26 +100,13 @@ public class BlockRedstoneTorch extends BlockTorch {
             list.remove(0);
         }
 
-        // CraftBukkit start
-        org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-        int oldCurrent = this.isOn ? 15 : 0;
-
-        BlockRedstoneEvent event = new BlockRedstoneEvent(block, oldCurrent, oldCurrent);
-        // CraftBukkit end
-
         if (this.isOn) {
             if (flag) {
                 // CraftBukkit start
-                if (oldCurrent != 0) {
-                    event.setNewCurrent(0);
-                    manager.callEvent(event);
-                    if (event.getNewCurrent() != 0) {
-                        return;
-                    }
+                if (CraftEventFactory.callRedstoneChange(world, i, j, k, 15, 0).getNewCurrent() != 0) {
+                    return;
                 }
                 // CraftBukkit end
-
                 world.setTypeAndData(i, j, k, Blocks.REDSTONE_TORCH_OFF, world.getData(i, j, k), 3);
                 if (this.a(world, i, j, k, true)) {
                     world.makeSound((double) ((float) i + 0.5F), (double) ((float) j + 0.5F), (double) ((float) k + 0.5F), "random.fizz", 0.5F, 2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
@@ -135,15 +122,10 @@ public class BlockRedstoneTorch extends BlockTorch {
             }
         } else if (!flag && !this.a(world, i, j, k, false)) {
             // CraftBukkit start
-            if (oldCurrent != 15) {
-                event.setNewCurrent(15);
-                manager.callEvent(event);
-                if (event.getNewCurrent() != 15) {
-                    return;
-                }
+            if (CraftEventFactory.callRedstoneChange(world, i, j, k, 0, 15).getNewCurrent() != 15) {
+                return;
             }
             // CraftBukkit end
-
             world.setTypeAndData(i, j, k, Blocks.REDSTONE_TORCH_ON, world.getData(i, j, k), 3);
         }
     }

@@ -298,7 +298,6 @@ public class EntityHorse extends EntityAnimal implements IInventoryListener {
             if (!event.isCancelled()) {
                 float damage = (float) event.getDamage();
                 if (damage > 0) {
-                    this.getBukkitEntity().setLastDamageCause(event);
                     this.damageEntity(DamageSource.FALL, damage);
                 }
             }
@@ -308,7 +307,6 @@ public class EntityHorse extends EntityAnimal implements IInventoryListener {
                 if (!passengerEvent.isCancelled() && this.passenger != null) { // Check again in case of plugin
                     float damage = (float) passengerEvent.getDamage();
                     if (damage > 0) {
-                        this.passenger.getBukkitEntity().setLastDamageCause(passengerEvent);
                         this.passenger.damageEntity(DamageSource.FALL, damage);
                     }
                 }
@@ -1174,19 +1172,23 @@ public class EntityHorse extends EntityAnimal implements IInventoryListener {
 
     public void w(int i) {
         if (this.cu()) {
-            // CraftBukkit start - fire HorseJumpEvent, use event power
             if (i < 0) {
                 i = 0;
-            }
-
-            float power;
-            if (i >= 90) {
-                power = 1.0F;
+            /* CraftBukkit start - moved down
             } else {
-                power = 0.4F + 0.4F * (float) i / 90.0F;
+                this.bI = true;
+                this.cS();
+                // CraftBukkit end */
             }
 
-            org.bukkit.event.entity.HorseJumpEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callHorseJumpEvent(this, power);
+            if (i >= 90) {
+                this.bt = 1.0F;
+            } else {
+                this.bt = 0.4F + 0.4F * (float) i / 90.0F;
+            }
+
+            // CraftBukkit start
+            org.bukkit.event.entity.HorseJumpEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callHorseJumpEvent(this, this.bt);
             if (!event.isCancelled()) {
                 this.bI = true;
                 this.cU();

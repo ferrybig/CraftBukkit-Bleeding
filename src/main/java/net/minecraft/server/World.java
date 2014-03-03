@@ -13,17 +13,12 @@ import java.util.concurrent.Callable;
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.util.LongHashSet;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.block.BlockCanBuildEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
-import org.bukkit.event.weather.WeatherChangeEvent;
-import org.bukkit.event.weather.ThunderChangeEvent;
 // CraftBukkit end
 
 public abstract class World implements IBlockAccess {
@@ -263,7 +258,7 @@ public abstract class World implements IBlockAccess {
 
     public Chunk getChunkAt(int i, int j) {
         // CraftBukkit start
-        Chunk result = null;
+        Chunk result;
         synchronized (this.chunkLock) {
             if (this.lastChunkAccessed == null || this.lastXAccessed != i || this.lastZAccessed != j) {
                 this.lastChunkAccessed = this.chunkProvider.getOrCreateChunk(i, j);
@@ -472,14 +467,8 @@ public abstract class World implements IBlockAccess {
 
             try {
                 // CraftBukkit start
-                CraftWorld world = ((WorldServer) this).getWorld();
-                if (world != null) {
-                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(i, j, k), CraftMagicNumbers.getId(block));
-                    this.getServer().getPluginManager().callEvent(event);
-
-                    if (event.isCancelled()) {
-                        return;
-                    }
+                if (CraftEventFactory.callBlockPhysicsEvent(this, i, j, k, block).isCancelled()) {
+                    return;
                 }
                 // CraftBukkit end
 
@@ -870,7 +859,9 @@ public abstract class World implements IBlockAccess {
     }
 
     public boolean addEntity(Entity entity, SpawnReason spawnReason) { // Changed signature, added SpawnReason
-        if (entity == null) return false;
+        if (entity == null) {
+            return false;
+        }
         // CraftBukkit end
 
         int i = MathHelper.floor(entity.locX / 16.0D);
@@ -882,28 +873,7 @@ public abstract class World implements IBlockAccess {
         }
 
         // CraftBukkit start
-        org.bukkit.event.Cancellable event = null;
-        if (entity instanceof EntityLiving && !(entity instanceof EntityPlayer)) {
-            boolean isAnimal = entity instanceof EntityAnimal || entity instanceof EntityWaterAnimal || entity instanceof EntityGolem;
-            boolean isMonster = entity instanceof EntityMonster || entity instanceof EntityGhast || entity instanceof EntitySlime;
-
-            if (spawnReason != SpawnReason.CUSTOM) {
-                if (isAnimal && !allowAnimals || isMonster && !allowMonsters)  {
-                    entity.dead = true;
-                    return false;
-                }
-            }
-
-            event = CraftEventFactory.callCreatureSpawnEvent((EntityLiving) entity, spawnReason);
-        } else if (entity instanceof EntityItem) {
-            event = CraftEventFactory.callItemSpawnEvent((EntityItem) entity);
-        } else if (entity.getBukkitEntity() instanceof org.bukkit.entity.Projectile) {
-            // Not all projectiles extend EntityProjectile, so check for Bukkit interface instead
-            event = CraftEventFactory.callProjectileLaunchEvent(entity);
-        }
-
-        if (event != null && (event.isCancelled() || entity.dead)) {
-            entity.dead = true;
+        if (!CraftEventFactory.handleEntitySpawnEvent(entity, spawnReason)) {
             return false;
         }
         // CraftBukkit end
@@ -1851,9 +1821,7 @@ public abstract class World implements IBlockAccess {
                     this.worldData.setThunderDuration(i);
                     if (i <= 0) {
                         // CraftBukkit start
-                        ThunderChangeEvent thunder = new ThunderChangeEvent(this.getWorld(), !this.worldData.isThundering());
-                        this.getServer().getPluginManager().callEvent(thunder);
-                        if (!thunder.isCancelled()) {
+                        if (!CraftEventFactory.callThunderChangeEvent(this.getWorld(), !this.worldData.isThundering()).isCancelled()) {
                             this.worldData.setThundering(!this.worldData.isThundering());
                         }
                         // CraftBukkit end
@@ -1881,10 +1849,7 @@ public abstract class World implements IBlockAccess {
                     this.worldData.setWeatherDuration(j);
                     if (j <= 0) {
                         // CraftBukkit start
-                        WeatherChangeEvent weather = new WeatherChangeEvent(this.getWorld(), !this.worldData.hasStorm());
-                        this.getServer().getPluginManager().callEvent(weather);
-
-                        if (!weather.isCancelled()) {
+                        if (!CraftEventFactory.callWeatherChangeEvent(this.getWorld(), !this.worldData.hasStorm()).isCancelled()) {
                             this.worldData.setStorm(!this.worldData.hasStorm());
                         }
                         // CraftBukkit end
@@ -2346,15 +2311,7 @@ public abstract class World implements IBlockAccess {
         Block block1 = this.getType(i, j, k);
         AxisAlignedBB axisalignedbb = flag ? null : block.a(this, i, j, k);
 
-        // CraftBukkit start - store default return
-        boolean defaultReturn = axisalignedbb != null && !this.a(axisalignedbb, entity) ? false : (block1.getMaterial() == Material.ORIENTABLE && block == Blocks.ANVIL ? true : block1.getMaterial().isReplaceable() && block.canPlace(this, i, j, k, l, itemstack));
-
-        // CraftBukkit start
-        BlockCanBuildEvent event = new BlockCanBuildEvent(this.getWorld().getBlockAt(i, j, k), CraftMagicNumbers.getId(block), defaultReturn);
-        this.getServer().getPluginManager().callEvent(event);
-
-        return event.isBuildable();
-        // CraftBukkit end
+        return CraftEventFactory.callBlockCanBuildEvent(this, i, j, k, block, axisalignedbb != null && !this.a(axisalignedbb, entity) ? false : (block1.getMaterial() == Material.ORIENTABLE && block == Blocks.ANVIL ? true : block1.getMaterial().isReplaceable() && block.canPlace(this, i, j, k, l, itemstack))).isBuildable(); // CraftBukkit
     }
 
     public PathEntity findPath(Entity entity, Entity entity1, float f, boolean flag, boolean flag1, boolean flag2, boolean flag3) {

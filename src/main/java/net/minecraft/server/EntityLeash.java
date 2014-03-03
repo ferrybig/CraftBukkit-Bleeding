@@ -58,8 +58,7 @@ public class EntityLeash extends EntityHanging {
                     entityinsentient = (EntityInsentient) iterator.next();
                     if (entityinsentient.bN() && entityinsentient.getLeashHolder() == entityhuman) {
                         // CraftBukkit start
-                        if (CraftEventFactory.callPlayerLeashEntityEvent(entityinsentient, this, entityhuman).isCancelled()) {
-                            ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutAttachEntity(1, entityinsentient, entityinsentient.getLeashHolder()));
+                        if (!CraftEventFactory.handlePlayerLeashEntityEvent(entityinsentient, this, entityhuman)) {
                             continue;
                         }
                         // CraftBukkit end

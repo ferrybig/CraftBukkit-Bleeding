@@ -3,8 +3,6 @@ package net.minecraft.server;
 import java.util.List;
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockMinecartDetector extends BlockMinecartTrackAbstract {
 
     public BlockMinecartDetector() {
@@ -60,12 +58,7 @@ public class BlockMinecartDetector extends BlockMinecartTrackAbstract {
 
         // CraftBukkit start
         if (flag != flag1) {
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-
-            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(block, flag ? 15 : 0, flag1 ? 15 : 0);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
-
-            flag1 = eventRedstone.getNewCurrent() > 0;
+            flag1 = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, flag ? 15 : 0, flag1 ? 15 : 0).getNewCurrent() > 0;
         }
         // CraftBukkit end
 

@@ -1,10 +1,8 @@
 package net.minecraft.server;
 
 // CraftBukkit start
-import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.SlimeSplitEvent;
 // CraftBukkit end
 
 public class EntitySlime extends EntityInsentient implements IMonster {
@@ -120,7 +118,7 @@ public class EntitySlime extends EntityInsentient implements IMonster {
         }
 
         if (event != null && !event.isCancelled()) {
-            entityhuman = event.getTarget() == null ? null : ((CraftEntity) event.getTarget()).getHandle();
+            entityhuman = event.getTarget() == null ? null : ((org.bukkit.craftbukkit.entity.CraftEntity) event.getTarget()).getHandle();
         }
 
         this.lastTarget = entityhuman;
@@ -170,11 +168,11 @@ public class EntitySlime extends EntityInsentient implements IMonster {
             int j = 2 + this.random.nextInt(3);
 
             // CraftBukkit start
-            SlimeSplitEvent event = new SlimeSplitEvent((org.bukkit.entity.Slime) this.getBukkitEntity(), j);
-            this.world.getServer().getPluginManager().callEvent(event);
+            org.bukkit.event.entity.SlimeSplitEvent event = CraftEventFactory.callSlimeSplitEvent(this, j);
+            int count = event.getCount();
 
-            if (!event.isCancelled() && event.getCount() > 0) {
-                j = event.getCount();
+            if (!event.isCancelled() && count > 0) {
+                j = count;
             } else {
                 super.die();
                 return;

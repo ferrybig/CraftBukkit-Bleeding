@@ -45,8 +45,7 @@ public class PathfinderGoalTame extends PathfinderGoal {
                 int i = this.entity.getTemper();
                 int j = this.entity.getMaxDomestication();
 
-                // CraftBukkit - fire EntityTameEvent
-                if (j > 0 && this.entity.aH().nextInt(j) < i && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this.entity, (EntityHuman) this.entity.passenger).isCancelled() && this.entity.passenger instanceof EntityHuman) {
+                if (j > 0 && this.entity.aH().nextInt(j) < i && !org.bukkit.craftbukkit.event.CraftEventFactory.callEntityTameEvent(this.entity, (EntityHuman) this.entity.passenger).isCancelled() && this.entity.passenger instanceof EntityHuman) { // CraftBukkit - fire EntityTameEvent
                     this.entity.h((EntityHuman) this.entity.passenger);
                     this.entity.world.broadcastEntityEffect(this.entity, (byte) 7);
                     return;

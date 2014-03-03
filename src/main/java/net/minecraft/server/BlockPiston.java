@@ -2,11 +2,7 @@ package net.minecraft.server;
 
 import java.util.List;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.block.CraftBlock;
-import org.bukkit.event.block.BlockPistonRetractEvent;
-import org.bukkit.event.block.BlockPistonExtendEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockPiston extends Block {
 
@@ -64,11 +60,7 @@ public class BlockPiston extends Block {
                 // CraftBukkit start
                 int length = h(world, i, j, k, i1);
                 if (length >= 0) {
-                    org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-                    BlockPistonExtendEvent event = new BlockPistonExtendEvent(block, length, CraftBlock.notchToBlockFace(i1));
-                    world.getServer().getPluginManager().callEvent(event);
-
-                    if (event.isCancelled()) {
+                    if (CraftEventFactory.callBlockPistonEvent(world, i, j, k, length, i1).isCancelled()) {
                         return;
                     }
                     // CraftBukkit end
@@ -77,11 +69,7 @@ public class BlockPiston extends Block {
                 }
             } else if (!flag && c(l)) {
                 // CraftBukkit start
-                org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-                BlockPistonRetractEvent event = new BlockPistonRetractEvent(block, CraftBlock.notchToBlockFace(i1));
-                world.getServer().getPluginManager().callEvent(event);
-
-                if (event.isCancelled()) {
+                if (CraftEventFactory.callBlockPistonEvent(world, i, j, k, -1, i1).isCancelled()) {
                     return;
                 }
                 // CraftBukkit end

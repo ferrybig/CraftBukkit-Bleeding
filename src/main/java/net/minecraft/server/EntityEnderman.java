@@ -2,11 +2,7 @@ package net.minecraft.server;
 
 import java.util.UUID;
 
-// CraftBukkit start
-import org.bukkit.Location;
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.EntityTeleportEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntityEnderman extends EntityMonster {
 
@@ -107,7 +103,7 @@ public class EntityEnderman extends EntityMonster {
         this.bu = this.target;
         int i;
 
-        if (!this.world.isStatic && this.world.getGameRules().getBoolean("mobGriefing")) {
+        if (!this.world.isStatic /*&& this.world.getGameRules().getBoolean("mobGriefing")*/) { // CraftBukkit - call events even if mobGriefing is false
             int j;
             int k;
             Block block;
@@ -120,7 +116,7 @@ public class EntityEnderman extends EntityMonster {
                     block = this.world.getType(i, j, k);
                     if (br[Block.b(block)]) {
                         // CraftBukkit start - Pickup event
-                        if (!CraftEventFactory.callEntityChangeBlockEvent(this, this.world.getWorld().getBlockAt(i, j, k), org.bukkit.Material.AIR).isCancelled()) {
+                        if (!CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, Blocks.AIR, 0, !this.world.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
                             this.setCarried(block);
                             this.setCarriedData(this.world.getData(i, j, k));
                             this.world.setTypeUpdate(i, j, k, Blocks.AIR);
@@ -137,7 +133,7 @@ public class EntityEnderman extends EntityMonster {
 
                 if (block.getMaterial() == Material.AIR && block1.getMaterial() != Material.AIR && block1.d()) {
                     // CraftBukkit start - Place event
-                    if (!CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, this.getCarried(), this.getCarriedData()).isCancelled()) {
+                    if (!CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, this.getCarried(), this.getCarriedData(), this.world.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
                         this.world.setTypeAndData(i, j, k, this.getCarried(), this.getCarriedData(), 3);
                         this.setCarried(Blocks.AIR);
                     }
@@ -246,16 +242,17 @@ public class EntityEnderman extends EntityMonster {
 
             if (flag1) {
                 // CraftBukkit start - Teleport event
-                EntityTeleportEvent teleport = new EntityTeleportEvent(this.getBukkitEntity(), new Location(this.world.getWorld(), d3, d4, d5), new Location(this.world.getWorld(), this.locX, this.locY, this.locZ));
-                this.world.getServer().getPluginManager().callEvent(teleport);
-                if (teleport.isCancelled()) {
+                org.bukkit.event.entity.EntityTeleportEvent event = CraftEventFactory.callEntityTeleportEvent(this, d3, d4, d5, this.locX, this.locY, this.locZ);
+                if (event.isCancelled()) {
                     return false;
                 }
-
-                Location to = teleport.getTo();
-                this.setPosition(to.getX(), to.getY(), to.getZ());
+                org.bukkit.Location to = event.getTo();
+                this.locX = to.getX();
+                this.locY = to.getY();
+                this.locZ = to.getZ();
                 // CraftBukkit end
 
+                this.setPosition(this.locX, this.locY, this.locZ);
                 if (this.world.getCubes(this, this.boundingBox).isEmpty() && !this.world.containsLiquid(this.boundingBox)) {
                     flag = true;
                 }
@@ -306,14 +303,15 @@ public class EntityEnderman extends EntityMonster {
         Item item = this.getLoot();
 
         if (item != null) {
-            // CraftBukkit start - Whole method
-            java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-            int count = this.random.nextInt(2 + i);
+            int j = this.random.nextInt(2 + i);
 
-            if (count > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(item), count));
+            /* CraftBukkit start
+            for (int k = 0; k < j; ++k) {
+                this.a(item, 1);
             }
-
+            */
+            java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+            loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asNewCraftStack(item, j));
             CraftEventFactory.callEntityDeathEvent(this, loot);
             // CraftBukkit end
         }

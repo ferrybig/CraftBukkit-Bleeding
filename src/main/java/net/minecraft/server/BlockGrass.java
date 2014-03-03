@@ -5,12 +5,7 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// CraftBukkit start
-import org.bukkit.block.BlockState;
-import org.bukkit.craftbukkit.util.CraftMagicNumbers;
-import org.bukkit.event.block.BlockSpreadEvent;
-import org.bukkit.event.block.BlockFadeEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockGrass extends Block implements IBlockFragilePlantElement {
 
@@ -26,16 +21,8 @@ public class BlockGrass extends Block implements IBlockFragilePlantElement {
         if (!world.isStatic) {
             if (world.getLightLevel(i, j + 1, k) < 4 && world.getType(i, j + 1, k).k() > 2) {
                 // CraftBukkit start
-                org.bukkit.World bworld = world.getWorld();
-                BlockState blockState = bworld.getBlockAt(i, j, k).getState();
-                blockState.setType(CraftMagicNumbers.getMaterial(Blocks.DIRT));
-
-                BlockFadeEvent event = new BlockFadeEvent(blockState.getBlock(), blockState);
-                world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
-                    blockState.update(true);
-                }
+                /* world.setTypeUpdate(i, j, k, Blocks.DIRT); */
+                CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.DIRT);
                 // CraftBukkit end
             } else if (world.getLightLevel(i, j + 1, k) >= 9) {
                 for (int l = 0; l < 4; ++l) {
@@ -46,16 +33,8 @@ public class BlockGrass extends Block implements IBlockFragilePlantElement {
 
                     if (world.getType(i1, j1, k1) == Blocks.DIRT && world.getData(i1, j1, k1) == 0 && world.getLightLevel(i1, j1 + 1, k1) >= 4 && block.k() <= 2) {
                         // CraftBukkit start
-                        org.bukkit.World bworld = world.getWorld();
-                        BlockState blockState = bworld.getBlockAt(i1, j1, k1).getState();
-                        blockState.setType(CraftMagicNumbers.getMaterial(Blocks.GRASS));
-
-                        BlockSpreadEvent event = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(i, j, k), blockState);
-                        world.getServer().getPluginManager().callEvent(event);
-
-                        if (!event.isCancelled()) {
-                            blockState.update(true);
-                        }
+                        /* world.setTypeUpdate(i1, j1, k1, Blocks.GRASS); */
+                        CraftEventFactory.handleBlockSpreadEvent(world, i1, j1, k1, i, j, k, Blocks.GRASS, 0);
                         // CraftBukkit end
                     }
                 }

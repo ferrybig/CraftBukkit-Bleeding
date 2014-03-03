@@ -1,9 +1,6 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.block.CraftBlockState;
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class ItemFlintAndSteel extends Item {
 
@@ -44,12 +41,12 @@ public class ItemFlintAndSteel extends Item {
         } else {
             if (world.getType(i, j, k).getMaterial() == Material.AIR) {
                 // CraftBukkit start - Store the clicked block
-                if (CraftEventFactory.callBlockIgniteEvent(world, i, j, k, org.bukkit.event.block.BlockIgniteEvent.IgniteCause.FLINT_AND_STEEL, entityhuman).isCancelled()) {
+                if (CraftEventFactory.callBlockIgniteEvent(world, i, j, k, entityhuman).isCancelled()) {
                     itemstack.damage(1, entityhuman);
                     return false;
                 }
 
-                CraftBlockState blockState = CraftBlockState.getBlockState(world, i, j, k);
+                org.bukkit.block.BlockState blockState =  world.getWorld().getBlockAt(i, j, k).getState();
                 // CraftBukkit end
 
                 world.makeSound((double) i + 0.5D, (double) j + 0.5D, (double) k + 0.5D, "fire.ignite", 1.0F, g.nextFloat() * 0.4F + 0.8F);

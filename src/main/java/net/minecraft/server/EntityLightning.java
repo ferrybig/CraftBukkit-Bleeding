@@ -38,9 +38,8 @@ public class EntityLightning extends EntityWeather {
 
             if (world.getType(i, j, k).getMaterial() == Material.AIR && Blocks.FIRE.canPlace(world, i, j, k)) {
                 // CraftBukkit start
-                if (!CraftEventFactory.callBlockIgniteEvent(world, i, j, k, this).isCancelled()) {
-                    world.setTypeUpdate(i, j, k, Blocks.FIRE);
-                }
+                /* world.setTypeUpdate(i, j, k, Blocks.FIRE); */
+                CraftEventFactory.handleBlockIgniteEvent(world, i, j, k, this);
                 // CraftBukkit end
             }
 
@@ -51,9 +50,8 @@ public class EntityLightning extends EntityWeather {
 
                 if (world.getType(j, k, l).getMaterial() == Material.AIR && Blocks.FIRE.canPlace(world, j, k, l)) {
                     // CraftBukkit start
-                    if (!CraftEventFactory.callBlockIgniteEvent(world, j, k, l, this).isCancelled()) {
-                        world.setTypeUpdate(j, k, l, Blocks.FIRE);
-                    }
+                    /* world.setTypeUpdate(i, j, k, Blocks.FIRE); */
+                    CraftEventFactory.handleBlockIgniteEvent(world, i, j, k, this);
                     // CraftBukkit end
                 }
             }
@@ -83,9 +81,8 @@ public class EntityLightning extends EntityWeather {
 
                     if (this.world.getType(i, j, k).getMaterial() == Material.AIR && Blocks.FIRE.canPlace(this.world, i, j, k)) {
                         // CraftBukkit start
-                        if (!CraftEventFactory.callBlockIgniteEvent(world, i, j, k, this).isCancelled()) {
-                            this.world.setTypeUpdate(i, j, k, Blocks.FIRE);
-                        }
+                        /* this.world.setTypeUpdate(i, j, k, Blocks.FIRE); */
+                        CraftEventFactory.handleBlockIgniteEvent(this.world, i, j, k, this);
                         // CraftBukkit end
                     }
                 }

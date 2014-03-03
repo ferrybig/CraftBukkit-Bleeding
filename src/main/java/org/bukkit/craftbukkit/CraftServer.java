@@ -124,6 +124,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.conversations.Conversable;
 import org.bukkit.craftbukkit.command.VanillaCommandWrapper;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.help.SimpleHelpMap;
 import org.bukkit.craftbukkit.inventory.CraftFurnaceRecipe;
 import org.bukkit.craftbukkit.inventory.CraftInventoryCustom;
@@ -148,11 +149,6 @@ import org.bukkit.craftbukkit.util.MojangNameLookup;
 import org.bukkit.craftbukkit.util.Versioning;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.player.PlayerChatTabCompleteEvent;
-import org.bukkit.event.world.WorldInitEvent;
-import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.event.world.WorldSaveEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.help.HelpMap;
 import org.bukkit.inventory.FurnaceRecipe;
@@ -176,7 +172,6 @@ import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.messaging.StandardMessenger;
 import org.bukkit.scheduler.BukkitWorker;
-import org.bukkit.util.StringUtil;
 import org.bukkit.util.permissions.DefaultPermissions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -675,10 +670,10 @@ public final class CraftServer implements Server {
         return playerList;
     }
 
-    // NOTE: Should only be called from DedicatedServer.ah()
+    // NOTE: Should only be called from DedicatedServer.ax()
     public boolean dispatchServerCommand(CommandSender sender, ServerCommand serverCommand) {
         if (sender instanceof Conversable) {
-            Conversable conversable = (Conversable)sender;
+            Conversable conversable = (Conversable) sender;
 
             if (conversable.isConversing()) {
                 conversable.acceptConversationInput(serverCommand.command);
@@ -940,7 +935,7 @@ public final class CraftServer implements Server {
             internal.getWorld().getPopulators().addAll(generator.getDefaultPopulators(internal.getWorld()));
         }
 
-        pluginManager.callEvent(new WorldInitEvent(internal.getWorld()));
+        CraftEventFactory.callWorldInitEvent(internal);
         System.out.print("Preparing start region for level " + (console.worlds.size() - 1) + " (Seed: " + internal.getSeed() + ")");
 
         if (internal.getWorld().getKeepSpawnInMemory()) {
@@ -967,7 +962,7 @@ public final class CraftServer implements Server {
                 }
             }
         }
-        pluginManager.callEvent(new WorldLoadEvent(internal.getWorld()));
+        CraftEventFactory.callWorldLoadEvent(internal);
         return internal.getWorld();
     }
 
@@ -994,10 +989,7 @@ public final class CraftServer implements Server {
             return false;
         }
 
-        WorldUnloadEvent e = new WorldUnloadEvent(handle.getWorld());
-        pluginManager.callEvent(e);
-
-        if (e.isCancelled()) {
+        if (CraftEventFactory.callWorldUnloadEvent(handle).isCancelled()) {
             return false;
         }
 
@@ -1005,8 +997,7 @@ public final class CraftServer implements Server {
             try {
                 handle.save(true, null);
                 handle.saveLevel();
-                WorldSaveEvent event = new WorldSaveEvent(handle.getWorld());
-                getPluginManager().callEvent(event);
+                CraftEventFactory.callWorldSaveEvent(handle);
             } catch (ExceptionWorldConflict ex) {
                 getLogger().log(Level.SEVERE, null, ex);
             }
@@ -1578,25 +1569,7 @@ public final class CraftServer implements Server {
     }
 
     public List<String> tabCompleteChat(Player player, String message) {
-        Player[] players = getOnlinePlayers();
-        List<String> completions = new ArrayList<String>();
-        PlayerChatTabCompleteEvent event = new PlayerChatTabCompleteEvent(player, message, completions);
-        String token = event.getLastToken();
-        for (Player p : players) {
-            if (player.canSee(p) && StringUtil.startsWithIgnoreCase(p.getName(), token)) {
-                completions.add(p.getName());
-            }
-        }
-        pluginManager.callEvent(event);
-
-        Iterator<?> it = completions.iterator();
-        while (it.hasNext()) {
-            Object current = it.next();
-            if (!(current instanceof String)) {
-                // Sanity
-                it.remove();
-            }
-        }
+        List<String> completions = (List<String>) CraftEventFactory.handlePlayerChatTabCompleteEvent(player, message).getTabCompletions();
         Collections.sort(completions, String.CASE_INSENSITIVE_ORDER);
         return completions;
     }

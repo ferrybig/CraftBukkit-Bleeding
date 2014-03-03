@@ -2,8 +2,6 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockSign extends BlockContainer {
 
     private Class a;
@@ -116,11 +114,8 @@ public class BlockSign extends BlockContainer {
 
         // CraftBukkit start
         if (block != null && block.isPowerSource()) {
-            org.bukkit.block.Block bukkitBlock = world.getWorld().getBlockAt(i, j, k);
-            int power = bukkitBlock.getBlockPower();
-
-            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(bukkitBlock, power, power);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
+            int power = world.getWorld().getBlockAt(i, j, k).getBlockPower();
+            org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, power, power);
         }
         // CraftBukkit end
     }

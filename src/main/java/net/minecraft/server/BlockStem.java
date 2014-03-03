@@ -31,7 +31,10 @@ public class BlockStem extends BlockPlant implements IBlockFragilePlantElement {
 
                 if (l < 7) {
                     ++l;
-                    CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l); // CraftBukkit
+                    // CraftBukkit start
+                    /*  world.setData(i, j, k, l, 2); */
+                    CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l);
+                    // CraftBukkit end
                 } else {
                     if (world.getType(i - 1, j, k) == this.blockFruit) {
                         return;
@@ -72,7 +75,10 @@ public class BlockStem extends BlockPlant implements IBlockFragilePlantElement {
                     Block block = world.getType(j1, j - 1, k1);
 
                     if (world.getType(j1, j, k1).material == Material.AIR && (block == Blocks.SOIL || block == Blocks.DIRT || block == Blocks.GRASS)) {
-                        CraftEventFactory.handleBlockGrowEvent(world, j1, j, k1, this.blockFruit, 0); // CraftBukkit
+                        // CraftBukkit start
+                        /* world.setTypeUpdate(j1, j, k1, this.blockFruit); */
+                        CraftEventFactory.handleBlockGrowEvent(world, j1, j, k1, this.blockFruit, 0);
+                        // CraftBukkit end
                     }
                 }
             }

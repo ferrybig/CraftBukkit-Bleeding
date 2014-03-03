@@ -2,7 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.entity.EntityDamageByBlockEvent; // CraftBukkit
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockCactus extends Block {
 
@@ -24,7 +24,11 @@ public class BlockCactus extends Block {
                 int i1 = world.getData(i, j, k);
 
                 if (i1 == 15) {
-                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j + 1, k, this, 0); // CraftBukkit
+                    // CraftBukkit start
+                    /* world.setTypeUpdate(i, j + 1, k, this); */
+                    CraftEventFactory.handleBlockGrowEvent(world, i, j + 1, k, this, 0);
+                    // CraftBukkit end
+
                     world.setData(i, j, k, 0, 4);
                     this.doPhysics(world, i, j + 1, k, this);
                 } else {
@@ -80,21 +84,13 @@ public class BlockCactus extends Block {
 
     public void a(World world, int i, int j, int k, Entity entity) {
         // CraftBukkit start - EntityDamageByBlock event
-        if (entity instanceof EntityLiving) {
-            org.bukkit.block.Block damager = world.getWorld().getBlockAt(i, j, k);
-            org.bukkit.entity.Entity damagee = (entity == null) ? null : entity.getBukkitEntity();
+        org.bukkit.event.entity.EntityDamageByBlockEvent event = CraftEventFactory.handleEntityDamageByBlockEvent(world.getWorld().getBlockAt(i, j, k), entity, org.bukkit.event.entity.EntityDamageEvent.DamageCause.CONTACT, 1.0F);
 
-            EntityDamageByBlockEvent event = new EntityDamageByBlockEvent(damager, damagee, org.bukkit.event.entity.EntityDamageEvent.DamageCause.CONTACT, 1D);
-            world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                damagee.setLastDamageCause(event);
-                entity.damageEntity(DamageSource.CACTUS, (float) event.getDamage());
-            }
+        if (event.isCancelled()) {
             return;
         }
-        // CraftBukkit end
 
-        entity.damageEntity(DamageSource.CACTUS, 1.0F);
+        entity.damageEntity(DamageSource.CACTUS, (float) event.getDamage());
+        // CraftBukkit end
     }
 }

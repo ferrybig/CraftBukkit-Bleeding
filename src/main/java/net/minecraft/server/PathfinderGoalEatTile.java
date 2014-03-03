@@ -1,9 +1,6 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.Material;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class PathfinderGoalEatTile extends PathfinderGoal {
 
@@ -55,15 +52,19 @@ public class PathfinderGoalEatTile extends PathfinderGoal {
             int k = MathHelper.floor(this.b.locZ);
 
             if (this.c.getType(i, j, k) == Blocks.LONG_GRASS) {
-                // CraftBukkit
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b, this.b.world.getWorld().getBlockAt(i, j, k), Material.AIR, !this.c.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
+                // CraftBukkit start
+                /* if (this.c.getGameRules().getBoolean("mobGriefing")) */
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b, i, j, k, Blocks.AIR, 0, !this.c.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
+                    // CraftBukkit end
                     this.c.setAir(i, j, k, false);
                 }
 
                 this.b.p();
             } else if (this.c.getType(i, j - 1, k) == Blocks.GRASS) {
-                // CraftBukkit
-                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b, this.b.world.getWorld().getBlockAt(i, j - 1, k), Material.DIRT, !this.c.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
+                // CraftBukkit start
+                /* if (this.c.getGameRules().getBoolean("mobGriefing")) */
+                if (!CraftEventFactory.callEntityChangeBlockEvent(this.b, i, j - 1, k, Blocks.DIRT, 0, !this.c.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
+                    // CraftBukkit end
                     this.c.triggerEffect(2001, i, j - 1, k, Block.b((Block) Blocks.GRASS));
                     this.c.setTypeAndData(i, j - 1, k, Blocks.DIRT, 0, 2);
                 }

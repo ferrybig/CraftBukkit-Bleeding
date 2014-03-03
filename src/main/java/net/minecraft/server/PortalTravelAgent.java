@@ -7,7 +7,6 @@ import java.util.Random;
 
 // CraftBukkit start
 import org.bukkit.Location;
-import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.util.Vector;
 // CraftBukkit end
 
@@ -297,8 +296,8 @@ public class PortalTravelAgent {
             position.setYaw(f);
         }
 
-        EntityPortalExitEvent event = new EntityPortalExitEvent(entity.getBukkitEntity(), from, position, before, velocity);
-        this.a.getServer().getPluginManager().callEvent(event);
+        org.bukkit.event.entity.EntityPortalExitEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityPortalExitEvent(entity, from, position, before, velocity);
+
         Location to = event.getTo();
         if (event.isCancelled() || to == null || !entity.isAlive()) {
             position.setX(from.getX());

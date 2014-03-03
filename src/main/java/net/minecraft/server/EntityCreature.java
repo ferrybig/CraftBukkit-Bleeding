@@ -3,9 +3,9 @@ package net.minecraft.server;
 import java.util.UUID;
 
 // CraftBukkit start
-import org.bukkit.craftbukkit.entity.CraftEntity;
-import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.EntityUnleashEvent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
+import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
+import org.bukkit.event.entity.EntityUnleashEvent.UnleashReason;
 // CraftBukkit end
 
 public abstract class EntityCreature extends EntityInsentient {
@@ -41,22 +41,7 @@ public abstract class EntityCreature extends EntityInsentient {
         float f11 = 16.0F;
 
         if (this.target == null) {
-            // CraftBukkit start
-            Entity target = this.findTarget();
-            if (target != null) {
-                EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), target.getBukkitEntity(), EntityTargetEvent.TargetReason.CLOSEST_PLAYER);
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
-                    if (event.getTarget() == null) {
-                        this.target = null;
-                    } else {
-                        this.target = ((CraftEntity) event.getTarget()).getHandle();
-                    }
-                }
-            }
-            // CraftBukkit end
-
+            this.target = CraftEventFactory.handleEntityTargetEvent(this, this.target, this.findTarget(), TargetReason.CLOSEST_PLAYER); // CraftBukkit
             if (this.target != null) {
                 this.pathEntity = this.world.findPath(this, this.target, f11, true, false, false, true);
             }
@@ -67,22 +52,11 @@ public abstract class EntityCreature extends EntityInsentient {
                 this.a(this.target, f1);
             }
         } else {
-            // CraftBukkit start
-            EntityTargetEvent event = new EntityTargetEvent(this.getBukkitEntity(), null, EntityTargetEvent.TargetReason.TARGET_DIED);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                if (event.getTarget() == null) {
-                    this.target = null;
-                } else {
-                    this.target = ((CraftEntity) event.getTarget()).getHandle();
-                }
-            }
-            // CraftBukkit end
+            this.target = CraftEventFactory.handleEntityTargetEvent(this, this.target, null, TargetReason.TARGET_DIED); // CraftBukkit
         }
 
         if (this.target instanceof EntityPlayer && ((EntityPlayer) this.target).playerInteractManager.isCreative()) {
-            this.target = null;
+            this.target = CraftEventFactory.handleEntityTargetEvent(this, this.target, null, TargetReason.FORGOT_TARGET); // CraftBukkit
         }
 
         this.world.methodProfiler.b();
@@ -269,8 +243,7 @@ public abstract class EntityCreature extends EntityInsentient {
 
             if (this instanceof EntityTameableAnimal && ((EntityTameableAnimal) this).isSitting()) {
                 if (f > 10.0F) {
-                    this.world.getServer().getPluginManager().callEvent(new EntityUnleashEvent(this.getBukkitEntity(), EntityUnleashEvent.UnleashReason.DISTANCE)); // CraftBukkit
-                    this.unleash(true, true);
+                    this.unleash(true, true, UnleashReason.DISTANCE); // CraftBukkit - add unleash reason
                 }
 
                 return;
@@ -298,8 +271,7 @@ public abstract class EntityCreature extends EntityInsentient {
             }
 
             if (f > 10.0F) {
-                this.world.getServer().getPluginManager().callEvent(new EntityUnleashEvent(this.getBukkitEntity(), EntityUnleashEvent.UnleashReason.DISTANCE)); // CraftBukkit
-                this.unleash(true, true);
+                this.unleash(true, true, UnleashReason.DISTANCE); // CraftBukkit - add unleash reason
             }
         } else if (!this.bN() && this.bt) {
             this.bt = false;

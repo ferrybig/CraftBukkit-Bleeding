@@ -2,8 +2,6 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockDoor extends Block {
 
     protected BlockDoor(Material material) {
@@ -167,6 +165,13 @@ public class BlockDoor extends Block {
                     this.b(world, i, j, k, l, 0);
                 }
             // CraftBukkit start
+            /* } else {
+                boolean flag1 = world.isBlockIndirectlyPowered(i, j, k) || world.isBlockIndirectlyPowered(i, j + 1, k);
+
+                if ((flag1 || block.isPowerSource()) && block != this) {
+                    this.setDoor(world, i, j, k, flag1);
+                }
+            } */
             } else if (block.isPowerSource()) {
                 org.bukkit.World bworld = world.getWorld();
                 org.bukkit.block.Block bukkitBlock = bworld.getBlockAt(i, j, k);
@@ -174,14 +179,13 @@ public class BlockDoor extends Block {
 
                 int power = bukkitBlock.getBlockPower();
                 int powerTop = blockTop.getBlockPower();
-                if (powerTop > power) power = powerTop;
+                if (powerTop > power) {
+                    power = powerTop;
+                }
                 int oldPower = (world.getData(i, j, k) & 4) > 0 ? 15 : 0;
 
                 if (oldPower == 0 ^ power == 0) {
-                    BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(bukkitBlock, oldPower, power);
-                    world.getServer().getPluginManager().callEvent(eventRedstone);
-
-                    this.setDoor(world, i, j, k, eventRedstone.getNewCurrent() > 0);
+                    this.setDoor(world, i, j, k, org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, oldPower, power).getNewCurrent() > 0);
                 }
                 // CraftBukkit end
             }

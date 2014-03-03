@@ -1,12 +1,10 @@
 package net.minecraft.server;
 
-import org.bukkit.event.entity.ExplosionPrimeEvent; // CraftBukkit
-
 public class EntityTNTPrimed extends Entity {
 
     public int fuseTicks;
     private EntityLiving source;
-    public float yield = 4; // CraftBukkit - add field
+    public float yield = 4.0F; // CraftBukkit - add field
     public boolean isIncendiary = false; // CraftBukkit - add field
 
     public EntityTNTPrimed(World world) {
@@ -69,18 +67,11 @@ public class EntityTNTPrimed extends Entity {
     }
 
     private void explode() {
-        // CraftBukkit start
-        // float f = 4.0F;
+        /* CraftBukkit start
+        float f = 4.0F;
 
-        org.bukkit.craftbukkit.CraftServer server = this.world.getServer();
-
-        ExplosionPrimeEvent event = new ExplosionPrimeEvent((org.bukkit.entity.Explosive) org.bukkit.craftbukkit.entity.CraftEntity.getEntity(server, this));
-        server.getPluginManager().callEvent(event);
-
-        if (!event.isCancelled()) {
-            // give 'this' instead of (Entity) null so we know what causes the damage
-            this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), true);
-        }
+        this.world.explode(this, this.locX, this.locY, this.locZ, f, true); */
+        org.bukkit.craftbukkit.event.CraftEventFactory.handleExplosionPrimeEvent(this, this.locX, this.locY, this.locZ, this.yield, this.isIncendiary, true);
         // CraftBukkit end
     }
 

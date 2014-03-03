@@ -4,12 +4,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
-
-//CraftBukkit start
-import org.bukkit.craftbukkit.entity.CraftLivingEntity;
-import org.bukkit.event.entity.EntityCombustByEntityEvent;
-import org.bukkit.event.entity.EntityCombustEvent;
-//CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntityZombie extends EntityMonster {
 
@@ -139,14 +134,7 @@ public class EntityZombie extends EntityMonster {
                 }
 
                 if (flag) {
-                    // CraftBukkit start
-                    EntityCombustEvent event = new EntityCombustEvent(this.getBukkitEntity(), 8);
-                    this.world.getServer().getPluginManager().callEvent(event);
-
-                    if (!event.isCancelled()) {
-                        this.setOnFire(event.getDuration());
-                    }
-                    // CraftBukkit end
+                    this.setOnFire(CraftEventFactory.handleEntityCombustEvent(this, 8)); // CraftBukkit - call EntityCombustEvent
                 }
             }
         }
@@ -227,14 +215,7 @@ public class EntityZombie extends EntityMonster {
             int i = this.world.difficulty.a();
 
             if (this.bd() == null && this.isBurning() && this.random.nextFloat() < (float) i * 0.3F) {
-                // CraftBukkit start
-                EntityCombustByEntityEvent event = new EntityCombustByEntityEvent(this.getBukkitEntity(), entity.getBukkitEntity(), 2 * i);
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
-                    entity.setOnFire(event.getDuration());
-                }
-                // CraftBukkit end
+                entity.setOnFire(CraftEventFactory.handleEntityCombustByEntityEvent(this, entity, 2 * i)); // CraftBukkit - call EntityCombustByEntityEvent
             }
         }
 

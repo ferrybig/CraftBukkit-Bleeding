@@ -9,11 +9,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// CraftBukkit start
-import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerVelocityEvent;
-// CraftBukkit end
-
 public class EntityTrackerEntry {
 
     private static final Logger p = LogManager.getLogger();
@@ -214,28 +209,13 @@ public class EntityTrackerEntry {
 
         ++this.m;
         if (this.tracker.velocityChanged) {
-            // CraftBukkit start - Create PlayerVelocity event
-            boolean cancelled = false;
-
-            if (this.tracker instanceof EntityPlayer) {
-                Player player = (Player) this.tracker.getBukkitEntity();
-                org.bukkit.util.Vector velocity = player.getVelocity();
-
-                PlayerVelocityEvent event = new PlayerVelocityEvent(player, velocity);
-                this.tracker.world.getServer().getPluginManager().callEvent(event);
-
-                if (event.isCancelled()) {
-                    cancelled = true;
-                } else if (!velocity.equals(event.getVelocity())) {
-                    player.setVelocity(velocity);
-                }
-            }
-
-            if (!cancelled) {
-                this.broadcastIncludingSelf((Packet) (new PacketPlayOutEntityVelocity(this.tracker)));
+            // CraftBukkit start - fire PlayerVelocityEvent
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.handlePlayerVelocityEvent(this.tracker)) {
+                this.tracker.velocityChanged = false;
+                return;
             }
             // CraftBukkit end
-
+            this.broadcastIncludingSelf((Packet) (new PacketPlayOutEntityVelocity(this.tracker)));
             this.tracker.velocityChanged = false;
         }
     }
@@ -307,8 +287,7 @@ public class EntityTrackerEntry {
                 if (!this.trackedPlayers.contains(entityplayer) && (this.d(entityplayer) || this.tracker.n)) {
                     // CraftBukkit start - respect vanish API
                     if (this.tracker instanceof EntityPlayer) {
-                        Player player = ((EntityPlayer) this.tracker).getBukkitEntity();
-                        if (!entityplayer.getBukkitEntity().canSee(player)) {
+                        if (!entityplayer.getBukkitEntity().canSee(((EntityPlayer) this.tracker).getBukkitEntity())) {
                             return;
                         }
                     }

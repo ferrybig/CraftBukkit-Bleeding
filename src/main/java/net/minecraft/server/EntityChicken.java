@@ -1,6 +1,6 @@
 package net.minecraft.server;
 
-import org.bukkit.craftbukkit.util.CraftMagicNumbers; // CraftBukkit
+import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
 
 public class EntityChicken extends EntityAnimal {
 
@@ -89,22 +89,29 @@ public class EntityChicken extends EntityAnimal {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start - Whole method
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
         int j = this.random.nextInt(3) + this.random.nextInt(1 + i);
 
-        if (j > 0) {
-            loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.FEATHER), j));
+        /* CraftBukkit start
+        for (int k = 0; k < j; ++k) {
+            this.a(Items.FEATHER, 1);
         }
+        */
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        loot.add(CraftItemStack.asNewCraftStack(Items.FEATHER, j));
+        // CraftBukkit end
 
         if (this.isBurning()) {
-            loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.COOKED_CHICKEN), 1));
+            // CraftBukkit start
+            /* this.a(Items.COOKED_CHICKEN, 1); */
+            loot.add(CraftItemStack.asNewCraftStack(Items.COOKED_CHICKEN, 1));
+            // CraftBukkit end
         } else {
-            loot.add(new org.bukkit.inventory.ItemStack(CraftMagicNumbers.getMaterial(Items.RAW_CHICKEN), 1));
+            // CraftBukkit start
+            /* this.a(Items.RAW_CHICKEN, 1); */
+            loot.add(CraftItemStack.asNewCraftStack(Items.RAW_CHICKEN, 1));
+            // CraftBukkit end
         }
-
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     public EntityChicken b(EntityAgeable entityageable) {

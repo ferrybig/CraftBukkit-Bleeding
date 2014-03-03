@@ -1,7 +1,5 @@
 package net.minecraft.server;
 
-import org.bukkit.event.entity.ExplosionPrimeEvent; // CraftBukkit
-
 public class EntityWitherSkull extends EntityFireball {
 
     public EntityWitherSkull(World world) {
@@ -59,14 +57,9 @@ public class EntityWitherSkull extends EntityFireball {
             }
 
             // CraftBukkit start
-            ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), 1.0F, false);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (!event.isCancelled()) {
-                this.world.createExplosion(this, this.locX, this.locY, this.locZ, event.getRadius(), event.getFire(), this.world.getGameRules().getBoolean("mobGriefing"));
-            }
+            /* this.world.createExplosion(this, this.locX, this.locY, this.locZ, 1.0F, false, this.world.getGameRules().getBoolean("mobGriefing")); */
+            org.bukkit.craftbukkit.event.CraftEventFactory.handleExplosionPrimeEvent(this, this.locX, this.locY, this.locZ, 1.0F, false, this.world.getGameRules().getBoolean("mobGriefing"));
             // CraftBukkit end
-
             this.die();
         }
     }

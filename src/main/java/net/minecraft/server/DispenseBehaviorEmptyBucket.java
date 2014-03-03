@@ -1,9 +1,6 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.block.BlockDispenseEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
 
 final class DispenseBehaviorEmptyBucket extends DispenseBehaviorItem {
 
@@ -32,25 +29,11 @@ final class DispenseBehaviorEmptyBucket extends DispenseBehaviorItem {
         }
 
         // CraftBukkit start
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
-        CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
-
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(i, j, k));
         if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
-        }
-
-        if (event.isCancelled()) {
-            return itemstack;
-        }
-
-        if (!event.getItem().equals(craftItem)) {
-            // Chain to handler for new item
-            ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.get(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
+            org.bukkit.event.block.BlockDispenseEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockDispenseEvent(isourceblock, craftItem, i, j, k);
+            if (event.isCancelled() || event.getItem().equals(craftItem)) {
+                return this.eventProcessing(event, isourceblock, itemstack, craftItem, false);
             }
         }
         // CraftBukkit end

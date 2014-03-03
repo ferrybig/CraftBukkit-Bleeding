@@ -3,10 +3,7 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.ExplosionPrimeEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntityWither extends EntityMonster implements IRangedEntity {
 
@@ -163,15 +160,9 @@ public class EntityWither extends EntityMonster implements IRangedEntity {
             i = this.ca() - 1;
             if (i <= 0) {
                 // CraftBukkit start
-                ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), 7.0F, false);
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (!event.isCancelled()) {
-                    this.world.createExplosion(this, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ, event.getRadius(), event.getFire(), this.world.getGameRules().getBoolean("mobGriefing"));
-                }
+                /* this.world.createExplosion(this, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ, 7.0F, false, this.world.getGameRules().getBoolean("mobGriefing")); */
+                CraftEventFactory.handleExplosionPrimeEvent(this, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ, 7.0F, false, this.world.getGameRules().getBoolean("mobGriefing"));
                 // CraftBukkit end
-
-                this.world.createExplosion(this, this.locX, this.locY + (double) this.getHeadHeight(), this.locZ, 7.0F, false, this.world.getGameRules().getBoolean("mobGriefing"));
                 this.world.b(1013, (int) this.locX, (int) this.locY, (int) this.locZ, 0);
             }
 
@@ -246,7 +237,7 @@ public class EntityWither extends EntityMonster implements IRangedEntity {
 
             if (this.bv > 0) {
                 --this.bv;
-                if (this.bv == 0 && this.world.getGameRules().getBoolean("mobGriefing")) {
+                if (this.bv == 0 /*&& this.world.getGameRules().getBoolean("mobGriefing")*/) { // CraftBukkit - call events even if mobGriefing is false
                     i = MathHelper.floor(this.locY);
                     j = MathHelper.floor(this.locX);
                     int j1 = MathHelper.floor(this.locZ);
@@ -262,7 +253,7 @@ public class EntityWither extends EntityMonster implements IRangedEntity {
 
                                 if (block.getMaterial() != Material.AIR && block != Blocks.BEDROCK && block != Blocks.ENDER_PORTAL && block != Blocks.ENDER_PORTAL_FRAME && block != Blocks.COMMAND) {
                                     // CraftBukkit start
-                                    if (CraftEventFactory.callEntityChangeBlockEvent(this, j2, k2, l2, Blocks.AIR, 0).isCancelled()) {
+                                    if (CraftEventFactory.callEntityChangeBlockEvent(this, j2, k2, l2, Blocks.AIR, 0, !this.world.getGameRules().getBoolean("mobGriefing")).isCancelled()) {
                                         continue;
                                     }
                                     // CraftBukkit end
@@ -400,8 +391,9 @@ public class EntityWither extends EntityMonster implements IRangedEntity {
 
     protected void dropDeathLoot(boolean flag, int i) {
         // CraftBukkit start
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
-        loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(Items.NETHER_STAR), 1));
+        /* this.a(Items.NETHER_STAR, 1); */
+        List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asNewCraftStack(Items.NETHER_STAR, 1));
         CraftEventFactory.callEntityDeathEvent(this, loot);
         // CraftBukkit end
         if (!this.world.isStatic) {

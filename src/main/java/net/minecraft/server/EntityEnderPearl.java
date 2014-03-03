@@ -1,8 +1,7 @@
 package net.minecraft.server;
 
 // CraftBukkit start
-import org.bukkit.Bukkit;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.player.PlayerTeleportEvent;
 // CraftBukkit end
 
@@ -30,25 +29,30 @@ public class EntityEnderPearl extends EntityProjectile {
                 EntityPlayer entityplayer = (EntityPlayer) this.getShooter();
 
                 if (entityplayer.playerConnection.b().isConnected() && entityplayer.world == this.world) {
-                    // CraftBukkit start - Fire PlayerTeleportEvent
-                    org.bukkit.craftbukkit.entity.CraftPlayer player = entityplayer.getBukkitEntity();
-                    org.bukkit.Location location = getBukkitEntity().getLocation();
-                    location.setPitch(player.getLocation().getPitch());
-                    location.setYaw(player.getLocation().getYaw());
+                    /* CraftBukkit start - Fire PlayerTeleportEvent
+                    if (this.getShooter().al()) {
+                        this.getShooter().mount((Entity) null);
+                    }
 
-                    PlayerTeleportEvent teleEvent = new PlayerTeleportEvent(player, player.getLocation(), location, PlayerTeleportEvent.TeleportCause.ENDER_PEARL);
-                    Bukkit.getPluginManager().callEvent(teleEvent);
+                    this.getShooter().enderTeleportTo(this.locX, this.locY, this.locZ);
+                    this.getShooter().fallDistance = 0.0F;
+                    this.getShooter().damageEntity(DamageSource.FALL, 5.0F);
+                    */
+                    org.bukkit.craftbukkit.entity.CraftPlayer player = entityplayer.getBukkitEntity();
+                    org.bukkit.Location pearlLocation = this.getBukkitEntity().getLocation();
+                    pearlLocation.setPitch(entityplayer.pitch);
+                    pearlLocation.setYaw(entityplayer.yaw);
+
+                    PlayerTeleportEvent teleEvent = CraftEventFactory.callPlayerTeleportEvent(player, pearlLocation, PlayerTeleportEvent.TeleportCause.ENDER_PEARL);
 
                     if (!teleEvent.isCancelled() && !entityplayer.playerConnection.isDisconnected()) {
                         entityplayer.playerConnection.teleport(teleEvent.getTo());
                         this.getShooter().fallDistance = 0.0F;
 
-                        EntityDamageByEntityEvent damageEvent = new EntityDamageByEntityEvent(this.getBukkitEntity(), player, EntityDamageByEntityEvent.DamageCause.FALL, 5.0D);
-                        Bukkit.getPluginManager().callEvent(damageEvent);
+                        org.bukkit.event.entity.EntityDamageEvent damageEvent = CraftEventFactory.callEntityDamageEvent(this, entityplayer, org.bukkit.event.entity.EntityDamageByEntityEvent.DamageCause.FALL, 5.0D);
 
                         if (!damageEvent.isCancelled() && !entityplayer.playerConnection.isDisconnected()) {
                             entityplayer.invulnerableTicks = -1; // Remove spawning invulnerability
-                            player.setLastDamageCause(damageEvent);
                             entityplayer.damageEntity(DamageSource.FALL, (float) damageEvent.getDamage());
                         }
                     }

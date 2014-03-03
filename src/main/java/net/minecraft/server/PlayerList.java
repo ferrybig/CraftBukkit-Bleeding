@@ -24,17 +24,10 @@ import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.chunkio.ChunkIOExecutor;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.TravelAgent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
+import org.bukkit.event.player.PlayerLoginEvent.Result;
 import org.bukkit.util.Vector;
 // CraftBukkit end
 
@@ -241,23 +234,20 @@ public abstract class PlayerList {
     }
 
     public void c(EntityPlayer entityplayer) {
-        cserver.detectListNameConflict(entityplayer); // CraftBukkit
+        this.cserver.detectListNameConflict(entityplayer); // CraftBukkit
         // this.sendAll(new PacketPlayOutPlayerInfo(entityplayer.getName(), true, 1000)); // CraftBukkit - replaced with loop below
         this.players.add(entityplayer);
         WorldServer worldserver = this.server.getWorldServer(entityplayer.dimension);
 
         // CraftBukkit start
-        PlayerJoinEvent playerJoinEvent = new PlayerJoinEvent(this.cserver.getPlayer(entityplayer), "\u00A7e" + entityplayer.getName() + " joined the game.");
-        this.cserver.getPluginManager().callEvent(playerJoinEvent);
-
-        String joinMessage = playerJoinEvent.getJoinMessage();
+        String joinMessage = CraftEventFactory.callPlayerJoinEvent(entityplayer).getJoinMessage();
 
         if ((joinMessage != null) && (joinMessage.length() > 0)) {
             for (IChatBaseComponent line : org.bukkit.craftbukkit.util.CraftChatMessage.fromString(joinMessage)) {
-                this.server.getPlayerList().sendAll(new PacketPlayOutChat(line));
+                this.sendAll(new PacketPlayOutChat(line));
             }
         }
-        this.cserver.onPlayerJoin(playerJoinEvent.getPlayer());
+        this.cserver.onPlayerJoin(entityplayer.getBukkitEntity());
 
         ChunkIOExecutor.adjustPoolSize(this.getPlayerCount());
         // CraftBukkit end
@@ -287,8 +277,8 @@ public abstract class PlayerList {
             if (!entityplayer.getBukkitEntity().canSee(entityplayer1.getBukkitEntity())) {
                 continue;
             }
-            // .name -> .listName
-            entityplayer.playerConnection.sendPacket(new PacketPlayOutPlayerInfo(entityplayer1.listName, true, entityplayer1.ping));
+
+            entityplayer.playerConnection.sendPacket(new PacketPlayOutPlayerInfo(entityplayer1.listName, true, entityplayer1.ping)); // .getName() -> .listName
             // CraftBukkit end
         }
     }
@@ -301,11 +291,8 @@ public abstract class PlayerList {
         entityplayer.a(StatisticList.f);
 
         // CraftBukkit start - Quitting must be before we do final save of data, in case plugins need to modify it
-        org.bukkit.craftbukkit.event.CraftEventFactory.handleInventoryCloseEvent(entityplayer);
-
-        PlayerQuitEvent playerQuitEvent = new PlayerQuitEvent(this.cserver.getPlayer(entityplayer), "\u00A7e" + entityplayer.getName() + " left the game.");
-        this.cserver.getPluginManager().callEvent(playerQuitEvent);
-        entityplayer.getBukkitEntity().disconnect(playerQuitEvent.getQuitMessage());
+        CraftEventFactory.handleInventoryCloseEvent(entityplayer);
+        String quitMessage = CraftEventFactory.handlePlayerQuitEvent(entityplayer);
         // CraftBukkit end
 
         this.b(entityplayer);
@@ -337,7 +324,7 @@ public abstract class PlayerList {
         // This removes the scoreboard (and player reference) for the specific player in the manager
         this.cserver.getScoreboardManager().removePlayer(entityplayer.getBukkitEntity());
 
-        return playerQuitEvent.getQuitMessage();
+        return quitMessage;
         // CraftBukkit end
     }
 
@@ -348,12 +335,10 @@ public abstract class PlayerList {
         // depending on the outcome.
         SocketAddress socketaddress = loginlistener.networkManager.getSocketAddress();
 
-        EntityPlayer entity = new EntityPlayer(this.server, this.server.getWorldServer(0), gameprofile, new PlayerInteractManager(this.server.getWorldServer(0)));
-        Player player = entity.getBukkitEntity();
-        PlayerLoginEvent event = new PlayerLoginEvent(player, hostname, ((java.net.InetSocketAddress) socketaddress).getAddress());
-        String s;
+        String s = "";
+        Result result = Result.ALLOWED;
 
-        if (this.j.isBanned(gameprofile) && !this.j.get(gameprofile).e()) { // Should be hasExpired
+        if (this.j.isBanned(gameprofile) && !this.j.get(gameprofile).e()) { // add this.j.get(gameprofile).e(), should be hasExpired
             GameProfileBanEntry gameprofilebanentry = (GameProfileBanEntry) this.j.get(gameprofile);
 
             s = "You are banned from this server!\nReason: " + gameprofilebanentry.getReason();
@@ -362,11 +347,12 @@ public abstract class PlayerList {
             }
 
             // return s;
-            event.disallow(PlayerLoginEvent.Result.KICK_BANNED, s);
+            result = Result.KICK_BANNED;
         } else if (!this.isWhitelisted(gameprofile)) {
             // return "You are not white-listed on this server!";
-            event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, "You are not white-listed on this server!");
-        } else if (this.k.isBanned(socketaddress) && !this.j.get(gameprofile).e()) { // Should be hasExpired
+            s = "You are not white-listed on this server!";
+            result = Result.KICK_WHITELIST;
+        } else if (this.k.isBanned(socketaddress) && !this.j.get(gameprofile).e()) { // add this.j.get(gameprofile).e(), Should be hasExpired
             IpBanEntry ipbanentry = this.k.get(socketaddress);
 
             s = "Your IP address is banned from this server!\nReason: " + ipbanentry.getReason();
@@ -375,21 +361,16 @@ public abstract class PlayerList {
             }
 
             // return s;
-            event.disallow(PlayerLoginEvent.Result.KICK_BANNED, s);
+            result = Result.KICK_BANNED;
         } else {
             // return this.players.size() >= this.maxPlayers ? "The server is full!" : null;
             if (this.players.size() >= this.maxPlayers) {
-                event.disallow(PlayerLoginEvent.Result.KICK_FULL, "The server is full!");
+                s = "The server is full!";
+                result = Result.KICK_FULL;
             }
         }
 
-        this.cserver.getPluginManager().callEvent(event);
-        if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
-            loginlistener.disconnect(event.getKickMessage());
-            return null;
-        }
-
-        return entity;
+        return CraftEventFactory.handlePlayerLoginEvent(this.server, gameprofile, hostname, socketaddress, loginlistener, result, s);
         // CraftBukkit end
     }
 
@@ -471,7 +452,7 @@ public abstract class PlayerList {
         // CraftBukkit start - fire PlayerRespawnEvent
         if (location == null) {
             boolean isBedSpawn = false;
-            CraftWorld cworld = (CraftWorld) this.server.server.getWorld(entityplayer.spawnWorld);
+            CraftWorld cworld = (CraftWorld) this.cserver.getWorld(entityplayer.spawnWorld);
             if (cworld != null && chunkcoordinates != null) {
                 chunkcoordinates1 = EntityHuman.getBed(cworld.getHandle(), chunkcoordinates, flag1);
                 if (chunkcoordinates1 != null) {
@@ -484,16 +465,12 @@ public abstract class PlayerList {
             }
 
             if (location == null) {
-                cworld = (CraftWorld) this.server.server.getWorlds().get(0);
+                cworld = (CraftWorld) this.cserver.getWorlds().get(0);
                 chunkcoordinates = cworld.getHandle().getSpawn();
                 location = new Location(cworld, chunkcoordinates.x + 0.5, chunkcoordinates.y, chunkcoordinates.z + 0.5);
             }
 
-            Player respawnPlayer = this.cserver.getPlayer(entityplayer1);
-            PlayerRespawnEvent respawnEvent = new PlayerRespawnEvent(respawnPlayer, location, isBedSpawn);
-            this.cserver.getPluginManager().callEvent(respawnEvent);
-
-            location = respawnEvent.getRespawnLocation();
+            location = CraftEventFactory.callPlayerRespawnEvent(entityplayer1, location, isBedSpawn).getRespawnLocation();
             entityplayer.reset();
         } else {
             location.setWorld(this.server.getWorldServer(i).getWorld());
@@ -547,8 +524,7 @@ public abstract class PlayerList {
         // CraftBukkit start
         // Don't fire on respawn
         if (fromWorld != location.getWorld()) {
-            PlayerChangedWorldEvent event = new PlayerChangedWorldEvent((Player) entityplayer1.getBukkitEntity(), fromWorld);
-            Bukkit.getServer().getPluginManager().callEvent(event);
+            CraftEventFactory.callPlayerChangedWorldEvent(entityplayer1, fromWorld);
         }
 
         // Save player file again if they were disconnected
@@ -560,60 +536,29 @@ public abstract class PlayerList {
         return entityplayer1;
     }
 
-    // CraftBukkit start - Replaced the standard handling of portals with a more customised method.
-    public void changeDimension(EntityPlayer entityplayer, int i, TeleportCause cause) {
-        WorldServer exitWorld = null;
-        if (entityplayer.dimension < CraftWorld.CUSTOM_DIMENSION_OFFSET) { // plugins must specify exit from custom Bukkit worlds
-            // only target existing worlds (compensate for allow-nether/allow-end as false)
-            for (WorldServer world : this.server.worlds) {
-                if (world.dimension == i) {
-                    exitWorld = world;
-                }
-            }
-        }
+    public void changeDimension(EntityPlayer entityplayer, int i) {
+        int j = entityplayer.dimension;
+        WorldServer worldserver = this.server.getWorldServer(entityplayer.dimension);
 
-        Location enter = entityplayer.getBukkitEntity().getLocation();
-        Location exit = null;
-        boolean useTravelAgent = false; // don't use agent for custom worlds or return from THE_END
-        if (exitWorld != null) {
-            if ((cause == TeleportCause.END_PORTAL) && (i == 0)) {
-                // THE_END -> NORMAL; use bed if available, otherwise default spawn
-                exit = ((org.bukkit.craftbukkit.entity.CraftPlayer) entityplayer.getBukkitEntity()).getBedSpawnLocation();
-                if (exit == null || ((CraftWorld) exit.getWorld()).getHandle().dimension != 0) {
-                    exit = exitWorld.getWorld().getSpawnLocation();
-                }
-            } else {
-                // NORMAL <-> NETHER or NORMAL -> THE_END
-                exit = this.calculateTarget(enter, exitWorld);
-                useTravelAgent = true;
-            }
-        }
+        entityplayer.dimension = i;
+        WorldServer worldserver1 = this.server.getWorldServer(entityplayer.dimension);
 
-        TravelAgent agent = exit != null ? (TravelAgent) ((CraftWorld) exit.getWorld()).getHandle().getTravelAgent() : org.bukkit.craftbukkit.CraftTravelAgent.DEFAULT; // return arbitrary TA to compensate for implementation dependent plugins
-        PlayerPortalEvent event = new PlayerPortalEvent(entityplayer.getBukkitEntity(), enter, exit, agent, cause);
-        event.useTravelAgent(useTravelAgent);
-        Bukkit.getServer().getPluginManager().callEvent(event);
-        if (event.isCancelled() || event.getTo() == null) {
-            return;
-        }
+        entityplayer.playerConnection.sendPacket(new PacketPlayOutRespawn(entityplayer.dimension, entityplayer.world.difficulty, entityplayer.world.getWorldData().getType(), entityplayer.playerInteractManager.getGameMode()));
+        worldserver.removeEntity(entityplayer);
+        entityplayer.dead = false;
+        this.a(entityplayer, j, worldserver, worldserver1);
+        this.a(entityplayer, worldserver);
+        entityplayer.playerConnection.a(entityplayer.locX, entityplayer.locY, entityplayer.locZ, entityplayer.yaw, entityplayer.pitch);
+        entityplayer.playerInteractManager.a(worldserver1);
+        this.b(entityplayer, worldserver1);
+        this.updateClient(entityplayer);
+        Iterator iterator = entityplayer.getEffects().iterator();
 
-        exit = event.useTravelAgent() ? event.getPortalTravelAgent().findOrCreate(event.getTo()) : event.getTo();
-        if (exit == null) {
-            return;
-        }
-        exitWorld = ((CraftWorld) exit.getWorld()).getHandle();
+        while (iterator.hasNext()) {
+            MobEffect mobeffect = (MobEffect) iterator.next();
 
-        Vector velocity = entityplayer.getBukkitEntity().getVelocity();
-        boolean before = exitWorld.chunkProviderServer.forceChunkLoad;
-        exitWorld.chunkProviderServer.forceChunkLoad = true;
-        exitWorld.getTravelAgent().adjustExit(entityplayer, exit, velocity);
-        exitWorld.chunkProviderServer.forceChunkLoad = before;
-
-        this.moveToWorld(entityplayer, exitWorld.dimension, true, exit, false); // Vanilla doesn't check for suffocation when handling portals, so neither should we
-        if (entityplayer.motX != velocity.getX() || entityplayer.motY != velocity.getY() || entityplayer.motZ != velocity.getZ()) {
-            entityplayer.getBukkitEntity().setVelocity(velocity);
+            entityplayer.playerConnection.sendPacket(new PacketPlayOutEntityEffect(entityplayer.getId(), mobeffect));
         }
-        // CraftBukkit end
     }
 
     public void a(Entity entity, int i, WorldServer worldserver, WorldServer worldserver1) {
@@ -868,7 +813,7 @@ public abstract class PlayerList {
         this.operators.add(new OpListEntry(gameprofile, this.server.l()));
 
         // CraftBukkit start
-        Player player = server.server.getPlayer(gameprofile.getId());
+        Player player = this.cserver.getPlayer(gameprofile.getId());
         if (player != null) {
             player.recalculatePermissions();
         }
@@ -879,7 +824,7 @@ public abstract class PlayerList {
         this.operators.remove(gameprofile);
 
         // CraftBukkit start
-        Player player = server.server.getPlayer(gameprofile.getId());
+        Player player = this.cserver.getPlayer(gameprofile.getId());
         if (player != null) {
             player.recalculatePermissions();
         }
@@ -1153,7 +1098,7 @@ public abstract class PlayerList {
 
     public void u() {
         for (int i = 0; i < this.players.size(); ++i) {
-            ((EntityPlayer) this.players.get(i)).playerConnection.disconnect(this.server.server.getShutdownMessage()); // CraftBukkit - add custom shutdown message
+            ((EntityPlayer) this.players.get(i)).playerConnection.disconnect(this.cserver.getShutdownMessage()); // CraftBukkit - add custom shutdown message
         }
     }
 

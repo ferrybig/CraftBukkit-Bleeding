@@ -4,10 +4,7 @@ import net.minecraft.util.com.google.common.collect.HashMultiset;
 import net.minecraft.util.com.google.common.collect.Iterables;
 import net.minecraft.util.com.google.common.collect.Multisets;
 
-// CraftBukkit start
-import org.bukkit.Bukkit;
-import org.bukkit.event.server.MapInitializeEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class ItemWorldMap extends ItemWorldMapBase {
 
@@ -32,11 +29,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
             worldmap.map = (byte) ((WorldServer) world).dimension; // CraftBukkit - fixes Bukkit multiworld maps
             worldmap.c();
             worldMain.a(s, (PersistentBase) worldmap); // CraftBukkit - use primary world for maps
-
-            // CraftBukkit start
-            MapInitializeEvent event = new MapInitializeEvent(worldmap.mapView);
-            Bukkit.getServer().getPluginManager().callEvent(event);
-            // CraftBukkit end
+            CraftEventFactory.callMapInitializeEvent(worldmap.mapView); // CraftBukkit - fire MapInitializeEvent
         }
 
         return worldmap;
@@ -205,7 +198,6 @@ public class ItemWorldMap extends ItemWorldMapBase {
     public void d(ItemStack itemstack, World world, EntityHuman entityhuman) {
         if (itemstack.hasTag() && itemstack.getTag().getBoolean("map_is_scaling")) {
             WorldMap worldmap = Items.MAP.getSavedMap(itemstack, world);
-
             world = world.getServer().getServer().worlds.get(0); // CraftBukkit - use primary world for maps
 
             itemstack.setData(world.b("map"));
@@ -221,11 +213,7 @@ public class ItemWorldMap extends ItemWorldMapBase {
             worldmap1.map = worldmap.map;
             worldmap1.c();
             world.a("map_" + itemstack.getData(), (PersistentBase) worldmap1);
-
-            // CraftBukkit start
-            MapInitializeEvent event = new MapInitializeEvent(worldmap1.mapView);
-            Bukkit.getServer().getPluginManager().callEvent(event);
-            // CraftBukkit end
+            CraftEventFactory.callMapInitializeEvent(worldmap1.mapView); // CraftBukkit
         }
     }
 }

@@ -122,19 +122,20 @@ public class EntityBlaze extends EntityMonster {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(); // CraftBukkit
 
         if (flag) {
             int j = this.random.nextInt(2 + i);
 
-            if (j > 0) {
-                loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.craftbukkit.util.CraftMagicNumbers.getMaterial(Items.BLAZE_ROD), j));
+            /* CraftBukkit start
+            for (int k = 0; k < j; ++k) {
+                this.a(Items.BLAZE_ROD, 1);
             }
+            */
+            loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asNewCraftStack(Items.BLAZE_ROD, j));
+            // CraftBukkit end
         }
-
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     public boolean bZ() {

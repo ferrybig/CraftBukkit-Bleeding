@@ -1,8 +1,8 @@
 package net.minecraft.server;
 
 // CraftBukkit start
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.block.BlockDispenseEvent;
 // CraftBukkit end
 
 final class DispenseBehaviorFlintAndSteel extends DispenseBehaviorItem {
@@ -19,32 +19,19 @@ final class DispenseBehaviorFlintAndSteel extends DispenseBehaviorItem {
         int k = isourceblock.getBlockZ() + enumfacing.getAdjacentZ();
 
         // CraftBukkit start
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
-        CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
-
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(0, 0, 0));
         if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
-        }
+            CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
+            org.bukkit.event.block.BlockDispenseEvent event = CraftEventFactory.callBlockDispenseEvent(isourceblock, craftItem, i, j, k);
 
-        if (event.isCancelled()) {
-            return itemstack;
-        }
-
-        if (!event.getItem().equals(craftItem)) {
-            // Chain to handler for new item
-            ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.get(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            if (event.isCancelled() || event.getItem().equals(craftItem)) {
+                return this.eventProcessing(event, isourceblock, itemstack, craftItem, false);
             }
         }
         // CraftBukkit end
 
         if (world.isEmpty(i, j, k)) {
             // CraftBukkit start - Ignition by dispensing flint and steel
-            if (!org.bukkit.craftbukkit.event.CraftEventFactory.callBlockIgniteEvent(world, i, j, k, isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ()).isCancelled()) {
+            if (!CraftEventFactory.callBlockIgniteEvent(world, i, j, k, isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ()).isCancelled()) {
                 world.setTypeUpdate(i, j, k, Blocks.FIRE);
                 if (itemstack.isDamaged(1, world.random)) {
                     itemstack.count = 0;

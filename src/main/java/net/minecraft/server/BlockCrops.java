@@ -29,7 +29,10 @@ public class BlockCrops extends BlockPlant implements IBlockFragilePlantElement 
 
                 if (random.nextInt((int) (25.0F / f) + 1) == 0) {
                     ++l;
-                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l); // CraftBukkit
+                    // CraftBukkit start
+                    /* world.setData(i, j, k, l, 2); */
+                    org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, l);
+                    // CraftBukkit end
                 }
             }
         }

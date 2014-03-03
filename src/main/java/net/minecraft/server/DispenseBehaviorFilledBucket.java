@@ -1,9 +1,6 @@
 package net.minecraft.server;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.block.BlockDispenseEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
 
 final class DispenseBehaviorFilledBucket extends DispenseBehaviorItem {
 
@@ -24,29 +21,16 @@ final class DispenseBehaviorFilledBucket extends DispenseBehaviorItem {
         int y = j + enumfacing.getAdjacentY();
         int z = k + enumfacing.getAdjacentZ();
         if (world.isEmpty(x, y, z) || !world.getType(x, y, z).getMaterial().isBuildable()) {
-            org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-            CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
-
-            BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(x, y, z));
             if (!BlockDispenser.eventFired) {
-                world.getServer().getPluginManager().callEvent(event);
-            }
+                CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack);
+                org.bukkit.event.block.BlockDispenseEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockDispenseEvent(isourceblock, craftItem, x, y, z);
 
-            if (event.isCancelled()) {
-                return itemstack;
-            }
-
-            if (!event.getItem().equals(craftItem)) {
-                // Chain to handler for new item
-                ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-                IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.get(eventStack.getItem());
-                if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                    idispensebehavior.a(isourceblock, eventStack);
-                    return itemstack;
+                if (event.isCancelled() || event.getItem().equals(craftItem)) {
+                    return this.eventProcessing(event, isourceblock, itemstack, craftItem, false);
                 }
-            }
 
-            itembucket = (ItemBucket) CraftItemStack.asNMSCopy(event.getItem()).getItem();
+                itembucket = (ItemBucket) CraftItemStack.asNMSCopy(event.getItem()).getItem();
+            }
         }
         // CraftBukkit end
 

@@ -2,11 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockSpreadEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockFire extends Block {
 
@@ -82,11 +78,17 @@ public class BlockFire extends Block {
             }
 
             if (!this.canPlace(world, i, j, k)) {
-                fireExtinguished(world, i, j, k); // CraftBukkit - invalid place location
+                // CraftBukkit start - invalid place location
+                /* world.setAir(i, j, k); */
+                CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+                // CraftBukkit end
             }
 
             if (!flag && world.Q() && (world.isRainingAt(i, j, k) || world.isRainingAt(i - 1, j, k) || world.isRainingAt(i + 1, j, k) || world.isRainingAt(i, j, k - 1) || world.isRainingAt(i, j, k + 1))) {
-                fireExtinguished(world, i, j, k); // CraftBukkit - extinguished by rain
+                // CraftBukkit start - extinguished by rain
+                /* world.setAir(i, j, k); */
+                CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+                // CraftBukkit end
             } else {
                 int l = world.getData(i, j, k);
 
@@ -97,10 +99,16 @@ public class BlockFire extends Block {
                 world.a(i, j, k, this, this.a(world) + random.nextInt(10));
                 if (!flag && !this.e(world, i, j, k)) {
                     if (!World.a((IBlockAccess) world, i, j - 1, k) || l > 3) {
-                        fireExtinguished(world, i, j, k); // CraftBukkit - burn out of inflammable block
+                        // CraftBukkit start - burn out of inflammable block
+                        /* world.setAir(i, j, k); */
+                        CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+                        // CraftBukkit end
                     }
                 } else if (!flag && !this.e((IBlockAccess) world, i, j - 1, k) && l == 15 && random.nextInt(4) == 0) {
-                    fireExtinguished(world, i, j, k); // CraftBukkit - burn out
+                    // CraftBukkit start - burn out
+                    /* world.setAir(i, j, k); */
+                    CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+                    // CraftBukkit end
                 } else {
                     boolean flag1 = world.z(i, j, k);
                     byte b0 = 0;
@@ -143,24 +151,12 @@ public class BlockFire extends Block {
                                             }
 
                                             // CraftBukkit start - Call to stop spread of fire
-                                            if (world.getType(i1, k1, j1) != Blocks.FIRE) {
-                                                if (CraftEventFactory.callBlockIgniteEvent(world, i1, k1, j1, i, j, k).isCancelled()) {
-                                                    continue;
-                                                }
-
-                                                org.bukkit.Server server = world.getServer();
-                                                org.bukkit.World bworld = world.getWorld();
-                                                org.bukkit.block.BlockState blockState = bworld.getBlockAt(i1, k1, j1).getState();
-                                                blockState.setTypeId(Block.b(this));
-                                                blockState.setData(new org.bukkit.material.MaterialData(Block.b(this), (byte) k2));
-
-                                                BlockSpreadEvent spreadEvent = new BlockSpreadEvent(blockState.getBlock(), bworld.getBlockAt(i, j, k), blockState);
-                                                server.getPluginManager().callEvent(spreadEvent);
-
-                                                if (!spreadEvent.isCancelled()) {
-                                                    blockState.update(true);
-                                                }
+                                            /* world.setTypeAndData(i1, k1, j1, this, k2, 3); */
+                                            if (CraftEventFactory.callBlockIgniteEvent(world, i1, k1, j1, i, j, k).isCancelled()) {
+                                                continue;
                                             }
+
+                                            CraftEventFactory.handleBlockSpreadEvent(world, i1, j1, k1, i, j, k, this, k2);
                                             // CraftBukkit end
                                         }
                                     }
@@ -184,12 +180,7 @@ public class BlockFire extends Block {
             boolean flag = world.getType(i, j, k) == Blocks.TNT;
 
             // CraftBukkit start
-            org.bukkit.block.Block theBlock = world.getWorld().getBlockAt(i, j, k);
-
-            BlockBurnEvent event = new BlockBurnEvent(theBlock);
-            world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
+            if (CraftEventFactory.callBlockBurnEvent(world, i, j, k).isCancelled()) {
                 return;
             }
             // CraftBukkit end
@@ -253,14 +244,20 @@ public class BlockFire extends Block {
 
     public void doPhysics(World world, int i, int j, int k, Block block) {
         if (!World.a((IBlockAccess) world, i, j - 1, k) && !this.e(world, i, j, k)) {
-            fireExtinguished(world, i, j, k); // CraftBukkit - fuel block gone
+            // CraftBukkit start - fuel block gone
+            /* world.setAir(i, j, k); */
+            CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+            // CraftBukkit end
         }
     }
 
     public void onPlace(World world, int i, int j, int k) {
         if (world.worldProvider.dimension > 0 || !Blocks.PORTAL.e(world, i, j, k)) {
             if (!World.a((IBlockAccess) world, i, j - 1, k) && !this.e(world, i, j, k)) {
-                fireExtinguished(world, i, j, k); // CraftBukkit - fuel block broke
+                // CraftBukkit start - fuel block broke
+                /* world.setAir(i, j, k); */
+                CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.AIR);
+                // CraftBukkit end
             } else {
                 world.a(i, j, k, this, this.a(world) + world.random.nextInt(10));
             }
@@ -270,12 +267,4 @@ public class BlockFire extends Block {
     public MaterialMapColor f(int i) {
         return MaterialMapColor.f;
     }
-
-    // CraftBukkit start
-    private void fireExtinguished(World world, int x, int y, int z) {
-        if (!CraftEventFactory.callBlockFadeEvent(world.getWorld().getBlockAt(x, y, z), Blocks.AIR).isCancelled()) {
-            world.setAir(x, y, z);
-        }
-    }
-    // CraftBukkit end
 }

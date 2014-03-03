@@ -123,7 +123,7 @@ public class CraftInventoryView extends InventoryView {
                 // Nothing to do, it's a CONTAINER slot
             }
         } else {
-            if (slot == -999) {
+            if (slot == -999 || slot == -1) {
                 type = SlotType.OUTSIDE;
             } else if (inventory.getType() == InventoryType.CRAFTING && slot < 9) {
                 type = SlotType.ARMOR;

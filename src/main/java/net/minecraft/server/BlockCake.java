@@ -54,15 +54,8 @@ public class BlockCake extends Block {
     private void b(World world, int i, int j, int k, EntityHuman entityhuman) {
         if (entityhuman.g(false)) {
             // CraftBukkit start
-            int oldFoodLevel = entityhuman.getFoodData().foodLevel;
-
-            org.bukkit.event.entity.FoodLevelChangeEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callFoodLevelChangeEvent(entityhuman, 2 + oldFoodLevel);
-
-            if (!event.isCancelled()) {
-                entityhuman.getFoodData().eat(event.getFoodLevel() - oldFoodLevel, 0.1F);
-            }
-
-            ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutUpdateHealth(((EntityPlayer) entityhuman).getBukkitEntity().getScaledHealth(), entityhuman.getFoodData().foodLevel, entityhuman.getFoodData().saturationLevel));
+            /* entityhuman.getFoodData().eat(2, 0.1F); */
+            org.bukkit.craftbukkit.event.CraftEventFactory.handleFoodLevelChangeEvent(entityhuman, 2, 0.1F, true);
             // CraftBukkit end
             int l = world.getData(i, j, k) + 1;
 

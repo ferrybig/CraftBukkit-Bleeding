@@ -3,10 +3,7 @@ package net.minecraft.server;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.EntityDamageEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntityFallingBlock extends Entity {
 
@@ -95,11 +92,10 @@ public class EntityFallingBlock extends Entity {
                     if (this.world.getType(i, j, k) != Blocks.PISTON_MOVING) {
                         this.die();
                         // CraftBukkit start - fire EntityChangeBlockEvent
-                        if (!this.f && this.world.mayPlace(this.id, i, j, k, true, 1, (Entity) null, (ItemStack) null) && !BlockFalling.canFall(this.world, i, j - 1, k) /* mimic the false conditions of setTypeIdAndData */ && i >= -30000000 && k >= -30000000 && i < 30000000 && k < 30000000 && j > 0 && j < 256 && !(this.world.getType(i, j, k) == this.id && this.world.getData(i, j, k) == this.data)) {
-                            if (CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, this.id, this.data).isCancelled()) {
+                        if (!this.f && this.world.mayPlace(this.id, i, j, k, true, 1, (Entity) null, (ItemStack) null) && !BlockFalling.canFall(this.world, i, j - 1, k) /*&& this.world.setTypeAndData(i, j, k, this.id, this.data, 3))*/) {
+                            if (CraftEventFactory.callEntityChangeBlockEvent(this, i, j, k, this.id, this.data).isCancelled() || !this.world.setTypeAndData(i, j, k, this.id, this.data, 3)) {
                                 return;
                             }
-                            this.world.setTypeAndData(i, j, k, this.id, this.data, 3);
                             // CraftBukkit end
 
                             if (this.id instanceof BlockFalling) {
@@ -159,7 +155,7 @@ public class EntityFallingBlock extends Entity {
                     // CraftBukkit start
                     float damage = (float) Math.min(MathHelper.d((float) i * this.fallHurtAmount), this.fallHurtMax);
 
-                    EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(this, entity, EntityDamageEvent.DamageCause.FALLING_BLOCK, damage);
+                    org.bukkit.event.entity.EntityDamageEvent event = CraftEventFactory.callEntityDamageEvent(this, entity, org.bukkit.event.entity.EntityDamageByEntityEvent.DamageCause.FALLING_BLOCK, damage);
                     if (event.isCancelled()) {
                         continue;
                     }

@@ -240,11 +240,14 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     private void openCustomInventory(Inventory inventory, EntityPlayer player, int windowType) {
-        if (player.playerConnection == null) return;
-        Container container = new CraftContainer(inventory, this, player.nextContainerCounter());
+        if (player.playerConnection == null) {
+            return;
+        }
 
-        container = CraftEventFactory.callInventoryOpenEvent(player, container);
-        if(container == null) return;
+        Container container = CraftEventFactory.callInventoryOpenEvent(player, new CraftContainer(inventory, this, player.nextContainerCounter()));
+        if (container == null) {
+            return;
+        }
 
         String title = container.getBukkitView().getTitle();
         int size = container.getBukkitView().getTopInventory().getSize();
@@ -289,8 +292,12 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public void openInventory(InventoryView inventory) {
-        if (!(getHandle() instanceof EntityPlayer)) return; // TODO: NPC support?
-        if (((EntityPlayer) getHandle()).playerConnection == null) return;
+        if (!(getHandle() instanceof EntityPlayer)) {
+            return; // TODO: NPC support?
+        }
+        if (((EntityPlayer) getHandle()).playerConnection == null) {
+            return;
+        }
         if (getHandle().activeContainer != getHandle().defaultContainer) {
             // fire INVENTORY_CLOSE if one already open
             ((EntityPlayer)getHandle()).playerConnection.a(new PacketPlayInCloseWindow(getHandle().activeContainer.windowId));

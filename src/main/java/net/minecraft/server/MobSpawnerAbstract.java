@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bukkit.event.entity.CreatureSpawnEvent; // CraftBukkit
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason; // CraftBukkit
 
 public abstract class MobSpawnerAbstract {
 
@@ -128,7 +128,7 @@ public abstract class MobSpawnerAbstract {
 
             entity.f(nbttagcompound);
             if (entity.world != null) {
-                entity.world.addEntity(entity, CreatureSpawnEvent.SpawnReason.SPAWNER); // CraftBukkit
+                entity.world.addEntity(entity, SpawnReason.SPAWNER); // CraftBukkit
             }
 
             NBTTagCompound nbttagcompound1;
@@ -153,7 +153,7 @@ public abstract class MobSpawnerAbstract {
                     entity2.f(nbttagcompound2);
                     entity2.setPositionRotation(entity1.locX, entity1.locY, entity1.locZ, entity1.yaw, entity1.pitch);
                     if (entity.world != null) {
-                        entity.world.addEntity(entity2, CreatureSpawnEvent.SpawnReason.SPAWNER); // CraftBukkit
+                        entity.world.addEntity(entity2, SpawnReason.SPAWNER); // CraftBukkit
                     }
 
                     entity1.mount(entity2);
@@ -163,7 +163,7 @@ public abstract class MobSpawnerAbstract {
             }
         } else if (entity instanceof EntityLiving && entity.world != null) {
             ((EntityInsentient) entity).a((GroupDataEntity) null);
-            this.a().addEntity(entity, CreatureSpawnEvent.SpawnReason.SPAWNER); // CraftBukkit
+            this.a().addEntity(entity, SpawnReason.SPAWNER); // CraftBukkit
         }
 
         return entity;

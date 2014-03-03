@@ -49,14 +49,8 @@ public class ItemBow extends Item {
             }
 
             // CraftBukkit start
-            org.bukkit.event.entity.EntityShootBowEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callEntityShootBowEvent(entityhuman, itemstack, entityarrow, f);
-            if (event.isCancelled()) {
-                event.getProjectile().remove();
+            if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleEntityShootBowEvent(world, entityhuman, itemstack, entityarrow, f)) {
                 return;
-            }
-
-            if (event.getProjectile() == entityarrow.getBukkitEntity()) {
-                world.addEntity(entityarrow);
             }
             // CraftBukkit end
 
@@ -69,7 +63,7 @@ public class ItemBow extends Item {
             }
 
             if (!world.isStatic) {
-                // world.addEntity(entityarrow); // CraftBukkit - moved up
+                // world.addEntity(entityarrow); // CraftBukkit - moved to event processing
             }
         }
     }

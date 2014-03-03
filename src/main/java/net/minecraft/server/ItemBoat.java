@@ -59,9 +59,7 @@ public class ItemBoat extends Item {
                     int k = movingobjectposition.d;
 
                     // CraftBukkit start - Boat placement
-                    org.bukkit.event.player.PlayerInteractEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent(entityhuman, org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK, i, j, k, movingobjectposition.face, itemstack);
-
-                    if (event.isCancelled()) {
+                    if (org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent(entityhuman, org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK, i, j, k, movingobjectposition.face, itemstack).isCancelled()) {
                         return itemstack;
                     }
                     // CraftBukkit end

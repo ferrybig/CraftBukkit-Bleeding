@@ -2,10 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
-import org.bukkit.event.entity.EntityInteractEvent;
-import org.bukkit.craftbukkit.event.CraftEventFactory;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class BlockSoil extends Block {
 
@@ -36,13 +33,9 @@ public class BlockSoil extends Block {
                 world.setData(i, j, k, l - 1, 2);
             } else if (!this.e(world, i, j, k)) {
                 // CraftBukkit start
-                org.bukkit.block.Block block = world.getWorld().getBlockAt(i, j, k);
-                if (CraftEventFactory.callBlockFadeEvent(block, Blocks.DIRT).isCancelled()) {
-                    return;
-                }
+                /* world.setTypeUpdate(i, j, k, Blocks.DIRT); */
+                CraftEventFactory.handleBlockFadeEvent(world, i, j, k, Blocks.DIRT);
                 // CraftBukkit end
-
-                world.setTypeUpdate(i, j, k, Blocks.DIRT);
             }
         } else {
             world.setData(i, j, k, 7, 2);
@@ -56,15 +49,7 @@ public class BlockSoil extends Block {
             }
 
             // CraftBukkit start - Interact soil
-            org.bukkit.event.Cancellable cancellable;
-            if (entity instanceof EntityHuman) {
-                cancellable = CraftEventFactory.callPlayerInteractEvent((EntityHuman) entity, org.bukkit.event.block.Action.PHYSICAL, i, j, k, -1, null);
-            } else {
-                cancellable = new EntityInteractEvent(entity.getBukkitEntity(), world.getWorld().getBlockAt(i, j, k));
-                world.getServer().getPluginManager().callEvent((EntityInteractEvent) cancellable);
-            }
-
-            if (cancellable.isCancelled()) {
+            if (!CraftEventFactory.handleInteractEvent(entity, world, i, j ,k)) {
                 return;
             }
             // CraftBukkit end

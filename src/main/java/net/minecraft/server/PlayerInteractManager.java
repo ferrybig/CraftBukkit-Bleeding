@@ -1,9 +1,8 @@
 package net.minecraft.server;
 
 // CraftBukkit start
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.Event;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 // CraftBukkit end
@@ -99,12 +98,12 @@ public class PlayerInteractManager {
     }
 
     public void dig(int i, int j, int k, int l) {
-        // CraftBukkit start
-        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand());
+        PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_BLOCK, i, j, k, l, this.player.inventory.getItemInHand()); // CraftBukkit - call event
         if (!this.gamemode.isAdventure() || this.player.d(i, j, k)) {
+            // CraftBukkit start
             if (event.isCancelled()) {
                 // Let the client know the block still exists
-                ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
+                this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
                 // Update any tile entity data for this block
                 TileEntity tileentity = this.world.getTileEntity(i, j, k);
                 if (tileentity != null) {
@@ -123,27 +122,26 @@ public class PlayerInteractManager {
                 float f = 1.0F;
                 Block block = this.world.getType(i, j, k);
                 // CraftBukkit start - Swings at air do *NOT* exist.
-                if (event.useInteractedBlock() == Event.Result.DENY) {
+                if (event.useInteractedBlock() == Result.DENY) {
                     // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                     if (block == Blocks.WOODEN_DOOR) {
                         // For some reason *BOTH* the bottom/top part have to be marked updated.
                         boolean bottom = (this.world.getData(i, j, k) & 8) == 0;
-                        ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
-                        ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j + (bottom ? 1 : -1), k, this.world));
+                        this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
+                        this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j + (bottom ? 1 : -1), k, this.world));
                     } else if (block == Blocks.TRAP_DOOR) {
-                        ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
+                        this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
                     }
                 } else if (block.getMaterial() != Material.AIR) {
                     block.attack(this.world, i, j, k, this.player);
                     f = block.getDamage(this.player, this.player.world, i, j, k);
-                    // Allow fire punching to be blocked
-                    this.world.douseFire((EntityHuman) null, i, j, k, l);
+                    this.world.douseFire((EntityHuman) null, i, j, k, l); // Allow fire punching to be blocked
                 }
 
-                if (event.useItemInHand() == Event.Result.DENY) {
+                if (event.useItemInHand() == Result.DENY) {
                     // If we 'insta destroyed' then the client needs to be informed.
                     if (f > 1.0f) {
-                        ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
+                        this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
                     }
                     return;
                 }
@@ -151,7 +149,7 @@ public class PlayerInteractManager {
 
                 if (blockEvent.isCancelled()) {
                     // Let the client know the block still exists
-                    ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
+                    this.player.playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
                     return;
                 }
 
@@ -226,52 +224,10 @@ public class PlayerInteractManager {
 
     public boolean breakBlock(int i, int j, int k) {
         // CraftBukkit start - fire BlockBreakEvent
-        BlockBreakEvent event = null;
+        org.bukkit.event.block.BlockBreakEvent event = CraftEventFactory.handleBlockBreakEvent(this, i, j, k);
 
-        if (this.player instanceof EntityPlayer) {
-            org.bukkit.block.Block block = this.world.getWorld().getBlockAt(i, j, k);
-
-            // Tell client the block is gone immediately then process events
-            if (world.getTileEntity(i, j, k) == null) {
-                PacketPlayOutBlockChange packet = new PacketPlayOutBlockChange(i, j, k, this.world);
-                packet.block = Blocks.AIR;
-                packet.data = 0;
-                ((EntityPlayer) this.player).playerConnection.sendPacket(packet);
-            }
-
-            event = new BlockBreakEvent(block, this.player.getBukkitEntity());
-
-            // Adventure mode pre-cancel
-            event.setCancelled(this.gamemode.isAdventure() && !this.player.d(i, j, k));
-
-            // Sword + Creative mode pre-cancel
-            event.setCancelled(event.isCancelled() || (this.gamemode.d() && this.player.bd() != null && this.player.bd().getItem() instanceof ItemSword));
-
-            // Calculate default block experience
-            Block nmsBlock = this.world.getType(i, j, k);
-
-            if (nmsBlock != null && !event.isCancelled() && !this.isCreative() && this.player.a(nmsBlock)) {
-                // Copied from block.a(world, entityhuman, int, int, int, int)
-                if (!(nmsBlock.E() && EnchantmentManager.hasSilkTouchEnchantment(this.player))) {
-                    int data = block.getData();
-                    int bonusLevel = EnchantmentManager.getBonusBlockLootEnchantmentLevel(this.player);
-
-                    event.setExpToDrop(nmsBlock.getExpDrop(this.world, data, bonusLevel));
-                }
-            }
-
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
-                // Let the client know the block still exists
-                ((EntityPlayer) this.player).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j, k, this.world));
-                // Update any tile entity data for this block
-                TileEntity tileentity = this.world.getTileEntity(i, j, k);
-                if (tileentity != null) {
-                    this.player.playerConnection.sendPacket(tileentity.getUpdatePacket());
-                }
-                return false;
-            }
+        if (event.isCancelled()) {
+            return false;
         }
 
         if (false && this.gamemode.isAdventure() && !this.player.d(i, j, k)) { // Never trigger
@@ -281,7 +237,11 @@ public class PlayerInteractManager {
             return false;
         } else {
             Block block = this.world.getType(i, j, k);
-            if (block == Blocks.AIR) return false; // CraftBukkit - A plugin set block to air without cancelling
+            // CraftBukkit start - A plugin set block to air without cancelling
+            if (block == Blocks.AIR) {
+                return false;
+            }
+            // CraftBukkit end
             int l = this.world.getData(i, j, k);
 
             // CraftBukkit start - Special case skulls, their item data comes from a tile entity
@@ -313,7 +273,7 @@ public class PlayerInteractManager {
             }
 
             // CraftBukkit start - Drop event experience
-            if (flag && event != null) {
+            if (flag) {
                 block.dropExperience(this.world, i, j, k, event.getExpToDrop());
             }
             // CraftBukkit end
@@ -372,13 +332,13 @@ public class PlayerInteractManager {
         boolean result = false;
         if (block != Blocks.AIR) {
             PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(entityhuman, Action.RIGHT_CLICK_BLOCK, i, j, k, l, itemstack);
-            if (event.useInteractedBlock() == Event.Result.DENY) {
+            if (event.useInteractedBlock() == Result.DENY) {
                 // If we denied a door from opening, we need to send a correcting update to the client, as it already opened the door.
                 if (block == Blocks.WOODEN_DOOR) {
                     boolean bottom = (world.getData(i, j, k) & 8) == 0;
                     ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutBlockChange(i, j + (bottom ? 1 : -1), k, world));
                 }
-                result = (event.useItemInHand() != Event.Result.ALLOW);
+                result = (event.useItemInHand() != Result.ALLOW);
             } else if (!entityhuman.isSneaking() || itemstack == null) {
                 result = block.interact(world, i, j, k, entityhuman, l, f, f1, f2);
             }
@@ -397,7 +357,7 @@ public class PlayerInteractManager {
             }
 
             // If we have 'true' and no explicit deny *or* an explicit allow -- run the item part of the hook
-            if (itemstack != null && ((!result && event.useItemInHand() != Event.Result.DENY) || event.useItemInHand() == Event.Result.ALLOW)) {
+            if (itemstack != null && ((!result && event.useItemInHand() != Result.DENY) || event.useItemInHand() == Result.ALLOW)) {
                 this.useItem(entityhuman, world, itemstack);
             }
         }

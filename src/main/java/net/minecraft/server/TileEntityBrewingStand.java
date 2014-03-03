@@ -5,7 +5,6 @@ import java.util.List;
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.inventory.BrewEvent;
 // CraftBukkit end
 
 public class TileEntityBrewingStand extends TileEntity implements IWorldInventory {
@@ -23,7 +22,7 @@ public class TileEntityBrewingStand extends TileEntity implements IWorldInventor
 
     // CraftBukkit start - add fields and methods
     public List<HumanEntity> transaction = new java.util.ArrayList<HumanEntity>();
-    private int maxStack = 64;
+    private int maxStack = MAX_STACK;
 
     public void onOpen(CraftHumanEntity who) {
         transaction.add(who);
@@ -140,10 +139,9 @@ public class TileEntityBrewingStand extends TileEntity implements IWorldInventor
             ItemStack itemstack = this.items[3];
 
             // CraftBukkit start
-            if (getOwner() != null) {
-                BrewEvent event = new BrewEvent(world.getWorld().getBlockAt(x, y, z), (org.bukkit.inventory.BrewerInventory) this.getOwner().getInventory());
-                org.bukkit.Bukkit.getPluginManager().callEvent(event);
-                if (event.isCancelled()) {
+            org.bukkit.inventory.InventoryHolder owner = this.getOwner();
+            if (owner != null) {
+                if (org.bukkit.craftbukkit.event.CraftEventFactory.callBrewEvent(world, x, y, z, (org.bukkit.inventory.BrewerInventory) owner.getInventory()).isCancelled()) {
                     return;
                 }
             }

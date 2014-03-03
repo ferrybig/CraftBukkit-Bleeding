@@ -3,8 +3,6 @@ package net.minecraft.server;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bukkit.event.entity.EntityInteractEvent; // CraftBukkit
-
 public class BlockPressurePlateBinary extends BlockPressurePlateAbstract {
 
     private EnumMobType a;
@@ -45,19 +43,8 @@ public class BlockPressurePlateBinary extends BlockPressurePlateAbstract {
 
                 // CraftBukkit start - Call interact event when turning on a pressure plate
                 if (this.c(world.getData(i, j, k)) == 0) {
-                    org.bukkit.World bworld = world.getWorld();
-                    org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
-                    org.bukkit.event.Cancellable cancellable;
-
-                    if (entity instanceof EntityHuman) {
-                        cancellable = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerInteractEvent((EntityHuman) entity, org.bukkit.event.block.Action.PHYSICAL, i, j, k, -1, null);
-                    } else {
-                        cancellable = new EntityInteractEvent(entity.getBukkitEntity(), bworld.getBlockAt(i, j, k));
-                        manager.callEvent((EntityInteractEvent) cancellable);
-                    }
-
                     // We only want to block turning the plate on if all events are cancelled
-                    if (cancellable.isCancelled()) {
+                    if (!org.bukkit.craftbukkit.event.CraftEventFactory.handleInteractEvent(entity, world, i, j ,k)) {
                         continue;
                     }
                 }

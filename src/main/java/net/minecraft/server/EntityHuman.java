@@ -10,14 +10,7 @@ import net.minecraft.util.com.mojang.authlib.GameProfile;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
-import org.bukkit.craftbukkit.entity.CraftItem;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityCombustByEntityEvent;
-import org.bukkit.event.player.PlayerBedEnterEvent;
-import org.bukkit.event.player.PlayerBedLeaveEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 // CraftBukkit end
 
 public abstract class EntityHuman extends EntityLiving implements ICommandListener {
@@ -269,26 +262,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
             int i = this.f.count;
 
             // CraftBukkit start - fire PlayerItemConsumeEvent
-            org.bukkit.inventory.ItemStack craftItem = CraftItemStack.asBukkitCopy(this.f);
-            PlayerItemConsumeEvent event = new PlayerItemConsumeEvent((Player) this.getBukkitEntity(), craftItem);
-            world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
-                // Update client
-                if (this instanceof EntityPlayer) {
-                    ((EntityPlayer) this).playerConnection.sendPacket(new PacketPlayOutSetSlot((byte) 0, activeContainer.a((IInventory) this.inventory, this.inventory.itemInHandIndex).index, this.f));
-                }
-                return;
-            }
-
-            // Plugin modified the item, process it but don't remove it
-            if (!craftItem.equals(event.getItem())) {
-                CraftItemStack.asNMSCopy(event.getItem()).b(this.world, this);
-
-                // Update client
-                if (this instanceof EntityPlayer) {
-                    ((EntityPlayer) this).playerConnection.sendPacket(new PacketPlayOutSetSlot((byte) 0, activeContainer.a((IInventory) this.inventory, this.inventory.itemInHandIndex).index, this.f));
-                }
+            if (!CraftEventFactory.handlePlayerItemConsumeEvent(this, this.f)) {
                 return;
             }
             // CraftBukkit end
@@ -381,8 +355,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         }
 
         if (this.world.difficulty == EnumDifficulty.PEACEFUL && this.getHealth() < this.getMaxHealth() && this.world.getGameRules().getBoolean("naturalRegeneration") && this.ticksLived % 20 * 12 == 0) {
-            // CraftBukkit - added regain reason of "REGEN" for filtering purposes.
-            this.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.REGEN);
+            this.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.REGEN); // CraftBukkit - added regain reason of "REGEN" for filtering purposes.
         }
 
         this.inventory.k();
@@ -558,14 +531,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
             }
 
             // CraftBukkit start - fire PlayerDropItemEvent
-            Player player = (Player) this.getBukkitEntity();
-            CraftItem drop = new CraftItem(this.world.getServer(), entityitem);
-
-            PlayerDropItemEvent event = new PlayerDropItemEvent(player, drop);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
-                player.getInventory().addItem(drop.getItemStack());
+            if (CraftEventFactory.handlePlayerDropItemEvent(this, entityitem)) {
                 return null;
             }
             // CraftBukkit end
@@ -965,14 +931,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
                         if (entity instanceof EntityLiving) {
                             this.a(StatisticList.t, Math.round(f * 10.0F));
                             if (j > 0) {
-                                // CraftBukkit start - Call a combust event when somebody hits with a fire enchanted item
-                                EntityCombustByEntityEvent combustEvent = new EntityCombustByEntityEvent(this.getBukkitEntity(), entity.getBukkitEntity(), j * 4);
-                                org.bukkit.Bukkit.getPluginManager().callEvent(combustEvent);
-
-                                if (!combustEvent.isCancelled()) {
-                                    entity.setOnFire(combustEvent.getDuration());
-                                }
-                                // CraftBukkit end
+                                entity.setOnFire(CraftEventFactory.handleEntityCombustByEntityEvent(this, entity, j * 4)); // CraftBukkit - Call a combust event when somebody hits with a fire enchanted item
                             }
                         }
 
@@ -1037,16 +996,8 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
         }
 
         // CraftBukkit start - fire PlayerBedEnterEvent
-        if (this.getBukkitEntity() instanceof Player) {
-            Player player = (Player) this.getBukkitEntity();
-            org.bukkit.block.Block bed = this.world.getWorld().getBlockAt(i, j, k);
-
-            PlayerBedEnterEvent event = new PlayerBedEnterEvent(player, bed);
-            this.world.getServer().getPluginManager().callEvent(event);
-
-            if (event.isCancelled()) {
-                return EnumBedResult.OTHER_PROBLEM;
-            }
+        if (CraftEventFactory.callPlayerBedEnterEvent(this, i, j, k).isCancelled()) {
+            return EnumBedResult.OTHER_PROBLEM;
         }
         // CraftBukkit end
 
@@ -1134,21 +1085,7 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
             this.world.everyoneSleeping();
         }
 
-        // CraftBukkit start - fire PlayerBedLeaveEvent
-        if (this.getBukkitEntity() instanceof Player) {
-            Player player = (Player) this.getBukkitEntity();
-
-            org.bukkit.block.Block bed;
-            if (chunkcoordinates != null) {
-                bed = this.world.getWorld().getBlockAt(chunkcoordinates.x, chunkcoordinates.y, chunkcoordinates.z);
-            } else {
-                bed = this.world.getWorld().getBlockAt(player.getLocation());
-            }
-
-            PlayerBedLeaveEvent event = new PlayerBedLeaveEvent(player, bed);
-            this.world.getServer().getPluginManager().callEvent(event);
-        }
-        // CraftBukkit end
+        CraftEventFactory.callPlayerBedLeaveEvent(this, chunkcoordinates); // CraftBukkit - fire PlayerBedLeaveEvent
 
         if (flag) {
             this.sleepTicks = 0;

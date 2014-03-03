@@ -2,8 +2,6 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.block.LeavesDecayEvent; // CraftBukkit
-
 public abstract class BlockLeaves extends BlockTransparent {
 
     int[] a;
@@ -123,10 +121,7 @@ public abstract class BlockLeaves extends BlockTransparent {
 
     private void e(World world, int i, int j, int k) {
         // CraftBukkit start
-        LeavesDecayEvent event = new LeavesDecayEvent(world.getWorld().getBlockAt(i, j, k));
-        world.getServer().getPluginManager().callEvent(event);
-
-        if (event.isCancelled()) {
+        if (org.bukkit.craftbukkit.event.CraftEventFactory.callLeavesDecayEvent(world, i, j, k).isCancelled()) {
             return;
         }
         // CraftBukkit end

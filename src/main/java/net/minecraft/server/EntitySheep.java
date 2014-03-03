@@ -2,10 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
-import org.bukkit.event.entity.SheepRegrowWoolEvent;
-import org.bukkit.event.player.PlayerShearEntityEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.event.CraftEventFactory; // CraftBukkit
 
 public class EntitySheep extends EntityAnimal {
 
@@ -61,15 +58,15 @@ public class EntitySheep extends EntityAnimal {
     }
 
     protected void dropDeathLoot(boolean flag, int i) {
-        // CraftBukkit start - Whole method
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>();
+        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(); // CraftBukkit
 
         if (!this.isSheared()) {
-            loot.add(new org.bukkit.inventory.ItemStack(org.bukkit.Material.WOOL, 1, (short) 0, (byte) this.getColor()));
+            // CraftBukkit start
+            /* this.a(new ItemStack(Item.getItemOf(Blocks.WOOL), 1, this.getColor()), 0.0F); */
+            loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asBukkitCopy(new ItemStack(Item.getItemOf(Blocks.WOOL), 1, this.getColor())));
+            // CraftBukkit end
         }
-
-        org.bukkit.craftbukkit.event.CraftEventFactory.callEntityDeathEvent(this, loot);
-        // CraftBukkit end
+        CraftEventFactory.callEntityDeathEvent(this, loot); // CraftBukkit
     }
 
     protected Item getLoot() {
@@ -82,10 +79,7 @@ public class EntitySheep extends EntityAnimal {
         if (itemstack != null && itemstack.getItem() == Items.SHEARS && !this.isSheared() && !this.isBaby()) {
             if (!this.world.isStatic) {
                 // CraftBukkit start
-                PlayerShearEntityEvent event = new PlayerShearEntityEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), this.getBukkitEntity());
-                this.world.getServer().getPluginManager().callEvent(event);
-
-                if (event.isCancelled()) {
+                if (CraftEventFactory.callPlayerShearEntityEvent(entityhuman, this).isCancelled()) {
                     return false;
                 }
                 // CraftBukkit end
@@ -177,15 +171,7 @@ public class EntitySheep extends EntityAnimal {
     }
 
     public void p() {
-        // CraftBukkit start
-        SheepRegrowWoolEvent event = new SheepRegrowWoolEvent((org.bukkit.entity.Sheep) this.getBukkitEntity());
-        this.world.getServer().getPluginManager().callEvent(event);
-
-        if (!event.isCancelled()) {
-            this.setSheared(false);
-        }
-        // CraftBukkit end
-
+        this.setSheared(CraftEventFactory.callSheepRegrowWoolEvent(this).isCancelled()); // CraftBukkit - call SheepRegrowWoolEvent
         if (this.isBaby()) {
             this.a(60);
         }

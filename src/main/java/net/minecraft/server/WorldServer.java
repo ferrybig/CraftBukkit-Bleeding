@@ -15,16 +15,11 @@ import org.apache.logging.log4j.Logger;
 
 // CraftBukkit start
 import org.bukkit.WeatherType;
-import org.bukkit.block.BlockState;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.util.LongHash;
+// CraftBukkit end
 
-import org.bukkit.event.block.BlockFormEvent;
-import org.bukkit.event.weather.LightningStrikeEvent;
-import org.bukkit.event.weather.ThunderChangeEvent;
-import org.bukkit.event.weather.WeatherChangeEvent;
-
-public class WorldServer extends World implements org.bukkit.BlockChangeDelegate {
-    // CraftBukkit end
+public class WorldServer extends World implements org.bukkit.BlockChangeDelegate { // CraftBukkit - implement BlockChangeDelegate
 
     private static final Logger a = LogManager.getLogger();
     private final MinecraftServer server;
@@ -256,16 +251,11 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     private void Y() {
         // CraftBukkit start
-        WeatherChangeEvent weather = new WeatherChangeEvent(this.getWorld(), false);
-        this.getServer().getPluginManager().callEvent(weather);
-
-        ThunderChangeEvent thunder = new ThunderChangeEvent(this.getWorld(), false);
-        this.getServer().getPluginManager().callEvent(thunder);
-        if (!weather.isCancelled()) {
+        if (!CraftEventFactory.callWeatherChangeEvent(this.getWorld(), false).isCancelled()) {
             this.worldData.setWeatherDuration(0);
             this.worldData.setStorm(false);
         }
-        if (!thunder.isCancelled()) {
+        if (!CraftEventFactory.callThunderChangeEvent(this.getWorld(), false).isCancelled()) {
             this.worldData.setThunderDuration(0);
             this.worldData.setThundering(false);
         }
@@ -347,27 +337,15 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
                 l1 = this.h(j1 + k, k1 + l);
                 if (this.s(j1 + k, l1 - 1, k1 + l)) {
                     // CraftBukkit start
-                    BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1 - 1, k1 + l).getState();
-                    blockState.setTypeId(Block.b(Blocks.ICE));
-
-                    BlockFormEvent iceBlockForm = new BlockFormEvent(blockState.getBlock(), blockState);
-                    this.getServer().getPluginManager().callEvent(iceBlockForm);
-                    if (!iceBlockForm.isCancelled()) {
-                        blockState.update(true);
-                    }
+                    /* this.setTypeUpdate(j1 + k, l1 - 1, k1 + l, Blocks.ICE); */
+                    CraftEventFactory.handleBlockFormEvent(this, j1 + k, l1 - 1, k1 + l, Blocks.ICE);
                     // CraftBukkit end
                 }
 
                 if (this.Q() && this.e(j1 + k, l1, k1 + l, true)) {
                     // CraftBukkit start
-                    BlockState blockState = this.getWorld().getBlockAt(j1 + k, l1, k1 + l).getState();
-                    blockState.setTypeId(Block.b(Blocks.SNOW));
-
-                    BlockFormEvent snow = new BlockFormEvent(blockState.getBlock(), blockState);
-                    this.getServer().getPluginManager().callEvent(snow);
-                    if (!snow.isCancelled()) {
-                        blockState.update(true);
-                    }
+                    /* this.setTypeUpdate(j1 + k, l1, k1 + l, Blocks.SNOW); */
+                    CraftEventFactory.handleBlockFormEvent(this, j1 + k, l1, k1 + l, Blocks.SNOW);
                     // CraftBukkit end
                 }
 
@@ -826,16 +804,13 @@ public class WorldServer extends World implements org.bukkit.BlockChangeDelegate
 
     public boolean strikeLightning(Entity entity) {
         // CraftBukkit start
-        LightningStrikeEvent lightning = new LightningStrikeEvent(this.getWorld(), (org.bukkit.entity.LightningStrike) entity.getBukkitEntity());
-        this.getServer().getPluginManager().callEvent(lightning);
-
-        if (lightning.isCancelled()) {
+        if (CraftEventFactory.callLightningStrikeEvent(entity).isCancelled()) {
             return false;
         }
+        // CraftBukkit end
 
         if (super.strikeLightning(entity)) {
-            this.server.getPlayerList().sendPacketNearby(entity.locX, entity.locY, entity.locZ, 512.0D, this.dimension, new PacketPlayOutSpawnEntityWeather(entity));
-            // CraftBukkit end
+            this.server.getPlayerList().sendPacketNearby(entity.locX, entity.locY, entity.locZ, 512.0D, this.dimension, new PacketPlayOutSpawnEntityWeather(entity)); // CraftBukkit - this.worldProvider.dimension -> this.dimension
             return true;
         } else {
             return false;

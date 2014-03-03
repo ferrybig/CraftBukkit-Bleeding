@@ -2,8 +2,6 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-import org.bukkit.event.block.BlockRedstoneEvent; // CraftBukkit
-
 public class BlockCommand extends BlockContainer {
 
     public BlockCommand() {
@@ -21,18 +19,15 @@ public class BlockCommand extends BlockContainer {
             boolean flag1 = (l & 1) != 0;
 
             // CraftBukkit start
-            org.bukkit.block.Block bukkitBlock = world.getWorld().getBlockAt(i, j, k);
-            int old = flag1 ? 15 : 0;
-            int current = flag ? 15 : 0;
-
-            BlockRedstoneEvent eventRedstone = new BlockRedstoneEvent(bukkitBlock, old, current);
-            world.getServer().getPluginManager().callEvent(eventRedstone);
+            org.bukkit.event.block.BlockRedstoneEvent eventRedstone = org.bukkit.craftbukkit.event.CraftEventFactory.callRedstoneChange(world, i, j, k, flag1 ? 15 : 0, flag ? 15 : 0);
+            flag = eventRedstone.getNewCurrent() > 0;
+            flag1 = eventRedstone.getOldCurrent() > 0;
             // CraftBukkit end
 
-            if (eventRedstone.getNewCurrent() > 0 && !(eventRedstone.getOldCurrent() > 0)) { // CraftBukkit
+            if (flag && !flag1) {
                 world.setData(i, j, k, l | 1, 4);
                 world.a(i, j, k, this, this.a(world));
-            } else if (!(eventRedstone.getNewCurrent() > 0) && eventRedstone.getOldCurrent() > 0) { // CraftBukkit
+            } else if (!flag && flag1) {
                 world.setData(i, j, k, l & -2, 4);
             }
         }

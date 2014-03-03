@@ -696,7 +696,7 @@ public class Block {
         }
     }
 
-    protected boolean E() {
+    public boolean E() { // CraftBukkit - protected -> public
         return this.d() && !this.isTileEntity;
     }
 

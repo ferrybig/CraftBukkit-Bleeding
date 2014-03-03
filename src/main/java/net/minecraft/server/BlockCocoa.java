@@ -19,8 +19,10 @@ public class BlockCocoa extends BlockDirectional implements IBlockFragilePlantEl
 
             if (i1 < 2) {
                 ++i1;
-                // CraftBukkit
+                // CraftBukkit start
+                /* world.setData(i, j, k, i1 << 2 | l(l), 2); */
                 org.bukkit.craftbukkit.event.CraftEventFactory.handleBlockGrowEvent(world, i, j, k, this, i1 << 2 | l(l));
+                // CraftBukkit end
             }
         }
     }

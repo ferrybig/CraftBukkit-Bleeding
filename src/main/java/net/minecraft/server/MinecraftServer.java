@@ -37,9 +37,7 @@ import jline.console.ConsoleReader;
 import joptsimple.OptionSet;
 
 import org.bukkit.World.Environment;
-import org.bukkit.craftbukkit.util.Waitable;
-import org.bukkit.event.server.RemoteServerCommandEvent;
-import org.bukkit.event.world.WorldSaveEvent;
+import org.bukkit.craftbukkit.event.CraftEventFactory;
 // CraftBukkit end
 
 public abstract class MinecraftServer implements ICommandListener, Runnable, IMojangStatistics {
@@ -266,7 +264,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
                 world.getWorld().getPopulators().addAll(gen.getDefaultPopulators(world.getWorld()));
             }
 
-            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldInitEvent(world.getWorld()));
+            CraftEventFactory.callWorldInitEvent(world);
 
             world.addIWorldAccess(new WorldManager(this, world));
             if (!this.N()) {
@@ -320,7 +318,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
         }
 
         for (WorldServer world : this.worlds) {
-            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(world.getWorld()));
+            CraftEventFactory.callWorldLoadEvent(world);
         }
         // CraftBukkit end
         this.n();
@@ -354,23 +352,27 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
 
     protected void saveChunks(boolean flag) throws ExceptionWorldConflict { // CraftBukkit - added throws
         if (!this.M) {
-            // CraftBukkit start - fire WorldSaveEvent
-            // WorldServer[] aworldserver = this.worldServer;
-            int i = this.worlds.size();
+            WorldServer[] aworldserver = this.worlds.toArray(new WorldServer[this.worlds.size()]); // CraftBukkit - this.worldServer -> this.worlds.toArray
+            int i = aworldserver.length;
 
             for (int j = 0; j < i; ++j) {
-                WorldServer worldserver = this.worlds.get(j);
+                WorldServer worldserver = aworldserver[j];
 
                 if (worldserver != null) {
                     if (!flag) {
                         MinecraftServer.i.info("Saving chunks for level \'" + worldserver.getWorldData().getName() + "\'/" + worldserver.worldProvider.getName());
                     }
 
+                    /* CraftBukkit start - fire WorldSaveEvent
+                    try {
+                        worldserver.save(true, (IProgressUpdate) null);
+                    } catch (ExceptionWorldConflict exceptionworldconflict) {
+                        i.warn(exceptionworldconflict.getMessage());
+                    }
+                    */
                     worldserver.save(true, (IProgressUpdate) null);
                     worldserver.saveLevel();
-
-                    WorldSaveEvent event = new WorldSaveEvent(worldserver.getWorld());
-                    this.server.getPluginManager().callEvent(event);
+                    CraftEventFactory.callWorldSaveEvent(worldserver);
                     // CraftBukkit end
                 }
             }
@@ -873,30 +875,13 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
         // CraftBukkit end
     }
 
-    // CraftBukkit start - fire RemoteServerCommandEvent
-    public String g(final String s) { // final parameter
-        Waitable<String> waitable = new Waitable<String>() {
-            @Override
-            protected String evaluate() {
-                RemoteControlCommandListener.instance.e();
-                // Event changes start
-                RemoteServerCommandEvent event = new RemoteServerCommandEvent(MinecraftServer.this.remoteConsole, s);
-                MinecraftServer.this.server.getPluginManager().callEvent(event);
-                // Event changes end
-                ServerCommand servercommand = new ServerCommand(event.getCommand(), RemoteControlCommandListener.instance);
-                MinecraftServer.this.server.dispatchServerCommand(MinecraftServer.this.remoteConsole, servercommand); // CraftBukkit
-                // this.o.a(RemoteControlCommandListener.instance, s);
-                return RemoteControlCommandListener.instance.f();
-            }};
-        processQueue.add(waitable);
-        try {
-            return waitable.get();
-        } catch (java.util.concurrent.ExecutionException e) {
-            throw new RuntimeException("Exception processing rcon command " + s, e.getCause());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // Maintain interrupted state
-            throw new RuntimeException("Interrupted processing rcon command " + s, e);
-        }
+    public String g(String s) {
+        /* CraftBukkit start - fire RemoteServerCommandEvent
+        RemoteControlCommandListener.instance.e();
+        this.o.a(RemoteControlCommandListener.instance, s);
+        return RemoteControlCommandListener.instance.f();
+        */
+        return CraftEventFactory.handleRemoteServerCommandEvent(this, s);
         // CraftBukkit end
     }
 

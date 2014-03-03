@@ -2,10 +2,7 @@ package net.minecraft.server;
 
 import java.util.Random;
 
-// CraftBukkit start
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.block.BlockDispenseEvent;
-// CraftBukkit end
+import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
 
 final class DispenseBehaviorFireball extends DispenseBehaviorItem {
 
@@ -24,32 +21,22 @@ final class DispenseBehaviorFireball extends DispenseBehaviorItem {
         double d5 = random.nextGaussian() * 0.05D + (double) enumfacing.getAdjacentZ();
 
         // CraftBukkit start
-        ItemStack itemstack1 = itemstack.a(1);
-        org.bukkit.block.Block block = world.getWorld().getBlockAt(isourceblock.getBlockX(), isourceblock.getBlockY(), isourceblock.getBlockZ());
-        CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+        CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack.a(1));
 
-        BlockDispenseEvent event = new BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(d3, d4, d5));
         if (!BlockDispenser.eventFired) {
-            world.getServer().getPluginManager().callEvent(event);
-        }
+            org.bukkit.event.block.BlockDispenseEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callBlockDispenseEvent(isourceblock, craftItem, d3, d4, d5);
 
-        if (event.isCancelled()) {
-            itemstack.count++;
-            return itemstack;
-        }
-
-        if (!event.getItem().equals(craftItem)) {
-            itemstack.count++;
-            // Chain to handler for new item
-            ItemStack eventStack = CraftItemStack.asNMSCopy(event.getItem());
-            IDispenseBehavior idispensebehavior = (IDispenseBehavior) BlockDispenser.a.get(eventStack.getItem());
-            if (idispensebehavior != IDispenseBehavior.a && idispensebehavior != this) {
-                idispensebehavior.a(isourceblock, eventStack);
-                return itemstack;
+            if (event.isCancelled() || event.getItem().equals(craftItem)) {
+                return this.eventProcessing(event, isourceblock, itemstack, craftItem, true);
             }
+
+            org.bukkit.util.Vector vector = event.getVelocity();
+            d3 = vector.getX();
+            d4 = vector.getY();
+            d5 = vector.getZ();
         }
 
-        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(world, d0, d1, d2, event.getVelocity().getX(), event.getVelocity().getY(), event.getVelocity().getZ());
+        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(world, d0, d1, d2, d3, d4, d5);
         entitysmallfireball.projectileSource = new org.bukkit.craftbukkit.projectiles.CraftBlockProjectileSource((TileEntityDispenser) isourceblock.getTileEntity());
 
         world.addEntity(entitysmallfireball);

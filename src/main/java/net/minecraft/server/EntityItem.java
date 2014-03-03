@@ -5,8 +5,6 @@ import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.bukkit.event.player.PlayerPickupItemEvent; // CraftBukkit
-
 public class EntityItem extends Entity {
 
     private static final Logger d = LogManager.getLogger();
@@ -106,8 +104,7 @@ public class EntityItem extends Entity {
             // ++this.age; // CraftBukkit - Moved up
             if (!this.world.isStatic && this.age >= 6000) {
                 // CraftBukkit start - fire ItemDespawnEvent
-                if (org.bukkit.craftbukkit.event.CraftEventFactory.callItemDespawnEvent(this).isCancelled()) {
-                    this.age = 0;
+                if (org.bukkit.craftbukkit.event.CraftEventFactory.handleItemDespawnEvent(this)) {
                     return;
                 }
                 // CraftBukkit end
@@ -245,9 +242,7 @@ public class EntityItem extends Entity {
 
             if (this.pickupDelay <= 0 && canHold > 0) {
                 itemstack.count = canHold;
-                PlayerPickupItemEvent event = new PlayerPickupItemEvent((org.bukkit.entity.Player) entityhuman.getBukkitEntity(), (org.bukkit.entity.Item) this.getBukkitEntity(), remaining);
-                // event.setCancelled(!entityhuman.canPickUpLoot); TODO
-                this.world.getServer().getPluginManager().callEvent(event);
+                org.bukkit.event.player.PlayerPickupItemEvent event = org.bukkit.craftbukkit.event.CraftEventFactory.callPlayerPickupItemEvent(entityhuman, this.getBukkitEntity(), remaining);
                 itemstack.count = canHold + remaining;
 
                 if (event.isCancelled()) {

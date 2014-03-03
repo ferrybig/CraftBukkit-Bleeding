@@ -6,7 +6,7 @@ import java.util.UUID;
 
 // CraftBukkit start
 import org.bukkit.craftbukkit.event.CraftEventFactory;
-import org.bukkit.event.entity.EntityUnleashEvent;
+import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.event.entity.EntityUnleashEvent.UnleashReason;
 // CraftBukkit end
 
@@ -196,6 +196,21 @@ public abstract class EntityInsentient extends EntityLiving {
                 if (itemstack != null) {
                     loot.add(org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(itemstack));
                 }
+            }
+        }
+
+        // Special case for Creepers dropping records & Spiders dropping eyes
+        if (this instanceof EntityCreeper) {
+            EntityCreeper creeper = (EntityCreeper) this;
+            Item record = creeper.record;
+
+            if (record != null) {
+                loot.add(CraftItemStack.asNewCraftStack(record));
+                creeper.record = null;
+            }
+        } else if (this instanceof EntitySpider) {
+            if (flag && (this.random.nextInt(3) == 0 || this.random.nextInt(1 + i) > 0)) {
+                loot.add(CraftItemStack.asNewCraftStack(Items.SPIDER_EYE));
             }
         }
 
@@ -794,8 +809,7 @@ public abstract class EntityInsentient extends EntityLiving {
             if (itemstack != null && itemstack.getItem() == Items.LEASH && this.bM()) {
                 if (!(this instanceof EntityTameableAnimal) || !((EntityTameableAnimal) this).isTamed()) {
                     // CraftBukkit start - fire PlayerLeashEntityEvent
-                    if (CraftEventFactory.callPlayerLeashEntityEvent(this, entityhuman, entityhuman).isCancelled()) {
-                        ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutAttachEntity(1, this, this.getLeashHolder()));
+                    if (!CraftEventFactory.handlePlayerLeashEntityEvent(this, entityhuman, entityhuman)) {
                         return false;
                     }
                     // CraftBukkit end
@@ -806,8 +820,7 @@ public abstract class EntityInsentient extends EntityLiving {
 
                 if (((EntityTameableAnimal) this).e(entityhuman)) {
                     // CraftBukkit start - fire PlayerLeashEntityEvent
-                    if (CraftEventFactory.callPlayerLeashEntityEvent(this, entityhuman, entityhuman).isCancelled()) {
-                        ((EntityPlayer) entityhuman).playerConnection.sendPacket(new PacketPlayOutAttachEntity(1, this, this.getLeashHolder()));
+                    if (!CraftEventFactory.handlePlayerLeashEntityEvent(this, entityhuman, entityhuman)) {
                         return false;
                     }
                     // CraftBukkit end
@@ -832,13 +845,21 @@ public abstract class EntityInsentient extends EntityLiving {
 
         if (this.bv) {
             if (this.bw == null || this.bw.dead) {
-                this.world.getServer().getPluginManager().callEvent(new EntityUnleashEvent(this.getBukkitEntity(), UnleashReason.HOLDER_GONE)); // CraftBukkit
-                this.unleash(true, true);
+                this.unleash(true, true, UnleashReason.HOLDER_GONE); // CraftBukkit - add unleash reason
             }
         }
     }
 
     public void unleash(boolean flag, boolean flag1) {
+        // CraftBukkit start
+        this.unleash(flag, flag1, null);
+    }
+
+    public void unleash(boolean flag, boolean flag1, UnleashReason unleashReason) { // add unleashReason
+        if (unleashReason != null) {
+            CraftEventFactory.callEntityUnleashEvent(this, unleashReason);
+        }
+        // CraftBukkit end
         if (this.bv) {
             this.bv = false;
             this.bw = null;
@@ -899,8 +920,7 @@ public abstract class EntityInsentient extends EntityLiving {
 
                 this.bw = entityleash;
             } else {
-                this.world.getServer().getPluginManager().callEvent(new EntityUnleashEvent(this.getBukkitEntity(), UnleashReason.UNKNOWN)); // CraftBukkit
-                this.unleash(false, true);
+                this.unleash(false, true, UnleashReason.UNKNOWN); // CraftBukkit - add unleash reason
             }
         }
 

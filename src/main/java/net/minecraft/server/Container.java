@@ -7,12 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 // CraftBukkit start
-import java.util.HashMap;
-import java.util.Map;
 import org.bukkit.craftbukkit.inventory.CraftInventory;
-import org.bukkit.craftbukkit.inventory.CraftItemStack;
-import org.bukkit.event.Event.Result;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.InventoryView;
 // CraftBukkit end
 
@@ -144,7 +139,7 @@ public abstract class Container {
                     l = playerinventory.getCarried().count;
                     Iterator iterator = this.h.iterator();
 
-                    Map<Integer, ItemStack> draggedSlots = new HashMap<Integer, ItemStack>(); // CraftBukkit - Store slots from drag in map (raw slot id -> new stack)
+                    java.util.Map<Integer, org.bukkit.inventory.ItemStack> draggedSlots = new java.util.HashMap<Integer, org.bukkit.inventory.ItemStack>(); // CraftBukkit - Store slots from drag in map (raw slot id -> new stack)
                     while (iterator.hasNext()) {
                         Slot slot1 = (Slot) iterator.next();
 
@@ -162,45 +157,19 @@ public abstract class Container {
                             }
 
                             l -= itemstack2.count - j1;
-                            draggedSlots.put(slot1.rawSlotIndex, itemstack2); // CraftBukkit - Put in map instead of setting
+                            draggedSlots.put(slot1.rawSlotIndex, org.bukkit.craftbukkit.inventory.CraftItemStack.asBukkitCopy(itemstack2)); // CraftBukkit - Put in map instead of setting
                         }
                     }
 
-                    // CraftBukkit start - InventoryDragEvent
-                    InventoryView view = getBukkitView();
-                    org.bukkit.inventory.ItemStack newcursor = CraftItemStack.asCraftMirror(itemstack1);
-                    newcursor.setAmount(l);
-                    Map<Integer, org.bukkit.inventory.ItemStack> eventmap = new HashMap<Integer, org.bukkit.inventory.ItemStack>();
-                    for (Map.Entry<Integer, ItemStack> ditem : draggedSlots.entrySet()) {
-                        eventmap.put(ditem.getKey(), CraftItemStack.asBukkitCopy(ditem.getValue()));
+                    /* CraftBukkit start - InventoryDragEvent
+                    itemstack1.count = l;
+                    if (itemstack1.count <= 0) {
+                        itemstack1 = null;
                     }
 
-                    // It's essential that we set the cursor to the new value here to prevent item duplication if a plugin closes the inventory.
-                    ItemStack oldCursor = playerinventory.getCarried();
-                    playerinventory.setCarried(CraftItemStack.asNMSCopy(newcursor));
-
-                    InventoryDragEvent event = new InventoryDragEvent(view, (newcursor.getType() != org.bukkit.Material.AIR ? newcursor : null), CraftItemStack.asBukkitCopy(oldCursor), this.dragType == 1, eventmap);
-                    entityhuman.world.getServer().getPluginManager().callEvent(event);
-
-                    // Whether or not a change was made to the inventory that requires an update.
-                    boolean needsUpdate = event.getResult() != Result.DEFAULT;
-
-                    if (event.getResult() != Result.DENY) {
-                        for (Map.Entry<Integer, ItemStack> dslot : draggedSlots.entrySet()) {
-                            view.setItem(dslot.getKey(), CraftItemStack.asBukkitCopy(dslot.getValue()));
-                        }
-                        // The only time the carried item will be set to null is if the inventory is closed by the server.
-                        // If the inventory is closed by the server, then the cursor items are dropped.  This is why we change the cursor early.
-                        if (playerinventory.getCarried() != null) {
-                            playerinventory.setCarried(CraftItemStack.asNMSCopy(event.getCursor()));
-                            needsUpdate = true;
-
-                        }
-                    } else {
-                        playerinventory.setCarried(oldCursor);
-                    }
-
-                    if (needsUpdate && entityhuman instanceof EntityPlayer) {
+                    playerinventory.setCarried(itemstack1);
+                    */
+                    if (org.bukkit.craftbukkit.event.CraftEventFactory.handleInventoryDragEvent(this.getBukkitView(), itemstack1, l, this.dragType, playerinventory, draggedSlots) && entityhuman instanceof EntityPlayer) {
                         ((EntityPlayer) entityhuman).updateInventory(this);
                     }
                     // CraftBukkit end
