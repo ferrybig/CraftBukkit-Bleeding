@@ -1,5 +1,7 @@
 package net.minecraft.server;
 
+import org.bukkit.event.world.PortalCreateEvent; // CraftBukkit
+
 public class ItemEnderEye extends Item {
 
     public ItemEnderEye() {
@@ -60,6 +62,10 @@ public class ItemEnderEye extends Item {
                 }
 
                 if (flag1 && l1 == k1 + 2) {
+                    // CraftBukkit start
+                    java.util.Collection<org.bukkit.block.Block> blocks = new java.util.HashSet<org.bukkit.block.Block>();
+                    org.bukkit.World bworld = world.getWorld();
+                    // CraftBukkit end
                     for (l2 = k1; l2 <= l1; ++l2) {
                         j2 = i + Direction.a[i2] * l2;
                         k2 = k + Direction.b[i2] * l2;
@@ -69,6 +75,7 @@ public class ItemEnderEye extends Item {
                             flag1 = false;
                             break;
                         }
+                        blocks.add(bworld.getBlockAt(j2, j, k2)); // CraftBukkit - add block to list
                     }
 
                     int i3;
@@ -83,10 +90,27 @@ public class ItemEnderEye extends Item {
                                 flag1 = false;
                                 break;
                             }
+                            blocks.add(bworld.getBlockAt(k2, j, i3)); // CraftBukkit - add block to list
                         }
                     }
 
                     if (flag1) {
+                        // CraftBukkit start - copy below for loop, then call event
+                        for (l2 = k1; l2 <= l1; ++l2) {
+                            for (j2 = 1; j2 <= 3; ++j2) {
+                                k2 = i + Direction.a[i2] * l2;
+                                i3 = k + Direction.b[i2] * l2;
+                                k2 += Direction.a[j1] * j2;
+                                i3 += Direction.b[j1] * j2;
+                                blocks.add(bworld.getBlockAt(k2, j, i3));
+                            }
+                        }
+
+                        PortalCreateEvent event = new PortalCreateEvent(blocks, bworld, PortalCreateEvent.CreateReason.PLACED_ENDER_EYE);
+                        if (event.isCancelled()) {
+                            return true;
+                        }
+                        // CraftBukkit end
                         for (l2 = k1; l2 <= l1; ++l2) {
                             for (j2 = 1; j2 <= 3; ++j2) {
                                 k2 = i + Direction.a[i2] * l2;
