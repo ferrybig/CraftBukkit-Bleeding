@@ -67,6 +67,11 @@ public class BlockRedstoneOre extends Block {
 
     public void a(World world, int i, int j, int k, Random random) {
         if (this == Blocks.GLOWING_REDSTONE_ORE) {
+            // CraftBukkit start
+            if (CraftEventFactory.callBlockFadeEvent(world.getWorld().getBlockAt(i, j, k), Blocks.REDSTONE_ORE).isCancelled()) {
+                return;
+            }
+            // CraftBukkit end
             world.setTypeUpdate(i, j, k, Blocks.REDSTONE_ORE);
         }
     }
