@@ -508,6 +508,7 @@ public abstract class MinecraftServer implements ICommandListener, Runnable, IMo
                 try {
                     this.reader.getTerminal().restore();
                 } catch (Exception e) {
+                    // ignore;
                 }
                 // CraftBukkit end
                 this.t();

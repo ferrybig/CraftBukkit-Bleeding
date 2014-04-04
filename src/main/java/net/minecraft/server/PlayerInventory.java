@@ -87,13 +87,17 @@ public class PlayerInventory implements IInventory {
     public int canHold(ItemStack itemstack) {
         int remains = itemstack.count;
         for (int i = 0; i < this.items.length; ++i) {
-            if (this.items[i] == null) return itemstack.count;
+            if (this.items[i] == null) {
+                return itemstack.count;
+            }
 
             // Taken from firstPartial(ItemStack)
             if (this.items[i] != null && this.items[i].getItem() == itemstack.getItem() && this.items[i].isStackable() && this.items[i].count < this.items[i].getMaxStackSize() && this.items[i].count < this.getMaxStackSize() && (!this.items[i].usesData() || this.items[i].getData() == itemstack.getData()) && ItemStack.equals(this.items[i], itemstack)) {
                 remains -= (this.items[i].getMaxStackSize() < this.getMaxStackSize() ? this.items[i].getMaxStackSize() : this.getMaxStackSize()) - this.items[i].count;
             }
-            if (remains <= 0) return itemstack.count;
+            if (remains <= 0) {
+                return itemstack.count;
+            }
         }
         return itemstack.count - remains;
     }

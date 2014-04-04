@@ -79,7 +79,11 @@ public class ContainerFurnace extends Container {
     }
 
     public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
+        // CraftBukkit start
+        if (!this.checkReachable) {
+            return true;
+        }
+        // CraftBukkit end
         return this.furnace.a(entityhuman);
     }
 

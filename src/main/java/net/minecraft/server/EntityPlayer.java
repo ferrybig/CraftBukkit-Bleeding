@@ -484,7 +484,11 @@ public class EntityPlayer extends EntityHuman implements ICrafting {
     }
 
     public void a(boolean flag, boolean flag1, boolean flag2) {
-        if (this.fauxSleeping && !this.sleeping) return; // CraftBukkit - Can't leave bed if not in one!
+        // CraftBukkit start - Can't leave bed if not in one!
+        if (this.fauxSleeping && !this.sleeping) {
+            return;
+        }
+        // CraftBukkit end
 
         if (this.isSleeping()) {
             this.r().getTracker().sendPacketToEntity(this, new PacketPlayOutAnimation(this, 2));

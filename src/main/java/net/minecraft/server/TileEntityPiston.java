@@ -89,7 +89,11 @@ public class TileEntityPiston extends TileEntity {
     }
 
     public void h() {
-        if (this.world == null) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.world == null) {
+            return;
+        }
+        // CraftBukkit end
 
         this.n = this.m;
         if (this.n >= 1.0F) {

@@ -97,7 +97,9 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
 
     public ItemStack getResult() {
         net.minecraft.server.ItemStack item = getResultInventory().getItem(0);
-        if(item != null) return CraftItemStack.asCraftMirror(item);
+        if (item != null) {
+            return CraftItemStack.asCraftMirror(item);
+        }
         return null;
     }
 
@@ -132,7 +134,7 @@ public class CraftInventoryCrafting extends CraftInventory implements CraftingIn
     }
 
     public Recipe getRecipe() {
-        IRecipe recipe = ((InventoryCrafting)getInventory()).currentRecipe;
+        IRecipe recipe = ((InventoryCrafting) getInventory()).currentRecipe;
         return recipe == null ? null : recipe.toBukkitRecipe();
     }
 }

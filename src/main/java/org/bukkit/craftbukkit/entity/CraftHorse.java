@@ -54,7 +54,9 @@ public class CraftHorse extends CraftAnimals implements Horse {
     }
 
     public void setCarryingChest(boolean chest) {
-        if (chest == isCarryingChest()) return;
+        if (chest == isCarryingChest()) {
+            return;
+        }
         getHandle().setHasChest(chest);
         getHandle().loadChest();
     }
@@ -99,7 +101,9 @@ public class CraftHorse extends CraftAnimals implements Horse {
 
     @Override
     public AnimalTamer getOwner() {
-        if (getOwnerUUID() == null) return null;
+        if (getOwnerUUID() == null) {
+            return null;
+        }
         return getServer().getOfflinePlayer(getOwnerUUID());
     }
 

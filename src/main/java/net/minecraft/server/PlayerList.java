@@ -189,7 +189,11 @@ public abstract class PlayerList {
     }
 
     public void setPlayerFileData(WorldServer[] aworldserver) {
-        if (this.playerFileData != null) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.playerFileData != null) {
+            return;
+        }
+        // CraftBukkit end
         this.playerFileData = aworldserver[0].getDataManager().getPlayerFileData();
     }
 

@@ -114,7 +114,9 @@ public final class CraftMapView implements MapView {
 
     private boolean isContextual() {
         for (MapRenderer renderer : renderers) {
-            if (renderer.isContextual()) return true;
+            if (renderer.isContextual()) {
+                return true;
+            }
         }
         return false;
     }

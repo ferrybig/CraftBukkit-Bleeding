@@ -43,12 +43,10 @@ public class CraftMinecartCommand extends CraftMinecart implements CommandMineca
     }
 
     @Override
-    public void sendMessage(String message) {
-    }
+    public void sendMessage(String message) {}
 
     @Override
-    public void sendMessage(String[] messages) {
-    }
+    public void sendMessage(String[] messages) {}
 
     @Override
     public String getName() {

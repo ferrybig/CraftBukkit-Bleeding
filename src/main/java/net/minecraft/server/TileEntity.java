@@ -176,7 +176,9 @@ public class TileEntity {
     // CraftBukkit start - add method
     public InventoryHolder getOwner() {
         org.bukkit.block.BlockState state = world.getWorld().getBlockAt(x, y, z).getState();
-        if (state instanceof InventoryHolder) return (InventoryHolder) state;
+        if (state instanceof InventoryHolder) {
+            return (InventoryHolder) state;
+        }
         return null;
     }
     // CraftBukkit end

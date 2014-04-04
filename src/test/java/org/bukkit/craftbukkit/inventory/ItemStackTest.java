@@ -435,6 +435,7 @@ public class ItemStackTest extends AbstractTestingBase {
                 try {
                     oos.close();
                 } catch (IOException ex) {
+                    // ignore;
                 }
             }
         }
@@ -456,8 +457,7 @@ public class ItemStackTest extends AbstractTestingBase {
             if (ois != null) {
                 try {
                     ois.close();
-                } catch (IOException ex) {
-                }
+                } catch (IOException ex) {}
             }
         }
 

@@ -122,6 +122,5 @@ public final class CraftChatMessage {
         return new StringMessage(message).getOutput();
     }
 
-    private CraftChatMessage() {
-    }
+    private CraftChatMessage() {}
 }

@@ -436,7 +436,11 @@ public class PlayerConnection implements PacketPlayInListener {
     }
 
     public void a(PacketPlayInBlockDig packetplayinblockdig) {
-        if (this.player.dead) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.player.dead) {
+            return;
+        }
+        // CraftBukkit end
         WorldServer worldserver = this.minecraftServer.getWorldServer(this.player.dimension);
 
         this.player.v();
@@ -527,7 +531,9 @@ public class PlayerConnection implements PacketPlayInListener {
         WorldServer worldserver = this.minecraftServer.getWorldServer(this.player.dimension);
 
         // CraftBukkit start
-        if (this.player.dead) return;
+        if (this.player.dead) {
+            return;
+        }
 
         // This is a horrible hack needed because the client sends 2 packets on 'right mouse click'
         // aimed at a block. We shouldn't need to get the second packet if the data is handled
@@ -1212,59 +1218,59 @@ public class PlayerConnection implements PacketPlayInListener {
                 org.bukkit.event.inventory.InventoryClickEvent event = CraftEventFactory.callInventoryClickEvent(inventory, type, click, action, packetplayinwindowclick);
 
                 switch (event.getResult()) {
-                    case ALLOW:
-                    case DEFAULT:
-                        itemstack = this.player.activeContainer.clickItem(packetplayinwindowclick.d(), packetplayinwindowclick.e(), packetplayinwindowclick.h(), this.player);
-                        break;
-                    case DENY:
-                        /* Needs enum constructor in InventoryAction
-                        if (action.modifiesOtherSlots()) {
+                case ALLOW:
+                case DEFAULT:
+                    itemstack = this.player.activeContainer.clickItem(packetplayinwindowclick.d(), packetplayinwindowclick.e(), packetplayinwindowclick.h(), this.player);
+                    break;
+                case DENY:
+                    /* Needs enum constructor in InventoryAction
+                    if (action.modifiesOtherSlots()) {
 
-                        } else {
-                            if (action.modifiesCursor()) {
-                                this.player.playerConnection.sendPacket(new Packet103SetSlot(-1, -1, this.player.inventory.getCarried()));
-                            }
-                            if (action.modifiesClicked()) {
-                                this.player.playerConnection.sendPacket(new Packet103SetSlot(this.player.activeContainer.windowId, packet102windowclick.slot, this.player.activeContainer.getSlot(packet102windowclick.slot).getItem()));
-                            }
-                        }*/
-                        switch (action) {
-                            // Modified other slots
-                            case PICKUP_ALL:
-                            case MOVE_TO_OTHER_INVENTORY:
-                            case HOTBAR_MOVE_AND_READD:
-                            case HOTBAR_SWAP:
-                            case COLLECT_TO_CURSOR:
-                            case UNKNOWN:
-                                this.player.updateInventory(this.player.activeContainer);
-                                break;
-                            // Modified cursor and clicked
-                            case PICKUP_SOME:
-                            case PICKUP_HALF:
-                            case PICKUP_ONE:
-                            case PLACE_ALL:
-                            case PLACE_SOME:
-                            case PLACE_ONE:
-                            case SWAP_WITH_CURSOR:
-                                this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.player.inventory.getCarried()));
-                                this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(this.player.activeContainer.windowId, packetplayinwindowclick.d(), this.player.activeContainer.getSlot(packetplayinwindowclick.d()).getItem()));
-                                break;
-                            // Modified clicked only
-                            case DROP_ALL_SLOT:
-                            case DROP_ONE_SLOT:
-                                this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(this.player.activeContainer.windowId, packetplayinwindowclick.d(), this.player.activeContainer.getSlot(packetplayinwindowclick.d()).getItem()));
-                                break;
-                            // Modified cursor only
-                            case DROP_ALL_CURSOR:
-                            case DROP_ONE_CURSOR:
-                            case CLONE_STACK:
-                                this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.player.inventory.getCarried()));
-                                break;
-                            // Nothing
-                            case NOTHING:
-                                break;
+                    } else {
+                        if (action.modifiesCursor()) {
+                            this.player.playerConnection.sendPacket(new Packet103SetSlot(-1, -1, this.player.inventory.getCarried()));
                         }
-                        return;
+                        if (action.modifiesClicked()) {
+                            this.player.playerConnection.sendPacket(new Packet103SetSlot(this.player.activeContainer.windowId, packet102windowclick.slot, this.player.activeContainer.getSlot(packet102windowclick.slot).getItem()));
+                        }
+                    }*/
+                    switch (action) {
+                    // Modified other slots
+                    case PICKUP_ALL:
+                    case MOVE_TO_OTHER_INVENTORY:
+                    case HOTBAR_MOVE_AND_READD:
+                    case HOTBAR_SWAP:
+                    case COLLECT_TO_CURSOR:
+                    case UNKNOWN:
+                        this.player.updateInventory(this.player.activeContainer);
+                        break;
+                    // Modified cursor and clicked
+                    case PICKUP_SOME:
+                    case PICKUP_HALF:
+                    case PICKUP_ONE:
+                    case PLACE_ALL:
+                    case PLACE_SOME:
+                    case PLACE_ONE:
+                    case SWAP_WITH_CURSOR:
+                        this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.player.inventory.getCarried()));
+                        this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(this.player.activeContainer.windowId, packetplayinwindowclick.d(), this.player.activeContainer.getSlot(packetplayinwindowclick.d()).getItem()));
+                        break;
+                    // Modified clicked only
+                    case DROP_ALL_SLOT:
+                    case DROP_ONE_SLOT:
+                        this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(this.player.activeContainer.windowId, packetplayinwindowclick.d(), this.player.activeContainer.getSlot(packetplayinwindowclick.d()).getItem()));
+                        break;
+                    // Modified cursor only
+                    case DROP_ALL_CURSOR:
+                    case DROP_ONE_CURSOR:
+                    case CLONE_STACK:
+                        this.player.playerConnection.sendPacket(new PacketPlayOutSetSlot(-1, -1, this.player.inventory.getCarried()));
+                        break;
+                    // Nothing
+                    case NOTHING:
+                        break;
+                    }
+                    return;
                 }
             }
             // CraftBukkit end
@@ -1355,7 +1361,11 @@ public class PlayerConnection implements PacketPlayInListener {
     }
 
     public void a(PacketPlayInTransaction packetplayintransaction) {
-        if (this.player.dead) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.player.dead) {
+            return;
+        }
+        // CraftBukkit end
         Short oshort = (Short) this.n.get(this.player.activeContainer.windowId);
 
         if (oshort != null && packetplayintransaction.d() == oshort.shortValue() && this.player.activeContainer.windowId == packetplayintransaction.c() && !this.player.activeContainer.c(this.player)) {
@@ -1364,7 +1374,11 @@ public class PlayerConnection implements PacketPlayInListener {
     }
 
     public void a(PacketPlayInUpdateSign packetplayinupdatesign) {
-        if (this.player.dead) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.player.dead) {
+            return;
+        }
+        // CraftBukkit end
 
         this.player.v();
         WorldServer worldserver = this.minecraftServer.getWorldServer(this.player.dimension);

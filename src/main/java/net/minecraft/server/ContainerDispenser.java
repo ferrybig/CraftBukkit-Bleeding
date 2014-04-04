@@ -17,7 +17,7 @@ public class ContainerDispenser extends Container {
         this.items = tileentitydispenser;
         // CraftBukkit start - Save player
         // TODO: Should we check to make sure it really is an InventoryPlayer?
-        this.player = (PlayerInventory)iinventory;
+        this.player = (PlayerInventory) iinventory;
         // CraftBukkit end
 
         int i;
@@ -41,7 +41,11 @@ public class ContainerDispenser extends Container {
     }
 
     public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
+        // CraftBukkit start
+        if (!this.checkReachable) {
+            return true;
+        }
+        // CraftBukkit end
         return this.items.a(entityhuman);
     }
 

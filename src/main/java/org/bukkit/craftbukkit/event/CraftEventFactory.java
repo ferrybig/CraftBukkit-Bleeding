@@ -752,7 +752,7 @@ public class CraftEventFactory {
             boolean isMonster = entity instanceof EntityMonster || entity instanceof EntityGhast || entity instanceof EntitySlime;
 
             if (spawnReason != SpawnReason.CUSTOM) {
-                if (isAnimal && !entity.world.allowAnimals || isMonster && !entity.world.allowMonsters)  {
+                if (isAnimal && !entity.world.allowAnimals || isMonster && !entity.world.allowMonsters) {
                     entity.dead = true;
                     return false;
                 }
@@ -818,16 +818,16 @@ public class CraftEventFactory {
         Block igniter = bukkitWorld.getBlockAt(igniterX, igniterY, igniterZ);
         IgniteCause cause;
         switch (igniter.getType()) {
-            case LAVA:
-            case STATIONARY_LAVA:
-                cause = IgniteCause.LAVA;
-                break;
-            case DISPENSER:
-                cause = IgniteCause.FLINT_AND_STEEL;
-                break;
-            case FIRE: // Fire or any other unknown block counts as SPREAD.
-            default:
-                cause = IgniteCause.SPREAD;
+        case LAVA:
+        case STATIONARY_LAVA:
+            cause = IgniteCause.LAVA;
+            break;
+        case DISPENSER:
+            cause = IgniteCause.FLINT_AND_STEEL;
+            break;
+        case FIRE: // Fire or any other unknown block counts as SPREAD.
+        default:
+            cause = IgniteCause.SPREAD;
         }
 
         return callEvent(new BlockIgniteEvent(bukkitWorld.getBlockAt(x, y, z), cause, igniter));
@@ -918,31 +918,31 @@ public class CraftEventFactory {
         }
     }
 
-    public static Cancellable handleStatisticsIncrease(EntityHuman entityHuman, net.minecraft.server.Statistic statistic, int current, int incrementation) {
+    public static boolean handleStatisticsIncrease(EntityHuman entityHuman, net.minecraft.server.Statistic statistic, int current, int incrementation) {
         Player player = ((EntityPlayer) entityHuman).getBukkitEntity();
         Event event;
         if (statistic instanceof net.minecraft.server.Achievement) {
             if (current != 0) {
-                return null;
+                return true;
             }
             event = new PlayerAchievementAwardedEvent(player, CraftStatistic.getBukkitAchievement((net.minecraft.server.Achievement) statistic));
         } else {
             Statistic stat = CraftStatistic.getBukkitStatistic(statistic);
             switch (stat) {
-                case FALL_ONE_CM:
-                case BOAT_ONE_CM:
-                case CLIMB_ONE_CM:
-                case DIVE_ONE_CM:
-                case FLY_ONE_CM:
-                case HORSE_ONE_CM:
-                case MINECART_ONE_CM:
-                case PIG_ONE_CM:
-                case PLAY_ONE_TICK:
-                case SWIM_ONE_CM:
-                case WALK_ONE_CM:
-                    // Do not process event for these - too spammy
-                    return null;
-                default:
+            case FALL_ONE_CM:
+            case BOAT_ONE_CM:
+            case CLIMB_ONE_CM:
+            case DIVE_ONE_CM:
+            case FLY_ONE_CM:
+            case HORSE_ONE_CM:
+            case MINECART_ONE_CM:
+            case PIG_ONE_CM:
+            case PLAY_ONE_TICK:
+            case SWIM_ONE_CM:
+            case WALK_ONE_CM:
+                // Do not process event for these - too spammy
+                return true;
+            default:
             }
             if (stat.getType() == Type.UNTYPED) {
                 event = new PlayerStatisticIncrementEvent(player, stat, current, current + incrementation);
@@ -955,7 +955,7 @@ public class CraftEventFactory {
             }
         }
 
-        return (Cancellable) callEvent(event);
+        return ((Cancellable) callEvent(event)).isCancelled();
     }
 
     public static BlockFromToEvent callBlockFromToEvent(World world, int x, int y, int z, int toX, int toY, int toZ) {

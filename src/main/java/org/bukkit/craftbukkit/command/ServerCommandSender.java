@@ -14,8 +14,7 @@ import java.util.Set;
 public abstract class ServerCommandSender implements CommandSender {
     private final PermissibleBase perm = new PermissibleBase(this);
 
-    public ServerCommandSender() {
-    }
+    public ServerCommandSender() {}
 
     public boolean isPermissionSet(String name) {
         return perm.isPermissionSet(name);

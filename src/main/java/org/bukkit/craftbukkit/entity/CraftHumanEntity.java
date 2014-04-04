@@ -180,13 +180,15 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
     }
 
     public InventoryView openInventory(Inventory inventory) {
-        if(!(getHandle() instanceof EntityPlayer)) return null;
+        if (!(getHandle() instanceof EntityPlayer)) {
+            return null;
+        }
         EntityPlayer player = (EntityPlayer) getHandle();
         InventoryType type = inventory.getType();
         Container formerContainer = getHandle().activeContainer;
         // TODO: Should we check that it really IS a CraftInventory first?
         CraftInventory craftinv = (CraftInventory) inventory;
-        switch(type) {
+        switch (type) {
         case PLAYER:
         case CHEST:
         case ENDER_CHEST:
@@ -300,7 +302,7 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
         }
         if (getHandle().activeContainer != getHandle().defaultContainer) {
             // fire INVENTORY_CLOSE if one already open
-            ((EntityPlayer)getHandle()).playerConnection.a(new PacketPlayInCloseWindow(getHandle().activeContainer.windowId));
+            ((EntityPlayer) getHandle()).playerConnection.a(new PacketPlayInCloseWindow(getHandle().activeContainer.windowId));
         }
         EntityPlayer player = (EntityPlayer) getHandle();
         Container container;

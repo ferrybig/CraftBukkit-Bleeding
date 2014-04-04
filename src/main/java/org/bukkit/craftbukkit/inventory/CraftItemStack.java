@@ -321,28 +321,28 @@ public final class CraftItemStack extends ItemStack {
             return CraftItemFactory.instance().getItemMeta(getType(item));
         }
         switch (getType(item)) {
-            case WRITTEN_BOOK:
-            case BOOK_AND_QUILL:
-                return new CraftMetaBook(item.tag);
-            case SKULL_ITEM:
-                return new CraftMetaSkull(item.tag);
-            case LEATHER_HELMET:
-            case LEATHER_CHESTPLATE:
-            case LEATHER_LEGGINGS:
-            case LEATHER_BOOTS:
-                return new CraftMetaLeatherArmor(item.tag);
-            case POTION:
-                return new CraftMetaPotion(item.tag);
-            case MAP:
-                return new CraftMetaMap(item.tag);
-            case FIREWORK:
-                return new CraftMetaFirework(item.tag);
-            case FIREWORK_CHARGE:
-                return new CraftMetaCharge(item.tag);
-            case ENCHANTED_BOOK:
-                return new CraftMetaEnchantedBook(item.tag);
-            default:
-                return new CraftMetaItem(item.tag);
+        case WRITTEN_BOOK:
+        case BOOK_AND_QUILL:
+            return new CraftMetaBook(item.tag);
+        case SKULL_ITEM:
+            return new CraftMetaSkull(item.tag);
+        case LEATHER_HELMET:
+        case LEATHER_CHESTPLATE:
+        case LEATHER_LEGGINGS:
+        case LEATHER_BOOTS:
+            return new CraftMetaLeatherArmor(item.tag);
+        case POTION:
+            return new CraftMetaPotion(item.tag);
+        case MAP:
+            return new CraftMetaMap(item.tag);
+        case FIREWORK:
+            return new CraftMetaFirework(item.tag);
+        case FIREWORK_CHARGE:
+            return new CraftMetaCharge(item.tag);
+        case ENCHANTED_BOOK:
+            return new CraftMetaEnchantedBook(item.tag);
+        default:
+            return new CraftMetaItem(item.tag);
         }
     }
 

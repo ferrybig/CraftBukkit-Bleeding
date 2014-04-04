@@ -37,7 +37,7 @@ public class LongHashSet {
     }
 
     public LongHashSet(int size) {
-        values = new long[(size==0 ? 1 : size)];
+        values = new long[(size == 0 ? 1 : size)];
         elements = 0;
         freeEntries = values.length;
         modCount = 0;

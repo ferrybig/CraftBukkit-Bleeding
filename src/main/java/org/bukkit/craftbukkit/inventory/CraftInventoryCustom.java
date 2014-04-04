@@ -64,7 +64,9 @@ public class CraftInventoryCustom extends CraftInventory {
         public ItemStack splitStack(int i, int j) {
             ItemStack stack = this.getItem(i);
             ItemStack result;
-            if (stack == null) return null;
+            if (stack == null) {
+                return null;
+            }
             if (stack.count <= j) {
                 this.setItem(i, null);
                 result = stack;
@@ -79,7 +81,9 @@ public class CraftInventoryCustom extends CraftInventory {
         public ItemStack splitWithoutUpdate(int i) {
             ItemStack stack = this.getItem(i);
             ItemStack result;
-            if (stack == null) return null;
+            if (stack == null) {
+                return null;
+            }
             if (stack.count <= 1) {
                 this.setItem(i, null);
                 result = stack;

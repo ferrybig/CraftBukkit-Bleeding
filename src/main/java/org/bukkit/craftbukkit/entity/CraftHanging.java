@@ -28,19 +28,19 @@ public class CraftHanging extends CraftEntity implements Hanging {
         hanging.y = block.getY();
         hanging.z = block.getZ();
         switch (face) {
-            case SOUTH:
-            default:
-                getHandle().setDirection(0);
-                break;
-            case WEST:
-                getHandle().setDirection(1);
-                break;
-            case NORTH:
-                getHandle().setDirection(2);
-                break;
-            case EAST:
-                getHandle().setDirection(3);
-                break;
+        case SOUTH:
+        default:
+            getHandle().setDirection(0);
+            break;
+        case WEST:
+            getHandle().setDirection(1);
+            break;
+        case NORTH:
+            getHandle().setDirection(2);
+            break;
+        case EAST:
+            getHandle().setDirection(3);
+            break;
         }
         if (!force && !hanging.survives()) {
             // Revert since it doesn't fit
@@ -55,15 +55,15 @@ public class CraftHanging extends CraftEntity implements Hanging {
 
     public BlockFace getFacing() {
         switch (this.getHandle().direction) {
-            case 0:
-            default:
-                return BlockFace.SOUTH;
-            case 1:
-                return BlockFace.WEST;
-            case 2:
-                return BlockFace.NORTH;
-            case 3:
-                return BlockFace.EAST;
+        case 0:
+        default:
+            return BlockFace.SOUTH;
+        case 1:
+            return BlockFace.WEST;
+        case 2:
+            return BlockFace.NORTH;
+        case 3:
+            return BlockFace.EAST;
         }
     }
 

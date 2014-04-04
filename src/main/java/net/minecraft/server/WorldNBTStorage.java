@@ -264,7 +264,9 @@ public class WorldNBTStorage implements IDataManager, IPlayerFileData {
 
     // CraftBukkit start
     public UUID getUUID() {
-        if (uuid != null) return uuid;
+        if (uuid != null) {
+            return uuid;
+        }
         File file1 = new File(this.baseDir, "uid.dat");
         if (file1.exists()) {
             DataInputStream dis = null;

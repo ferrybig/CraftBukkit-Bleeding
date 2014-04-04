@@ -22,8 +22,8 @@ public class CraftContainer extends Container {
         this.view = view;
         this.windowId = id;
         // TODO: Do we need to check that it really is a CraftInventory?
-        IInventory top = ((CraftInventory)view.getTopInventory()).getInventory();
-        IInventory bottom = ((CraftInventory)view.getBottomInventory()).getInventory();
+        IInventory top = ((CraftInventory) view.getTopInventory()).getInventory();
+        IInventory bottom = ((CraftInventory) view.getBottomInventory()).getInventory();
         cachedType = view.getType();
         cachedTitle = view.getTitle();
         cachedSize = getSize();
@@ -77,8 +77,8 @@ public class CraftContainer extends Container {
         if (view.getPlayer() instanceof CraftPlayer) {
             CraftPlayer player = (CraftPlayer) view.getPlayer();
             int type = getNotchInventoryType(cachedType);
-            IInventory top = ((CraftInventory)view.getTopInventory()).getInventory();
-            IInventory bottom = ((CraftInventory)view.getBottomInventory()).getInventory();
+            IInventory top = ((CraftInventory) view.getTopInventory()).getInventory();
+            IInventory bottom = ((CraftInventory) view.getBottomInventory()).getInventory();
             this.b.clear();
             this.c.clear();
             if (typeChanged) {
@@ -93,7 +93,7 @@ public class CraftContainer extends Container {
 
     public static int getNotchInventoryType(InventoryType type) {
         int typeID;
-        switch(type) {
+        switch (type) {
         case WORKBENCH:
             typeID = 1;
             break;
@@ -126,7 +126,7 @@ public class CraftContainer extends Container {
     }
 
     private void setupSlots(IInventory top, IInventory bottom) {
-        switch(cachedType) {
+        switch (cachedType) {
         case CREATIVE:
             break; // TODO: This should be an error?
         case PLAYER:

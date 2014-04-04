@@ -165,7 +165,7 @@ public abstract class CommandBlockListenerAbstract implements ICommandListener {
                         completed++;
                     }
                 } catch (Throwable exception) {
-                    if(this instanceof TileEntityCommandListener) {
+                    if (this instanceof TileEntityCommandListener) {
                         TileEntityCommandListener listener = (TileEntityCommandListener) this;
                         MinecraftServer.getLogger().log(Level.WARN, String.format("CommandBlock at (%d,%d,%d) failed to handle command", listener.getChunkCoordinates().x, listener.getChunkCoordinates().y, listener.getChunkCoordinates().z), exception);
                     } else if (this instanceof EntityMinecartCommandBlockListener) {

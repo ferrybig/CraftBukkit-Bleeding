@@ -49,7 +49,9 @@ public final class VanillaCommandWrapper extends VanillaCommand {
 
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args) {
-        if (!testPermission(sender)) return true;
+        if (!testPermission(sender)) {
+            return true;
+        }
 
         ICommandListener icommandlistener = getListener(sender);
         // Some commands use the worldserver variable but we leave it full of null values,
@@ -137,7 +139,7 @@ public final class VanillaCommandWrapper extends VanillaCommand {
             ChatMessage chatmessage3 = new ChatMessage("commands.generic.exception", new Object[0]);
             chatmessage3.getChatModifier().setColor(EnumChatFormat.RED);
             icommandlistener.sendMessage(chatmessage3);
-            if(icommandlistener instanceof TileEntityCommandListener) {
+            if (icommandlistener instanceof TileEntityCommandListener) {
                 TileEntityCommandListener listener = (TileEntityCommandListener) icommandlistener;
                 MinecraftServer.getLogger().log(Level.WARN, String.format("CommandBlock at (%d,%d,%d) failed to handle command", listener.getChunkCoordinates().x, listener.getChunkCoordinates().y, listener.getChunkCoordinates().z), throwable);
             } else if (icommandlistener instanceof EntityMinecartCommandBlockListener) {

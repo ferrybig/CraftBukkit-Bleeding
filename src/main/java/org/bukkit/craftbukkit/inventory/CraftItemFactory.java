@@ -31,8 +31,7 @@ public final class CraftItemFactory implements ItemFactory {
             .build();
     }
 
-    private CraftItemFactory() {
-    }
+    private CraftItemFactory() {}
 
     public boolean isApplicable(ItemMeta meta, ItemStack itemstack) {
         if (itemstack == null) {

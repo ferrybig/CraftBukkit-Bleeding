@@ -498,7 +498,11 @@ public class EntityEnderDragon extends EntityInsentient implements IComplex, IMo
     }
 
     protected void aE() {
-        if (this.dead) return; // CraftBukkit - can't kill what's already dead
+        // CraftBukkit start - can't kill what's already dead
+        if (this.dead) {
+            return;
+        }
+        // CraftBukkit end
         ++this.bB;
         if (this.bB >= 180 && this.bB <= 200) {
             float f = (this.random.nextFloat() - 0.5F) * 8.0F;

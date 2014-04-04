@@ -75,7 +75,7 @@ public class PerMaterialTest extends AbstractTestingBase {
     public void maxDurability() {
         if (material == Material.AIR) {
             assertThat((int) material.getMaxDurability(), is(0));
-        } else if (material.isBlock()){
+        } else if (material.isBlock()) {
             Item item = CraftMagicNumbers.getItem(material);
             assertThat((int) material.getMaxDurability(), is(item.getMaxDurability()));
         }

@@ -167,38 +167,38 @@ public final class AsynchronousExecutor<P, T, C, E extends Throwable> {
 
         void finish() throws E {
             switch (state) {
-                default:
-                case PENDING:
-                case STAGE_1_ASYNC:
-                case STAGE_1_SYNC:
-                    throw new IllegalStateException("Attempting to finish unprepared(" + state + ") task(" + parameter + ")");
-                case STAGE_1_COMPLETE:
-                    try {
-                        if (t != null) {
-                            throw t;
-                        }
-                        if (callbacks.isEmpty()) {
-                            return;
-                        }
-
-                        final CallBackProvider<P, T, C, E> provider = AsynchronousExecutor.this.provider;
-                        final P parameter = this.parameter;
-                        final T object = this.object;
-
-                        provider.callStage2(parameter, object);
-                        for (C callback : callbacks) {
-                            if (callback == this) {
-                                // 'this' is a placeholder to prevent callbacks from being empty on a get() call
-                                // See get method above
-                                continue;
-                            }
-                            provider.callStage3(parameter, object, callback);
-                        }
-                    } finally {
-                        tasks.remove(parameter);
-                        state = FINISHED;
+            default:
+            case PENDING:
+            case STAGE_1_ASYNC:
+            case STAGE_1_SYNC:
+                throw new IllegalStateException("Attempting to finish unprepared(" + state + ") task(" + parameter + ")");
+            case STAGE_1_COMPLETE:
+                try {
+                    if (t != null) {
+                        throw t;
                     }
-                case FINISHED:
+                    if (callbacks.isEmpty()) {
+                        return;
+                    }
+
+                    final CallBackProvider<P, T, C, E> provider = AsynchronousExecutor.this.provider;
+                    final P parameter = this.parameter;
+                    final T object = this.object;
+
+                    provider.callStage2(parameter, object);
+                    for (C callback : callbacks) {
+                        if (callback == this) {
+                            // 'this' is a placeholder to prevent callbacks from being empty on a get() call
+                            // See get method above
+                            continue;
+                        }
+                        provider.callStage3(parameter, object, callback);
+                    }
+                } finally {
+                    tasks.remove(parameter);
+                    state = FINISHED;
+                }
+            case FINISHED:
             }
         }
 

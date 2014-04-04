@@ -24,7 +24,9 @@ public class Util {
         try {
             return (T) field.get(object);
         } catch (IllegalArgumentException e) {
+            // ignore;
         } catch (IllegalAccessException e) {
+            // ignore;
         }
         throw new RuntimeException("Unable to get internal value");
     }

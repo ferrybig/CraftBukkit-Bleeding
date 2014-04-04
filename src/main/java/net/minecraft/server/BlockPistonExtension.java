@@ -26,7 +26,11 @@ public class BlockPistonExtension extends Block {
 
     public void remove(World world, int i, int j, int k, Block block, int l) {
         super.remove(world, i, j, k, block, l);
-        if ((l & 7) >= Facing.OPPOSITE_FACING.length) return; // CraftBukkit - fix a piston AIOOBE issue
+        // CraftBukkit start - check for AIOOB on piston data
+        if ((i & 7) >= Facing.OPPOSITE_FACING.length) {
+            return;
+        }
+        // CraftBukkit end
         int i1 = Facing.OPPOSITE_FACING[b(l)];
 
         i += Facing.b[i1];
@@ -153,7 +157,11 @@ public class BlockPistonExtension extends Block {
 
     public void doPhysics(World world, int i, int j, int k, Block block) {
         int l = b(world.getData(i, j, k));
-        if ((l & 7) >= Facing.OPPOSITE_FACING.length) return; // CraftBukkit - fix a piston AIOOBE issue
+        // CraftBukkit start - check for AIOOB on piston data
+        if ((i & 7) >= Facing.OPPOSITE_FACING.length) {
+            return;
+        }
+        // CraftBukkit end
         Block block1 = world.getType(i - Facing.b[l], j - Facing.c[l], k - Facing.d[l]);
 
         if (block1 != Blocks.PISTON && block1 != Blocks.PISTON_STICKY) {

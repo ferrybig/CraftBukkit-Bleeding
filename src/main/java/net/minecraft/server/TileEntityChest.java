@@ -157,7 +157,11 @@ public class TileEntityChest extends TileEntity implements IInventory {
     }
 
     public boolean a(EntityHuman entityhuman) {
-        if (this.world == null) return true; // CraftBukkit
+        // CraftBukkit start
+        if (this.world == null) {
+            return;
+        }
+        // CraftBukkit end
         return this.world.getTileEntity(this.x, this.y, this.z) != this ? false : entityhuman.e((double) this.x + 0.5D, (double) this.y + 0.5D, (double) this.z + 0.5D) <= 64.0D;
     }
 
@@ -250,7 +254,11 @@ public class TileEntityChest extends TileEntity implements IInventory {
 
     public void h() {
         super.h();
-        if (this.world == null) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.world == null) {
+            return;
+        }
+        // CraftBukkit end
         this.i();
         ++this.ticks;
         float f;
@@ -346,7 +354,11 @@ public class TileEntityChest extends TileEntity implements IInventory {
         int oldPower = Math.max(0, Math.min(15, this.o)); // CraftBukkit - Get power before new viewer is added
 
         ++this.o;
-        if (this.world == null) return; // CraftBukkit
+        // CraftBukkit start
+        if (this.world == null) {
+            return;
+        }
+        // CraftBukkit end
         this.world.playNote(this.x, this.y, this.z, this.q(), 1, this.o);
 
         // CraftBukkit start - Call redstone event
@@ -368,7 +380,11 @@ public class TileEntityChest extends TileEntity implements IInventory {
             int oldPower = Math.max(0, Math.min(15, this.o)); // CraftBukkit - Get power before new viewer is added
 
             --this.o;
-            if (this.world == null) return; // CraftBukkit
+            // CraftBukkit start
+            if (this.world == null) {
+                return;
+            }
+            // CraftBukkit end
             this.world.playNote(this.x, this.y, this.z, this.q(), 1, this.o);
 
             // CraftBukkit start - Call redstone event

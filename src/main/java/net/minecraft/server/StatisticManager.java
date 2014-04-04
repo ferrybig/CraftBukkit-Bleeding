@@ -8,8 +8,7 @@ public class StatisticManager {
 
     protected final Map a = Maps.newConcurrentMap();
 
-    public StatisticManager() {
-    }
+    public StatisticManager() {}
 
     public boolean a(Achievement achievement) {
         return this.getStatisticValue((Statistic) achievement) > 0;
@@ -22,8 +21,7 @@ public class StatisticManager {
     public void b(EntityHuman entityhuman, Statistic statistic, int i) {
         if (!statistic.d() || this.b((Achievement) statistic)) {
             // CraftBukkit start - fire Statistic events
-            org.bukkit.event.Cancellable cancellable = org.bukkit.craftbukkit.event.CraftEventFactory.handleStatisticsIncrease(entityhuman, statistic, this.getStatisticValue(statistic), i);
-            if (cancellable != null && cancellable.isCancelled()) {
+            if (org.bukkit.craftbukkit.event.CraftEventFactory.handleStatisticsIncrease(entityhuman, statistic, this.getStatisticValue(statistic), i)) {
                 return;
             }
             // CraftBukkit end

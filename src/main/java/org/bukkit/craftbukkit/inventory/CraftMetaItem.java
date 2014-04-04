@@ -118,8 +118,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             constructorMap = classConstructorBuilder.build();
         }
 
-        private SerializableMeta() {
-        }
+        private SerializableMeta() {}
 
         public static ItemMeta deserialize(Map<String, Object> map) throws Throwable {
             Validate.notNull(map, "Cannot deserialize null map");

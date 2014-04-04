@@ -529,7 +529,7 @@ public class CraftWorld implements World {
 
             if (chunk != null) {
                 byte[] biomevals = chunk.m();
-                biomevals[((z & 0xF) << 4) | (x & 0xF)] = (byte)bb.id;
+                biomevals[((z & 0xF) << 4) | (x & 0xF)] = (byte) bb.id;
             }
         }
     }
@@ -581,7 +581,7 @@ public class CraftWorld implements World {
     @SuppressWarnings("unchecked")
     @Deprecated
     public <T extends Entity> Collection<T> getEntitiesByClass(Class<T>... classes) {
-        return (Collection<T>)getEntitiesByClasses(classes);
+        return (Collection<T>) getEntitiesByClasses(classes);
     }
 
     @SuppressWarnings("unchecked")
@@ -1214,7 +1214,9 @@ public class CraftWorld implements World {
 
 
     public void playSound(Location loc, Sound sound, float volume, float pitch) {
-        if (loc == null || sound == null) return;
+        if (loc == null || sound == null) {
+            return;
+        }
 
         double x = loc.getX();
         double y = loc.getY();
@@ -1229,9 +1231,13 @@ public class CraftWorld implements World {
 
     public boolean setGameRuleValue(String rule, String value) {
         // No null values allowed
-        if (rule == null || value == null) return false;
+        if (rule == null || value == null) {
+            return false;
+        }
 
-        if (!isGameRule(rule)) return false;
+        if (!isGameRule(rule)) {
+            return false;
+        }
 
         getHandle().getGameRules().set(rule, value);
         return true;

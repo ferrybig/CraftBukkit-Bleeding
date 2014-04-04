@@ -20,6 +20,7 @@ public class ServerShutdownThread extends Thread {
             try {
                 server.reader.getTerminal().restore();
             } catch (Exception e) {
+                // ignore;
             }
         }
     }

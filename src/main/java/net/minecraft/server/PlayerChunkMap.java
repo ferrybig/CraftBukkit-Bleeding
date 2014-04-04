@@ -63,7 +63,11 @@ public class PlayerChunkMap {
 
         // this.e.clear(); // CraftBukkit - Removals are already covered
         if (this.managedPlayers.isEmpty()) {
-            if (!wasNotEmpty) return; // CraftBukkit - Only do unload when we go from non-empty to empty
+            // CraftBukkit start - Only do unload when we go from non-empty to empty
+            if (!wasNotEmpty) {
+                return;
+            }
+            // CraftBukkit end
             WorldProvider worldprovider = this.world.worldProvider;
 
             if (!worldprovider.e()) {

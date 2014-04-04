@@ -81,7 +81,11 @@ public class ContainerWorkbench extends Container {
     }
 
     public boolean a(EntityHuman entityhuman) {
-        if (!this.checkReachable) return true; // CraftBukkit
+        // CraftBukkit start
+        if (!this.checkReachable) {
+            return true;
+        }
+        // CraftBukkit end
         return this.g.getType(this.h, this.i, this.j) != Blocks.WORKBENCH ? false : entityhuman.e((double) this.h + 0.5D, (double) this.i + 0.5D, (double) this.j + 0.5D) <= 64.0D;
     }
 

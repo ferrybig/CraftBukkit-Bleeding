@@ -69,7 +69,9 @@ public class AutoUpdater {
     }
 
     public void check(final String currentSlug) {
-        if (!isEnabled()) return;
+        if (!isEnabled()) {
+            return;
+        }
 
         new Thread() {
             @Override

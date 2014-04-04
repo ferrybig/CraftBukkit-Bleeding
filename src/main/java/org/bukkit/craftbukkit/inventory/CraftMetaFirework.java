@@ -134,35 +134,35 @@ class CraftMetaFirework extends CraftMetaItem implements FireworkMeta {
 
     static int getNBT(Type type) {
         switch (type) {
-            case BALL:
-                return 0;
-            case BALL_LARGE:
-                return 1;
-            case STAR:
-                return 2;
-            case CREEPER:
-                return 3;
-            case BURST:
-                return 4;
-            default:
-                throw new AssertionError(type);
+        case BALL:
+            return 0;
+        case BALL_LARGE:
+            return 1;
+        case STAR:
+            return 2;
+        case CREEPER:
+            return 3;
+        case BURST:
+            return 4;
+        default:
+            throw new AssertionError(type);
         }
     }
 
     static Type getEffectType(int nbt) {
         switch (nbt) {
-            case 0:
-                return Type.BALL;
-            case 1:
-                return Type.BALL_LARGE;
-            case 2:
-                return Type.STAR;
-            case 3:
-                return Type.CREEPER;
-            case 4:
-                return Type.BURST;
-            default:
-                throw new AssertionError(nbt);
+        case 0:
+            return Type.BALL;
+        case 1:
+            return Type.BALL_LARGE;
+        case 2:
+            return Type.STAR;
+        case 3:
+            return Type.CREEPER;
+        case 4:
+            return Type.BURST;
+        default:
+            throw new AssertionError(nbt);
         }
     }
 
@@ -243,11 +243,11 @@ class CraftMetaFirework extends CraftMetaItem implements FireworkMeta {
 
     @Override
     boolean applicableTo(Material type) {
-        switch(type) {
-            case FIREWORK:
-                return true;
-            default:
-                return false;
+        switch (type) {
+        case FIREWORK:
+            return true;
+        default:
+            return false;
         }
     }
 

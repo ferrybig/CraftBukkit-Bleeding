@@ -773,7 +773,9 @@ public final class CraftServer implements Server {
         while (pollCount < 50 && getScheduler().getActiveWorkers().size() > 0) {
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                // ignore;
+            }
             pollCount++;
         }
 
@@ -836,7 +838,9 @@ public final class CraftServer implements Server {
         } finally {
             try {
                 stream.close();
-            } catch (IOException ex) {}
+            } catch (IOException ex) {
+                // ignore;
+            }
         }
 
         if (perms == null) {
@@ -1343,7 +1347,7 @@ public final class CraftServer implements Server {
     public BanList getBanList(BanList.Type type) {
         Validate.notNull(type, "Type cannot be null");
 
-        switch(type){
+        switch (type) {
         case IP:
             return new CraftIpBanList(playerList.getIPBans());
         case NAME:

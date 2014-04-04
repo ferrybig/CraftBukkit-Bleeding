@@ -64,10 +64,10 @@ class CraftMetaCharge extends CraftMetaItem implements FireworkEffectMeta {
     @Override
     boolean applicableTo(Material type) {
         switch (type) {
-            case FIREWORK_CHARGE:
-                return true;
-            default:
-                return false;
+        case FIREWORK_CHARGE:
+            return true;
+        default:
+            return false;
         }
     }
 
