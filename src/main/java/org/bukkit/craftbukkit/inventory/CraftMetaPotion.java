@@ -70,10 +70,7 @@ class CraftMetaPotion extends CraftMetaItem implements PotionMeta {
         }
 
         for (Object obj : rawEffectList) {
-            if (!(obj instanceof PotionEffect)) {
-                throw new IllegalArgumentException("Object in effect list is not valid. " + obj.getClass());
-            }
-            addCustomEffect((PotionEffect) obj, true);
+            addCustomEffect(new PotionEffect((Map<String, Object>) obj), true);
         }
     }
 
