@@ -173,14 +173,11 @@ public class ContainerEnchantTable extends Container {
                     this.world.getServer().getPluginManager().callEvent(event);
 
                     int level = event.getExpLevelCost();
-                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild) || event.getEnchantsToAdd().isEmpty()) {
+                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild) || enchants.isEmpty()) {
                         return false;
                     }
 
-                    if (flag) {
-                        itemstack.setItem(Items.ENCHANTED_BOOK);
-                    }
-
+                    boolean applied = !flag;
                     for (Map.Entry<org.bukkit.enchantments.Enchantment, Integer> entry : event.getEnchantsToAdd().entrySet()) {
                         try {
                             if (flag) {
@@ -191,6 +188,9 @@ public class ContainerEnchantTable extends Container {
 
                                 EnchantmentInstance enchantment = new EnchantmentInstance(enchantId, entry.getValue());
                                 Items.ENCHANTED_BOOK.a(itemstack, enchantment);
+                                applied = true;
+                                itemstack.setItem((Item) Items.ENCHANTED_BOOK);
+                                break;
                             } else {
                                 item.addUnsafeEnchantment(entry.getKey(), entry.getValue());
                             }
@@ -199,7 +199,10 @@ public class ContainerEnchantTable extends Container {
                         }
                     }
 
-                    entityhuman.levelDown(-level);
+                    // Only down level if we've applied the enchantments
+                    if (applied) {
+                        entityhuman.levelDown(-level);
+                    }
                     // CraftBukkit end
 
                     this.a(this.enchantSlots);
