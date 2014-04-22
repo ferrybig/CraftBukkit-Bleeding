@@ -190,7 +190,6 @@ public class ContainerEnchantTable extends Container {
                                 Items.ENCHANTED_BOOK.a(itemstack, enchantment);
                                 applied = true;
                                 itemstack.setItem((Item) Items.ENCHANTED_BOOK);
-                                break;
                             } else {
                                 item.addUnsafeEnchantment(entry.getKey(), entry.getValue());
                             }
