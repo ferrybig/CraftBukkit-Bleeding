@@ -173,15 +173,11 @@ public class ContainerEnchantTable extends Container {
                     this.world.getServer().getPluginManager().callEvent(event);
 
                     int level = event.getExpLevelCost();
-                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild)) {
+                    if (event.isCancelled() || (level > entityhuman.expLevel && !entityhuman.abilities.canInstantlyBuild) || event.getEnchantsToAdd().isEmpty()) {
                         return false;
                     }
 
                     if (flag) {
-                        // Don't spend XP if adding no enchants to a book, but allow custom enchanting on other items.
-                        if (event.getEnchantsToAdd().isEmpty()) {
-                            return false;
-                        }
                         itemstack.setItem(Items.ENCHANTED_BOOK);
                     }
 
