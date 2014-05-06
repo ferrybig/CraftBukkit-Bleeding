@@ -845,9 +845,6 @@ class CraftMetaItem implements ItemMeta, Repairable {
             for (Map.Entry<String, Object> extra : extraData.entrySet()) {
                 // This will add a shallow copy to the builder.
                 // Since this is just for serialization, I'm hoping it's ok.
-
-                org.bukkit.Bukkit.getLogger().info("Serializing: " + extra.getKey());
-
                 builder.put(extra.getKey(), extra.getValue());
             }
         }
