@@ -9,16 +9,23 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import net.minecraft.server.NBTBase;
+import net.minecraft.server.NBTTagByte;
+import net.minecraft.server.NBTTagByteArray;
 import net.minecraft.server.NBTTagCompound;
 import net.minecraft.server.NBTTagDouble;
+import net.minecraft.server.NBTTagFloat;
 import net.minecraft.server.NBTTagInt;
+import net.minecraft.server.NBTTagIntArray;
 import net.minecraft.server.NBTTagList;
 import net.minecraft.server.NBTTagLong;
+import net.minecraft.server.NBTTagShort;
 import net.minecraft.server.NBTTagString;
 
 import org.apache.commons.lang.Validate;
@@ -77,6 +84,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         final String BUKKIT;
         final String NBT;
 
+        // Auto-registry of well-known tag names
+        final static Set<String> BUKKIT_TAGS = new HashSet<String>();
+        final static Set<String> NBT_TAGS = new HashSet<String>();
+
         ItemMetaKey(final String both) {
             this(both, both);
         }
@@ -84,6 +95,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
         ItemMetaKey(final String nbt, final String bukkit) {
             this.NBT = nbt;
             this.BUKKIT = bukkit;
+            if (bukkit != null) BUKKIT_TAGS.add(bukkit);
+            if (nbt != null) NBT_TAGS.add(nbt);
         }
     }
 
@@ -118,8 +131,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             constructorMap = classConstructorBuilder.build();
         }
 
-        private SerializableMeta() {
-        }
+        private SerializableMeta() {}
 
         public static ItemMeta deserialize(Map<String, Object> map) throws Throwable {
             Validate.notNull(map, "Cannot deserialize null map");
@@ -199,13 +211,73 @@ class CraftMetaItem implements ItemMeta, Repairable {
     private String displayName;
     private List<String> lore;
     private Map<Enchantment, Integer> enchantments;
+    private Map<String, Object> extraData;
     private int repairCost;
     private final NBTTagList attributes;
+
+    /**
+     * Create a deep copy of a Map
+     *
+     * @param from The Map to copy
+     * @return a copy of from, or null if from is null or empty.
+     */
+    protected static Map<String, Object> deepCopy(Map<String, Object> from) {
+        return deepCopy(from, false);
+    }
+
+    /**
+     * Create a deep copy of a Map
+     *
+     * Can optionally filter out well-known tag names. This is only used
+     * for the root node.
+     *
+     * @param from The Map to copy
+     * @param filteredRoot Whether or not to filter out well-known tags. This is only used on root nodes.
+     * @return a copy of from, or null if from is null or empty.
+     */
+    @SuppressWarnings("unchecked")
+    protected static Map<String, Object> deepCopy(Map<String, Object> from, boolean filteredRoot) {
+        if (from == null) return null;
+        Map<String, Object> converted = null;
+        for (Map.Entry<String, Object> entry : from.entrySet()) {
+            String key = entry.getKey();
+            // Skip over well-known tags, but only at the root level.
+            // Also filter out some special-case identifiers.
+            // This, admittedly, makes me feel like I've done something wrong- it seems like these
+            // special class identifiers and other meta info shouldn't make it into the deserialized
+            // map in the first place?
+            if (filteredRoot && (ItemMetaKey.BUKKIT_TAGS.contains(key) || key.equals("==") || key.equals(SerializableMeta.TYPE_FIELD))) {
+                continue;
+            }
+            Object value = entry.getValue();
+            if (value != null) {
+                if (value instanceof Map) {
+                    value = deepCopy((Map<String, Object>) value);
+                } else if (value instanceof List) {
+                    value = new ArrayList<Object>((List<Object>) value);
+                } else if (value.getClass().isArray()) {
+                    Object[] originalArray = (Object[])value;
+                    Class arrayType = value.getClass().getComponentType();
+                    value = (Object[])java.lang.reflect.Array.newInstance(arrayType, originalArray.length);
+                    System.arraycopy(originalArray, 0, value, 0, originalArray.length);
+                }
+            }
+            if (converted == null) converted = new HashMap<String, Object>();
+            converted.put(key, value);
+        }
+
+        return converted;
+    }
 
     CraftMetaItem(CraftMetaItem meta) {
         if (meta == null) {
             attributes = null;
             return;
+        }
+
+        if (meta.hasExtraData()) {
+            // No filtering here, we assume the input was already filtered
+            extraData = deepCopy(meta.extraData);
         }
 
         this.displayName = meta.displayName;
@@ -222,7 +294,98 @@ class CraftMetaItem implements ItemMeta, Repairable {
         this.attributes = meta.attributes;
     }
 
+    /**
+     * Convert an NBT tag to an object of the appropriate type
+     *
+     * @param tag The tag to convert
+     * @return A copy of tag's data, or null on failure or bad input
+     */
+    protected static Object convert(NBTBase tag) {
+        if (tag == null) return null;
+
+        //  I'll admit, this is getting pretty terrible.
+        // Nothing a little extra deobfuscating can't fix, but
+        // I understand not wanting to reach into all the extra NBT classes.
+        // On the other hand, these are hopefully unlikely to change, yeah?
+        if (tag instanceof NBTTagCompound) {
+            return convert((NBTTagCompound)tag);
+        } else if (tag instanceof NBTTagString) {
+            return ((NBTTagString) tag).a_();
+        } else if (tag instanceof NBTTagList) {
+            NBTTagList list = (NBTTagList)tag;
+            int tagSize = list.size();
+            List<Object> convertedList = new ArrayList<Object>(tagSize);
+            for (int i = 0; i < tagSize; i++) {
+                convertedList.add(convert(list.get(i)));
+            }
+            return convertedList;
+        } else if (tag instanceof NBTTagDouble) {
+            return ((NBTTagDouble)tag).g();
+        } else if (tag instanceof NBTTagInt) {
+            return ((NBTTagInt)tag).d();
+        } else if (tag instanceof NBTTagLong) {
+            return ((NBTTagLong)tag).c();
+        } else if (tag instanceof NBTTagFloat) {
+            return ((NBTTagFloat)tag).h();
+        } else if (tag instanceof NBTTagByte) {
+            return ((NBTTagByte)tag).f();
+        } else if (tag instanceof NBTTagShort) {
+            return ((NBTTagShort)tag).e();
+        } else if (tag instanceof NBTTagByteArray) {
+            return ((NBTTagByteArray)tag).c();
+        } else if (tag instanceof NBTTagIntArray) {
+           return ((NBTTagIntArray)tag).c();
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a compound tag into a Map.
+     *
+     * Well-known tags can be filtered out from the root if desired.
+     *
+     * @param from The tag to convert
+     * @param filteredRoot Whether or not to filter out well-known tags. This is only used on root nodes.
+     * @return The converted Map, or null for a null or empty tag.
+     */
+    protected static Map<String, Object> convert(NBTTagCompound from, boolean filteredRoot) {
+        if (from == null ) return null;
+
+        // TODO: Deobfuscate c(), maybe?
+        Set<String> keys = from.c();
+
+        // Create on demand to save memory
+        Map<String, Object> converted = null;
+
+        for (String key : keys) {
+            // Skip over well-known tags, but only at the root level.
+            if (filteredRoot && ItemMetaKey.NBT_TAGS.contains(key)) {
+                continue;
+            }
+            if (converted == null) {
+                converted = new HashMap<String, Object>();
+            }
+            converted.put(key, convert(from.get(key)));
+        }
+
+        return converted;
+    }
+
+    /**
+     * Converts a compound tag into a Map.
+     *
+     * @param from The tag to convert
+     * @return The converted Map, or null for a null or empty tag.
+     */
+    protected static Map<String, Object> convert(NBTTagCompound from) {
+        return convert(from, false);
+    }
+
     CraftMetaItem(NBTTagCompound tag) {
+
+        extraData = convert(tag, true);
+
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
 
@@ -316,6 +479,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(Map<String, Object> map) {
+        extraData = deepCopy(map, true);
+
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
 
         Iterable<?> lore = SerializableMeta.getObject(Iterable.class, map, LORE.BUKKIT, true);
@@ -351,6 +516,64 @@ class CraftMetaItem implements ItemMeta, Repairable {
         return enchantments;
     }
 
+    /**
+     * Convert an object to an NBTBase object. This creates a copy of the
+     * input and wraps it in the appropriate NBT class.
+     *
+     * @param value The value to copy and wrap
+     * @return An NBTBase representation of the input
+     */
+    @SuppressWarnings("unchecked")
+    protected static NBTBase convert(Object value) {
+        if (value == null) return null;
+
+        NBTBase copiedValue = null;
+        if (value instanceof Map) {
+            NBTTagCompound subtag = new NBTTagCompound();
+            applyToItem(subtag, (Map<String, Object>)value);
+            copiedValue = subtag;
+        } else if (value instanceof String) {
+            copiedValue = new NBTTagString((String)value);
+        } else if (value instanceof Integer) {
+            copiedValue = new NBTTagInt((Integer)value);
+        } else if (value instanceof Float) {
+            copiedValue = new NBTTagFloat((Float)value);
+        } else if (value instanceof Double) {
+            copiedValue = new NBTTagDouble((Double)value);
+        } else if (value instanceof Byte) {
+            copiedValue = new NBTTagByte((Byte)value);
+        } else if (value instanceof Short) {
+            copiedValue = new NBTTagShort((Short)value);
+        } else if (value instanceof List) {
+            NBTTagList tagList = new NBTTagList();
+            List<Object> list = (List<Object>)value;
+            for (Object listValue : list) {
+                tagList.add(convert(listValue));
+            }
+            copiedValue = tagList;
+        } else if (value.getClass().isArray()) {
+            Class<?> arrayType = value.getClass().getComponentType();
+            // I suppose you could convert Byte[], Integer[] here ... Long, Float, etc for that matter.
+            if (arrayType == Byte.TYPE) {
+                copiedValue = new NBTTagByteArray((byte[]) value);
+            } else if (arrayType == Integer.TYPE) {
+                copiedValue = new NBTTagIntArray((int[]) value);
+            }
+        }
+
+        return copiedValue;
+    }
+
+    protected static void applyToItem(NBTTagCompound itemTag, Map<String, Object> data) {
+        if (itemTag == null || data == null) return;
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            NBTBase copiedValue = convert(entry.getValue());
+            if (copiedValue != null) {
+                itemTag.set(entry.getKey(), copiedValue);
+            }
+        }
+    }
+
     @Overridden
     void applyToItem(NBTTagCompound itemTag) {
         if (hasDisplayName()) {
@@ -369,6 +592,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (attributes != null) {
             itemTag.set(ATTRIBUTES.NBT, attributes);
+        }
+
+        if (hasExtraData()) {
+            applyToItem(itemTag, extraData);
         }
     }
 
@@ -421,7 +648,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Overridden
     boolean isEmpty() {
-        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost());
+        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost() || hasExtraData());
     }
 
     public String getDisplayName() {
@@ -435,6 +662,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     public boolean hasDisplayName() {
         return !Strings.isNullOrEmpty(displayName);
     }
+
+    public boolean hasExtraData() { return extraData != null; }
 
     public boolean hasLore() {
         return this.lore != null && !this.lore.isEmpty();
@@ -538,7 +767,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 && (this.hasEnchants() ? that.hasEnchants() && this.enchantments.equals(that.enchantments) : !that.hasEnchants())
                 && (this.hasLore() ? that.hasLore() && this.lore.equals(that.lore) : !that.hasLore())
                 && (this.hasAttributes() ? that.hasAttributes() && this.attributes.equals(that.attributes) : !that.hasAttributes())
-                && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost());
+                && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost())
+                && (this.hasExtraData() ? that.hasExtraData() && this.extraData.equals(that.extraData) : !that.hasExtraData());
     }
 
     /**
@@ -564,6 +794,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         hash = 61 * hash + (hasEnchants() ? this.enchantments.hashCode() : 0);
         hash = 61 * hash + (hasAttributes() ? this.attributes.hashCode() : 0);
         hash = 61 * hash + (hasRepairCost() ? this.repairCost : 0);
+        hash = 61 * hash + (hasExtraData() ? this.extraData.hashCode() : 0);
         return hash;
     }
 
@@ -577,6 +808,9 @@ class CraftMetaItem implements ItemMeta, Repairable {
             }
             if (this.enchantments != null) {
                 clone.enchantments = new HashMap<Enchantment, Integer>(this.enchantments);
+            }
+            if (this.extraData != null) {
+                clone.extraData = deepCopy(this.extraData);
             }
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -605,6 +839,17 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (hasRepairCost()) {
             builder.put(REPAIR.BUKKIT, repairCost);
+        }
+
+        if (hasExtraData()) {
+            for (Map.Entry<String, Object> extra : extraData.entrySet()) {
+                // This will add a shallow copy to the builder.
+                // Since this is just for serialization, I'm hoping it's ok.
+
+                org.bukkit.Bukkit.getLogger().info("Serializing: " + extra.getKey());
+
+                builder.put(extra.getKey(), extra.getValue());
+            }
         }
 
         return builder;
