@@ -613,7 +613,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     static void applyEnchantments(Map<Enchantment, Integer> enchantments, NBTTagCompound tag, ItemMetaKey key) {
-        if (enchantments == null || enchantments.size() == 0) {
+        if (enchantments == null) {
             return;
         }
 
@@ -710,7 +710,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     public boolean hasEnchants() {
-        return !(enchantments == null || enchantments.isEmpty());
+        return enchantments != null;
     }
 
     public boolean hasConflictingEnchant(Enchantment ench) {
@@ -853,7 +853,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     static void serializeEnchantments(Map<Enchantment, Integer> enchantments, ImmutableMap.Builder<String, Object> builder, ItemMetaKey key) {
-        if (enchantments == null || enchantments.isEmpty()) {
+        if (enchantments == null) {
             return;
         }
 
