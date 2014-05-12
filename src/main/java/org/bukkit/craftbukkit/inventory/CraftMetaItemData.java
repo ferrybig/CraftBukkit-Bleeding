@@ -13,6 +13,7 @@ import net.minecraft.server.NBTTagList;
 import net.minecraft.server.NBTTagLong;
 import net.minecraft.server.NBTTagShort;
 import net.minecraft.server.NBTTagString;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
     /**
      * Create an empty item data object.
      */
-    private CraftMetaItemData() {
+    protected CraftMetaItemData() {
     }
 
     /**
@@ -276,7 +277,17 @@ public class CraftMetaItemData extends MemoryConfiguration {
         if (value == null) return null;
 
         NBTBase copiedValue = null;
-        if (value instanceof Map) {
+        if (value instanceof ConfigurationSection) {
+            NBTTagCompound subtag = new NBTTagCompound();
+            ConfigurationSection section = (ConfigurationSection)value;
+            Collection<String> keys = section.getKeys(false);
+            Map<String, Object> sectionMap = new HashMap<String, Object>(keys.size());
+            for (String key : keys) {
+                sectionMap.put(key, section.get(key));
+            }
+            applyToItem(subtag, sectionMap);
+            copiedValue = subtag;
+        } else if (value instanceof Map) {
             NBTTagCompound subtag = new NBTTagCompound();
             applyToItem(subtag, (Map<String, Object>)value);
             copiedValue = subtag;
@@ -390,5 +401,9 @@ public class CraftMetaItemData extends MemoryConfiguration {
     @Override
     public int hashCode() {
         return map.hashCode();
+    }
+
+    public boolean isEmpty() {
+        return map.isEmpty();
     }
 }
