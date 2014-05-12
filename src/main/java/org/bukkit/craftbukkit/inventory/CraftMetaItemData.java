@@ -219,6 +219,8 @@ public class CraftMetaItemData extends MemoryConfiguration {
             NBTBase copiedValue = convert(entry.getValue());
             if (copiedValue != null) {
                 itemTag.set(entry.getKey(), copiedValue);
+            } else {
+                itemTag.remove(entry.getKey());
             }
         }
     }
