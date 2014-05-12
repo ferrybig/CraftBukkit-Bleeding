@@ -9,9 +9,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import net.minecraft.server.NBTBase;
 import net.minecraft.server.NBTTagCompound;
@@ -77,6 +79,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         final String BUKKIT;
         final String NBT;
 
+        // Auto-registry of well-known tag names
+        final static Set<String> BUKKIT_TAGS = new HashSet<String>();
+        final static Set<String> NBT_TAGS = new HashSet<String>();
+
         ItemMetaKey(final String both) {
             this(both, both);
         }
@@ -84,6 +90,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
         ItemMetaKey(final String nbt, final String bukkit) {
             this.NBT = nbt;
             this.BUKKIT = bukkit;
+            if (bukkit != null) BUKKIT_TAGS.add(bukkit);
+            if (nbt != null) NBT_TAGS.add(nbt);
         }
     }
 
@@ -199,6 +207,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     private String displayName;
     private List<String> lore;
     private Map<Enchantment, Integer> enchantments;
+    private CraftMetaItemData data;
     private int repairCost;
     private final NBTTagList attributes;
 
@@ -206,6 +215,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (meta == null) {
             attributes = null;
             return;
+        }
+
+        if (meta.hasData()) {
+            data = new CraftMetaItemData(meta.data);
         }
 
         this.displayName = meta.displayName;
@@ -223,6 +236,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(NBTTagCompound tag) {
+        data = CraftMetaItemData.getCustomData(tag);
+
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
 
@@ -316,6 +331,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(Map<String, Object> map) {
+        data = CraftMetaItemData.getCustomData(map);
+
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
 
         Iterable<?> lore = SerializableMeta.getObject(Iterable.class, map, LORE.BUKKIT, true);
@@ -370,6 +387,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (attributes != null) {
             itemTag.set(ATTRIBUTES.NBT, attributes);
         }
+
+        if (data != null) {
+            data.applyToItem(itemTag);
+        }
     }
 
     static NBTTagList createStringList(List<String> list) {
@@ -421,7 +442,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Overridden
     boolean isEmpty() {
-        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost());
+        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost() || hasData());
     }
 
     public String getDisplayName() {
@@ -435,6 +456,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     public boolean hasDisplayName() {
         return !Strings.isNullOrEmpty(displayName);
     }
+
+    public boolean hasData() { return data != null; }
 
     public boolean hasLore() {
         return this.lore != null && !this.lore.isEmpty();
@@ -538,7 +561,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 && (this.hasEnchants() ? that.hasEnchants() && this.enchantments.equals(that.enchantments) : !that.hasEnchants())
                 && (this.hasLore() ? that.hasLore() && this.lore.equals(that.lore) : !that.hasLore())
                 && (this.hasAttributes() ? that.hasAttributes() && this.attributes.equals(that.attributes) : !that.hasAttributes())
-                && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost());
+                && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost())
+                && (this.hasData() ? that.hasData() && this.data.equals(that.data) : !that.hasData());
     }
 
     /**
@@ -564,6 +588,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         hash = 61 * hash + (hasEnchants() ? this.enchantments.hashCode() : 0);
         hash = 61 * hash + (hasAttributes() ? this.attributes.hashCode() : 0);
         hash = 61 * hash + (hasRepairCost() ? this.repairCost : 0);
+        hash = 61 * hash + (hasData() ? this.data.hashCode() : 0);
         return hash;
     }
 
@@ -577,6 +602,9 @@ class CraftMetaItem implements ItemMeta, Repairable {
             }
             if (this.enchantments != null) {
                 clone.enchantments = new HashMap<Enchantment, Integer>(this.enchantments);
+            }
+            if (this.data != null) {
+                clone.data = new CraftMetaItemData(this.data);
             }
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -605,6 +633,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (hasRepairCost()) {
             builder.put(REPAIR.BUKKIT, repairCost);
+        }
+
+        if (hasData()) {
+            data.serialize(builder);
         }
 
         return builder;
