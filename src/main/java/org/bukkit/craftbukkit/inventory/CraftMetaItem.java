@@ -25,6 +25,7 @@ import net.minecraft.server.NBTTagString;
 
 import org.apache.commons.lang.Validate;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.configuration.serialization.SerializableAs;
@@ -457,8 +458,6 @@ class CraftMetaItem implements ItemMeta, Repairable {
         return !Strings.isNullOrEmpty(displayName);
     }
 
-    public boolean hasData() { return data != null; }
-
     public boolean hasLore() {
         return this.lore != null && !this.lore.isEmpty();
     }
@@ -469,6 +468,17 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     public boolean hasRepairCost() {
         return repairCost > 0;
+    }
+
+    public boolean hasData() {
+        return data != null && !data.isEmpty();
+    }
+
+    public ConfigurationSection getData() {
+        if (data == null) {
+            data = new CraftMetaItemData();
+        }
+        return data;
     }
 
     public boolean hasEnchant(Enchantment ench) {
