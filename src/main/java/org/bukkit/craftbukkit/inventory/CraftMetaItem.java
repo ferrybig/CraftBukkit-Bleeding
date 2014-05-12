@@ -216,6 +216,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (meta.hasEnchants()) {
             this.enchantments = new HashMap<Enchantment, Integer>(meta.enchantments);
+        } else if (meta.hasGlowEffect()) {
+            this.enchantments = new HashMap<Enchantment, Integer>();
         }
 
         this.repairCost = meta.repairCost;
@@ -386,7 +388,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     static void applyEnchantments(Map<Enchantment, Integer> enchantments, NBTTagCompound tag, ItemMetaKey key) {
-        if (enchantments == null || enchantments.size() == 0) {
+        if (enchantments == null) {
             return;
         }
 
@@ -421,7 +423,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Overridden
     boolean isEmpty() {
-        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost());
+        return !(hasDisplayName() || hasEnchants() || hasGlowEffect() || hasLore() || hasAttributes() || hasRepairCost());
     }
 
     public String getDisplayName() {
@@ -482,6 +484,23 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     public boolean hasEnchants() {
         return !(enchantments == null || enchantments.isEmpty());
+    }
+
+    public boolean hasGlowEffect() {
+        return enchantments != null;
+    }
+
+    public void setGlowEffect(boolean glow) {
+        if (glow && !hasGlowEffect()) {
+            enchantments = new HashMap<Enchantment, Integer>(0);
+        } else {
+            // Don't ever remove enchantments here.
+            // This means we can't really support glow=false
+            // with existing enchants, it just does nothing.
+            if (!hasEnchants()) {
+                enchantments = null;
+            }
+        }
     }
 
     public boolean hasConflictingEnchant(Enchantment ench) {
@@ -611,7 +630,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     static void serializeEnchantments(Map<Enchantment, Integer> enchantments, ImmutableMap.Builder<String, Object> builder, ItemMetaKey key) {
-        if (enchantments == null || enchantments.isEmpty()) {
+        if (enchantments == null) {
             return;
         }
 
