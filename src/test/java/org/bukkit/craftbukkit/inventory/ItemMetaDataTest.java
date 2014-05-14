@@ -62,6 +62,21 @@ public class ItemMetaDataTest extends AbstractTestingBase {
     }
 
     @Test
+    public void testNestedWellKnownTags() {
+        ItemStack testStack = new ItemStack(Material.STICK);
+        testStack = CraftItemStack.asCraftCopy(testStack);
+        ItemMeta itemMeta = testStack.getItemMeta();
+        assertThat(itemMeta.hasCustomData(), is(false));
+
+        // This is a special test case that fires if the safety checks
+        // are improperly looking at nested data
+        ConfigurationSection customData = itemMeta.getCustomData();
+        ConfigurationSection subSection = customData.createSection("test_sub_section");
+        subSection.set("id", TEST_STRING_VALUE);
+        testStack.setItemMeta(itemMeta);
+    }
+
+    @Test
     public void testAddSerializeableData() {
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);

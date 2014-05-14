@@ -111,7 +111,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
      * @param itemTag The item data to apply our map to.
      */
     protected void applyToItem(NBTTagCompound itemTag) {
-        applyToItem(itemTag, map);
+        applyToItem(itemTag, map, true);
     }
 
     /**
@@ -210,11 +210,11 @@ public class CraftMetaItemData extends MemoryConfiguration {
         if (value instanceof ConfigurationSection) {
             NBTTagCompound subtag = new NBTTagCompound();
             Map<String, Object> sectionMap = copyRoot((ConfigurationSection) value);
-            applyToItem(subtag, sectionMap);
+            applyToItem(subtag, sectionMap, false);
             copiedValue = subtag;
         } else if (value instanceof Map) {
             NBTTagCompound subtag = new NBTTagCompound();
-            applyToItem(subtag, (Map<String, Object>)value);
+            applyToItem(subtag, (Map<String, Object>)value, false);
             copiedValue = subtag;
         } else if (value instanceof String) {
             copiedValue = new NBTTagString((String)value);
@@ -249,7 +249,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
             Map<String, Object> serializedMap = serializeable.serialize();
 
             serializedMap.put(ConfigurationSerialization.SERIALIZED_TYPE_KEY, ConfigurationSerialization.getAlias(serializeable.getClass()));
-            applyToItem(subtag, serializedMap);
+            applyToItem(subtag, serializedMap, false);
             copiedValue = subtag;
         } else {
             throw new IllegalArgumentException("Can't store objects of type " + value.getClass().getName());
@@ -336,17 +336,20 @@ public class CraftMetaItemData extends MemoryConfiguration {
      * <p>
      * Will throw an IllegalArgumentException if providing
      * a non-ConfigurationSerializeable object, or if
-     * trying to override a well-known root key.
+     * trying to override a well-known root key when
+     * filterRegistered is true.
      *
      * @param itemTag The tag for which to apply data.
      * @param data The data to apply
+     * @param filterRegistered if true, an IllegalArgumentException
+     *    when trying to override a well-known tag name
      */
-    private static void applyToItem(NBTTagCompound itemTag, Map<String, Object> data) {
+    private static void applyToItem(NBTTagCompound itemTag, Map<String, Object> data, boolean filterRegistered) {
        if (itemTag == null || data == null) return;
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             String key = entry.getKey();
-            if (CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key)) {
+            if (filterRegistered && CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key)) {
                 throw new IllegalArgumentException("Can not customize key: " + key);
             }
             NBTBase copiedValue = convert(entry.getValue());
