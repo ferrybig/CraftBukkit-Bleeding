@@ -15,6 +15,8 @@ import net.minecraft.server.NBTTagShort;
 import net.minecraft.server.NBTTagString;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,10 +47,10 @@ public class CraftMetaItemData extends MemoryConfiguration {
 
     /**
      * Retrieve a CraftMetaItemData object for a given NBTTagCompound.
-     *
+     * <p>
      * This will scan the tag for any custom tags, those which are
      * not registered in ItemMetaKey, and copy them if present.
-     *
+     * <p>
      * If there are no custom tags, this will return null and
      * allocate no memory.
      *
@@ -60,16 +62,18 @@ public class CraftMetaItemData extends MemoryConfiguration {
         if (customKeys == null) return null;
 
         CraftMetaItemData itemData = new CraftMetaItemData();
-        copyFromItem(itemData, tag, customKeys);
+        for (String key : customKeys) {
+            itemData.set(key, convert(tag.get(key), key, itemData));
+        }
         return itemData;
     }
 
     /**
      * Retrieve a CraftMetaItemData object for a given Map of data.
-     *
+     * <p>
      * This will scan the Map for any custom tags, those which are
      * not registered in ItemMetaKey, and copy them if present.
-     *
+     * <p>
      * If there are no custom tags, this will return null and
      * allocate no memory.
      *
@@ -89,15 +93,12 @@ public class CraftMetaItemData extends MemoryConfiguration {
     /**
      * This will serialize all data into an ImmutableMap.Builder.
      *
-     * TODO: Is there a way this can route through MemorySection instead?
-     *
      * @param builder The Builder to put this ItemData into.
      * @return The same builder
      */
     ImmutableMap.Builder<String, Object> serialize(ImmutableMap.Builder<String, Object> builder) {
         for (Map.Entry<String, Object> extra : map.entrySet()) {
-            // TODO: Test this with complex trees of data
-            // Do I need to walk through this and make an
+            // Does this need to recurse through the map and make an
             // ImmutableMap.Builder for each Map in the data, and so on?
             builder.put(extra.getKey(), extra.getValue());
         }
@@ -114,30 +115,55 @@ public class CraftMetaItemData extends MemoryConfiguration {
     }
 
     /**
-     * Adds an NBT tag to a ConfigurationSection, by converting it
-     * to an object of the appropriate type.
+     * Convert an NBTBase object to an object of the appropriate type for
+     * inclusion in our data map.
+     * <p>
+     * This will convert a compound tag into either a Map (used for object
+     * deserialization) or a ConfigurationSection.
+     * <p>
+     * It is not possible to store a Map directly.
      *
-     * @param section The config section to store data in
-     * @param key The key for this data
      * @param tag The tag to convert and store
+     * @param key The key of this tag, needed if creating as a ConfigurationSection.
+     * @param baseSection If non-null, compound tags will be made into ConfigurationSections instead of Maps
      * @return The converted object, or null if nothing was stored
      */
-    private static Object set(ConfigurationSection section, String key, NBTBase tag) {
+    private static Object convert(NBTBase tag, String key, ConfigurationSection baseSection) {
         if (tag == null) return null;
 
         Object value = null;
-        //  I'll admit, this is getting pretty terrible.
-        // Nothing a little extra deobfuscating can't fix, but
-        // I understand not wanting to reach into all the extra NBT classes.
-        // On the other hand, these are hopefully unlikely to change, yeah?
+        // This adds some extra reaching into NBT internals.
         if (tag instanceof NBTTagCompound) {
             NBTTagCompound compound = (NBTTagCompound)tag;
             Collection<String> keys = getAllKeys(compound);
-            ConfigurationSection newSection = section.createSection(key);
-            for (String tagKey : keys) {
-                set(newSection, tagKey, compound.get(tagKey));
+
+            // Check for Map, ConfigurationSection or SerliazebleObject creation
+            boolean isSerializedObject = compound.hasKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY);
+            if (baseSection == null || isSerializedObject) {
+                Map<String, Object> dataMap = new HashMap<String, Object>();
+                for (String tagKey : keys) {
+                    dataMap.put(tagKey, convert(compound.get(tagKey), tagKey, null));
+                }
+                if (isSerializedObject) {
+                    try {
+                        value = ConfigurationSerialization.deserializeObject(dataMap);
+                        if (value == null) {
+                            throw new IllegalArgumentException("Failed to deserialize object of class " + compound.get(ConfigurationSerialization.SERIALIZED_TYPE_KEY));
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();;
+                        throw new IllegalArgumentException("Failed to deserialize object of class " + compound.get(ConfigurationSerialization.SERIALIZED_TYPE_KEY) + ", " + ex.getMessage());
+                    }
+                } else {
+                    value = dataMap;
+                }
+            } else {
+                ConfigurationSection newSection = baseSection.createSection(key);
+                for (String tagKey : keys) {
+                    newSection.set(tagKey, convert(compound.get(tagKey), tagKey, newSection));
+                }
+                value = newSection;
             }
-            value = newSection;
         } else if (tag instanceof NBTTagString) {
             value = ((NBTTagString) tag).a_();
         } else if (tag instanceof NBTTagList) {
@@ -145,7 +171,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
             int tagSize = list.size();
             List<Object> convertedList = new ArrayList<Object>(tagSize);
             for (int i = 0; i < tagSize; i++) {
-                convertedList.add(convert(list.get(i)));
+                convertedList.add(convert(list.get(i), null, null));
             }
             value = convertedList;
         } else if (tag instanceof NBTTagDouble) {
@@ -166,22 +192,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
             value = ((NBTTagIntArray)tag).c();
         }
 
-        if (value != null) {
-            section.set(key, value);
-        }
         return value;
-    }
-
-    /**
-     * Adds an NBT tag to this data, by converting it
-     * to an object of the appropriate type.
-     *
-     * @param key The key for this data
-     * @param tag The tag to convert and store
-     * @return The converted object, or null if nothing was stored
-     */
-    private Object set(String key, NBTBase tag) {
-        return set(this, key, tag);
     }
 
     /**
@@ -232,6 +243,16 @@ public class CraftMetaItemData extends MemoryConfiguration {
             } else if (arrayType == Integer.TYPE) {
                 copiedValue = new NBTTagIntArray((int[]) value);
             }
+        } else if (value instanceof ConfigurationSerializable) {
+            ConfigurationSerializable serializeable = (ConfigurationSerializable)value;
+            NBTTagCompound subtag = new NBTTagCompound();
+            Map<String, Object> serializedMap = serializeable.serialize();
+
+            serializedMap.put(ConfigurationSerialization.SERIALIZED_TYPE_KEY, ConfigurationSerialization.getAlias(serializeable.getClass()));
+            applyToItem(subtag, serializedMap);
+            copiedValue = subtag;
+        } else {
+            throw new IllegalArgumentException("Can't store objects of type " + value.getClass().getName());
         }
 
         return copiedValue;
@@ -239,7 +260,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
 
     /**
      * Retrieve all keys for a tag.
-     *
+     * <p>
      * This is a simple wrapper for the obfuscated c() method
      *
      * @param tag The NBTTagCompound to list keys
@@ -247,13 +268,13 @@ public class CraftMetaItemData extends MemoryConfiguration {
      */
     protected static Set<String> getAllKeys(NBTTagCompound tag) {
         if (tag == null) return null;
-        // TODO: Deobfuscate this?
+        // TODO: Deobfuscate c() and remove the wrapper?
         return tag.c();
     }
 
     /**
      * Return a list of custom tags found on the specified NBTTag.
-     *
+     * <p>
      * If there are no tags or no custom tags, this will return null.
      *
      * @param tag The NBTTagCompound to search for custom keys
@@ -280,10 +301,10 @@ public class CraftMetaItemData extends MemoryConfiguration {
 
     /**
      * Return a list of custom tags found in the specified Map.
-     *
+     * <p>
      * This filters out Bukkit tags (not NBT tags), they differ
      * in some cases- see ItemMetaKey for details.
-     *
+     * <p>
      * If there are no tags or no custom tags, this will return null.
      *
      * @param from The Map to search for custom keys
@@ -297,13 +318,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
         for (Map.Entry<String, Object> entry : from.entrySet()) {
             String key = entry.getKey();
             // Skip over well-known tags, but only at the root level.
-            // Also filter out some special-case identifiers.
-            // This, admittedly, makes me feel like I've done something wrong- it seems like these
-            // special class identifiers and other meta info shouldn't make it into the deserialized
-            // map in the first place? However, they did in testing.
-            if ((CraftMetaItem.ItemMetaKey.BUKKIT_TAGS.contains(key)
-                    || key.equals("==")
-                    || key.equals(CraftMetaItem.SerializableMeta.TYPE_FIELD))) {
+            if (CraftMetaItem.ItemMetaKey.BUKKIT_TAGS.contains(key)) {
                 continue;
             }
 
@@ -317,35 +332,28 @@ public class CraftMetaItemData extends MemoryConfiguration {
     }
 
     /**
-     * Copy data from an NBTTagCompound to a Map.
-     *
-     * @param section The ConfigurationSection to add data to, only custom data will be added
-     * @param from The Item data to look for custom data
-     * @param keys The specific keys to copy
-     */
-    protected static void copyFromItem(ConfigurationSection section, NBTTagCompound from, Collection<String> keys) {
-        if (from == null || section == null || keys == null) return;
-
-        for (String key : keys) {
-            set(section, key, from.get(key));
-        }
-    }
-
-    /**
      * Apply a Map of data to an item's NBTTag
+     * <p>
+     * Will throw an IllegalArgumentException if providing
+     * a non-ConfigurationSerializeable object, or if
+     * trying to override a well-known root key.
      *
      * @param itemTag The tag for which to apply data.
      * @param data The data to apply
      */
     private static void applyToItem(NBTTagCompound itemTag, Map<String, Object> data) {
-        if (itemTag == null || data == null) return;
+       if (itemTag == null || data == null) return;
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
+            String key = entry.getKey();
+            if (CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key)) {
+                throw new IllegalArgumentException("Can not customize key: " + key);
+            }
             NBTBase copiedValue = convert(entry.getValue());
             if (copiedValue != null) {
-                itemTag.set(entry.getKey(), copiedValue);
+                itemTag.set(key, copiedValue);
             } else {
-                itemTag.remove(entry.getKey());
+                itemTag.remove(key);
             }
         }
     }
@@ -364,7 +372,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
 
     /**
      * Does a deep copy from a Map to this object.
-     *
+     * <p>
      * Can be used to filter out unwanted keys.
      *
      * @param from The Map to copy from
