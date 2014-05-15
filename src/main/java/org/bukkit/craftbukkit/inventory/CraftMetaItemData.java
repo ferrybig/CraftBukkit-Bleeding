@@ -170,8 +170,47 @@ public class CraftMetaItemData extends MemoryConfiguration {
             NBTTagList list = (NBTTagList)tag;
             int tagSize = list.size();
             List<Object> convertedList = new ArrayList<Object>(tagSize);
+            int listType = list.d();
             for (int i = 0; i < tagSize; i++) {
-                convertedList.add(convert(list.get(i), null, null));
+                // Convert to appropriate NBT object type
+                Object listValue = null;
+                switch (listType) {
+                    case 10: // TagCompound
+                        listValue = convert(list.get(i));
+                        break;
+                    case 1: // Byte
+                    case 2: // Short
+                    case 3: // Int
+                    case 4: // Long
+                        // I don't think this is going to work.
+                        listValue = list.e(i);
+                        break;
+                    case 6: // Double
+                    case 5: // Float
+                        listValue = list.e(i);
+                        break;
+                    case 7: // Byte array
+                        int[] intArray = list.c(i);
+                        byte[] byteArray = new byte[intArray.length];
+                        for (int arrayIndex = 0; arrayIndex < intArray.length; arrayIndex++) {
+                            byteArray[arrayIndex] = (byte)intArray[arrayIndex];
+                        }
+                        listValue = byteArray;
+                        break;
+                    case 8: // String;
+                        listValue = list.f(i);
+                        break;
+                    case 9: // List;
+                        // We don't support nested lists.
+                        listValue = null;
+                        break;
+                    case 11: // Int array
+                        listValue = list.c(i);
+                        break;
+                }
+                if (listValue != null) {
+                    convertedList.add(listValue);
+                }
             }
             value = convertedList;
         } else if (tag instanceof NBTTagDouble) {
@@ -244,11 +283,11 @@ public class CraftMetaItemData extends MemoryConfiguration {
                 copiedValue = new NBTTagIntArray((int[]) value);
             }
         } else if (value instanceof ConfigurationSerializable) {
-            ConfigurationSerializable serializeable = (ConfigurationSerializable)value;
+            ConfigurationSerializable serializable = (ConfigurationSerializable)value;
+            Map<String, Object> serializedMap = new HashMap<String, Object>();
+            serializedMap.put(ConfigurationSerialization.SERIALIZED_TYPE_KEY, ConfigurationSerialization.getAlias(serializable.getClass()));
+            serializedMap.putAll(serializable.serialize());
             NBTTagCompound subtag = new NBTTagCompound();
-            Map<String, Object> serializedMap = serializeable.serialize();
-
-            serializedMap.put(ConfigurationSerialization.SERIALIZED_TYPE_KEY, ConfigurationSerialization.getAlias(serializeable.getClass()));
             applyToItem(subtag, serializedMap, false);
             copiedValue = subtag;
         } else {
@@ -287,7 +326,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
         Collection<String> customKeys = null;
         for (String key : keys) {
             // Skip over auto-registered NBT tags
-            if (CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key)) {
+            if (CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key) || CraftMetaItem.SerializableMeta.TYPE_FIELD.equals(key)) {
                 continue;
             }
             if (customKeys == null) {
@@ -318,10 +357,14 @@ public class CraftMetaItemData extends MemoryConfiguration {
         for (Map.Entry<String, Object> entry : from.entrySet()) {
             String key = entry.getKey();
             // Skip over well-known tags, but only at the root level.
-            if (CraftMetaItem.ItemMetaKey.BUKKIT_TAGS.contains(key)) {
+            if (CraftMetaItem.ItemMetaKey.BUKKIT_TAGS.contains(key) || CraftMetaItem.SerializableMeta.TYPE_FIELD.equals(key)) {
                 continue;
             }
 
+            // Skip over this as it will be passed in when deserializing
+            if (key.equals(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
+               continue;
+            }
             if (keys == null) {
                 keys = new ArrayList<String>();
             }
@@ -335,7 +378,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
      * Apply a Map of data to an item's NBTTag
      * <p>
      * Will throw an IllegalArgumentException if providing
-     * a non-ConfigurationSerializeable object, or if
+     * a non-ConfigurationSerializable object, or if
      * trying to override a well-known root key when
      * filterRegistered is true.
      *
@@ -349,7 +392,7 @@ public class CraftMetaItemData extends MemoryConfiguration {
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             String key = entry.getKey();
-            if (filterRegistered && CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key)) {
+            if (filterRegistered && (CraftMetaItem.ItemMetaKey.NBT_TAGS.contains(key) || CraftMetaItem.SerializableMeta.TYPE_FIELD.equals(key))) {
                 throw new IllegalArgumentException("Can not customize key: " + key);
             }
             NBTBase copiedValue = convert(entry.getValue());
