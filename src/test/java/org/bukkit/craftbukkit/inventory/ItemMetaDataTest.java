@@ -2,12 +2,15 @@ package org.bukkit.craftbukkit.inventory;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.support.AbstractTestingBase;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -70,6 +73,8 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
         // This is a special test case that fires if the safety checks
         // are improperly looking at nested data
+        // Adding "myplugin.value.id" or "myplugin.id" is fine,
+        // even though "id" is not.
         ConfigurationSection customData = itemMeta.getCustomData();
         ConfigurationSection subSection = customData.createSection("test_sub_section");
         subSection.set("id", TEST_STRING_VALUE);
@@ -78,15 +83,29 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
     @Test
     public void testAddSerializeableData() {
+
+        ItemStack testStoredStack = new ItemStack(Material.DIAMOND_SWORD);
+        testStoredStack = CraftItemStack.asCraftCopy(testStoredStack);
+        ItemMeta itemMeta = testStoredStack.getItemMeta();
+        itemMeta.setDisplayName(TEST_STRING_VALUE);
+        List<String> lore = new ArrayList<String>();
+        lore.add(TEST_STRING_VALUE + "_1");
+        lore.add(TEST_STRING_VALUE + "_2");
+        itemMeta.setLore(lore);
+        itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
+        itemMeta.getCustomData().set("testing_embedded_tag", TEST_STRING_VALUE);
+        testStoredStack.setItemMeta(itemMeta);
+
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
-        ItemMeta itemMeta = testStack.getItemMeta();
+        itemMeta = testStack.getItemMeta();
         assertThat(itemMeta.hasCustomData(), is(false));
 
         SerializeableObject serializeable = new SerializeableObject();
-        serializeable.data.put("Test-String", TEST_STRING_VALUE);
-        serializeable.data.put("Test-Integer", TEST_INTEGER_VALUE);
-        serializeable.data.put("Test-Double", TEST_DOUBLE_VALUE);
+        serializeable.map.put("Test-String", TEST_STRING_VALUE);
+        serializeable.map.put("Test-Integer", TEST_INTEGER_VALUE);
+        serializeable.map.put("Test-Double", TEST_DOUBLE_VALUE);
+        serializeable.map.put("Test-ItemStack", testStoredStack);
         ConfigurationSection customData = itemMeta.getCustomData();
         customData.set("test_serializeable", serializeable);
 
@@ -99,21 +118,111 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ConfigurationSection newData = newMeta.getCustomData();
         assertThat(newData, is(not(nullValue())));
         assertThat(newData.contains("test_serializeable"), is(true));
-        Object deserialized = newData.get("test_serializeable");
-        assertThat(deserialized instanceof SerializeableObject, is(true));
-        serializeable = (SerializeableObject)deserialized;
-
-        // This is kind of a hack- I think ConfigurationSerialization ought to remove
-        // this key when passing to deserialize. But, it doesn't.
-        // I'm guessing this isn't a problem for most objects since they look for specific keys
-        serializeable.data.remove(ConfigurationSerialization.SERIALIZED_TYPE_KEY);
-        assertThat(serializeable.data.size(), is(3));
-        assertThat(serializeable.data.get("Test-Integer") instanceof Integer, is(true));
-        Integer intValue = (Integer)serializeable.data.get("Test-Integer");
+        Object testObject = newData.get("test_serializeable");
+        assertThat(testObject instanceof SerializeableObject, is(true));
+        SerializeableObject deserialized = (SerializeableObject)testObject;
+        assertThat(deserialized.map.size(), is(serializeable.map.size()));
+        assertThat(deserialized.map.get("Test-Integer") instanceof Integer, is(true));
+        Integer intValue = (Integer)deserialized.map.get("Test-Integer");
         assertThat(intValue, is(TEST_INTEGER_VALUE));
-        assertThat(serializeable.data.get("Test-Double") instanceof Double, is(true));
-        Double doubleValue = (Double)serializeable.data.get("Test-Double");
+        assertThat(deserialized.map.get("Test-Double") instanceof Double, is(true));
+        Double doubleValue = (Double)deserialized.map.get("Test-Double");
         assertThat(doubleValue, is(TEST_DOUBLE_VALUE));
+        Object deserializedItem = deserialized.map.get("Test-ItemStack");
+        assertThat(deserializedItem instanceof ItemStack, is(true));
+        ItemStack deserializedItemStack = (ItemStack)deserializedItem;
+        assertThat(deserializedItemStack.getType(), is(Material.DIAMOND_SWORD));
+        ItemMeta deserializedMeta = deserializedItemStack.getItemMeta();
+        assertThat(deserializedMeta.hasCustomData(), is(true));
+        assertThat(deserializedMeta.hasEnchants(), is(true));
+    }
+
+    @Test
+    public void testSerializeObject() {
+        SerializeableObject object = new SerializeableObject();
+        List<ItemStack> items = new ArrayList<ItemStack>();
+        final int ITEM_COUNT = 64;
+        for (int i = 0; i < ITEM_COUNT; i++) {
+            ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
+            testStack = CraftItemStack.asCraftCopy(testStack);
+            ItemMeta itemMeta = testStack.getItemMeta();
+            ConfigurationSection customData = itemMeta.getCustomData();
+            customData.set("testing", TEST_STRING_VALUE);
+            itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
+            testStack.setItemMeta(itemMeta);
+
+            items.add(testStack);
+            object.list.add(testStack.clone());
+        }
+        object.map.put("items", items);
+        object.map.put("item_count", items.size());
+
+        List<String> players = new ArrayList<String>();
+        players.add("One Player");
+        players.add("Two Player");
+        object.map.put("players", players);
+
+        YamlConfiguration yamlConfig = new YamlConfiguration();
+        yamlConfig.set("test_object", object);
+        String testString = yamlConfig.saveToString();
+        assertThat(testString, is(not(isEmptyString())));
+
+        YamlConfiguration loadConfig = new YamlConfiguration();
+        try {
+            loadConfig.loadFromString(testString);
+        } catch (Throwable ex) {
+            throw new RuntimeException(testString, ex);
+        }
+
+        Object loadedObject = loadConfig.get("test_object");
+        assertThat(loadedObject, is(not(nullValue())));
+        assertThat(loadedObject instanceof SerializeableObject, is(true));
+
+        SerializeableObject deserialized = (SerializeableObject)loadedObject;
+
+        assertThat(deserialized.map.size(), is(object.map.size()));
+        assertThat(deserialized.list.size(), is(object.list.size()));
+        assertThat(deserialized.map.containsKey("items"), is(true));
+        assertThat(deserialized.map.containsKey("item_count"), is(true));
+        assertThat(deserialized.map.containsKey("players"), is(true));
+        assertThat(deserialized.map.get("item_count"), is(object.map.get("item_count")));
+        assertThat(deserialized.map.get("players"), is(object.map.get("players")));
+        assertThat(deserialized.map.get("items"), is(object.map.get("items")));
+
+        Object testList = deserialized.map.get("items");
+        assertThat(testList instanceof List, is(true));
+
+        List<ItemStack> itemList = (List<ItemStack>)testList;
+        assertThat(itemList.size(), is(ITEM_COUNT));
+    }
+
+    @Test
+    public void testSerializeItemStack() {
+        ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
+        testStack = CraftItemStack.asCraftCopy(testStack);
+        ItemMeta itemMeta = testStack.getItemMeta();
+        ConfigurationSection customData = itemMeta.getCustomData();
+        customData.set("testing", TEST_STRING_VALUE);
+        itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
+        testStack.setItemMeta(itemMeta);
+
+        YamlConfiguration yamlConfig = new YamlConfiguration();
+        yamlConfig.set("item", testStack);
+        String testString = yamlConfig.saveToString();
+        assertThat(testString, is(not(isEmptyString())));
+
+        YamlConfiguration loadConfig = new YamlConfiguration();
+        try {
+            loadConfig.loadFromString(testString);
+        } catch (Throwable ex) {
+            throw new RuntimeException(testString, ex);
+        }
+
+        ItemStack deserializedItem = yamlConfig.getItemStack("item");
+        assertThat(deserializedItem, is(not(nullValue())));
+        assertThat(itemMeta.hasCustomData(), is(true));
+        assertThat(itemMeta.hasEnchants(), is(true));
+        assertThat(itemMeta.getCustomData().getString("testing"), is(TEST_STRING_VALUE));
     }
 
     @Test
