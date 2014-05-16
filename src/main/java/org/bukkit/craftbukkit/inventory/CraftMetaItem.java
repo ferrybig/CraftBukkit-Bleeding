@@ -24,12 +24,12 @@ import net.minecraft.server.NBTTagString;
 
 import org.apache.commons.lang.Validate;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.craftbukkit.Overridden;
 import org.bukkit.craftbukkit.inventory.CraftMetaItem.ItemMetaKey.Specific;
+import org.bukkit.craftbukkit.util.NBTMetadataStore;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Repairable;
@@ -180,8 +180,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     static final ItemMetaKey DISPLAY = new ItemMetaKey("display");
     static final ItemMetaKey LORE = new ItemMetaKey("Lore", "lore");
     static final ItemMetaKey ENCHANTMENTS = new ItemMetaKey("ench", "enchants");
-    static final ItemMetaKey BUKKIT = new ItemMetaKey(CraftItemStack.BUKKIT_DATA_KEY);
-    static final ItemMetaKey PLUGINS = new ItemMetaKey(CraftItemStack.PLUGIN_DATA_KEY);
+    static final ItemMetaKey BUKKIT = new ItemMetaKey(NBTMetadataStore.BUKKIT_DATA_KEY);
+    static final ItemMetaKey PLUGINS = new ItemMetaKey(NBTMetadataStore.PLUGIN_DATA_KEY);
     @Specific(Specific.To.NBT)
     static final ItemMetaKey ENCHANTMENTS_ID = new ItemMetaKey("id");
     @Specific(Specific.To.NBT)
@@ -205,7 +205,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     private String displayName;
     private List<String> lore;
     private Map<Enchantment, Integer> enchantments;
-    private ItemMetadataStore dataStore;
+    private NBTMetadataStore dataStore;
     private int repairCost;
     private final NBTTagList attributes;
 
@@ -216,7 +216,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         }
 
         if (meta.hasMetadata()) {
-            this.dataStore = new ItemMetadataStore((NBTTagCompound)meta.dataStore.tag);
+            this.dataStore = (NBTMetadataStore)meta.dataStore.clone();
         }
 
         this.displayName = meta.displayName;
@@ -236,7 +236,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     CraftMetaItem(NBTTagCompound tag) {
         NBTTagCompound bukkitData = tag.getCompound(BUKKIT.NBT);
         if (bukkitData != null && bukkitData.hasKey(PLUGINS.NBT)) {
-            dataStore = new ItemMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
+            dataStore = new NBTMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
         }
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
@@ -333,7 +333,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (map.containsKey(PLUGINS.BUKKIT)) {
             Map<String, Object> metadataMap = SerializableMeta.getObject(Map.class, map, PLUGINS.BUKKIT, true);
             if (metadataMap != null) {
-                dataStore = new ItemMetadataStore(metadataMap);
+                dataStore = new NBTMetadataStore(metadataMap);
             }
         }
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
@@ -393,7 +393,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (hasMetadata()) {
             NBTTagCompound bukkitData = itemTag.getCompound(BUKKIT.NBT);
-            bukkitData.set(PLUGINS.NBT, dataStore.tag.clone());
+            bukkitData.set(PLUGINS.NBT, dataStore.getTag());
             itemTag.set(BUKKIT.NBT, bukkitData);
         }
     }
@@ -606,7 +606,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 clone.enchantments = new HashMap<Enchantment, Integer>(this.enchantments);
             }
             if (this.hasMetadata()) {
-                clone.dataStore = new ItemMetadataStore(this.dataStore.tag);
+                clone.dataStore = (NBTMetadataStore)dataStore.clone();
             }
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -698,7 +698,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     @Override
     public void setMetadata(String metadataKey, MetadataValue newMetadataValue) {
         if (dataStore == null) {
-            dataStore = new ItemMetadataStore();
+            dataStore = new NBTMetadataStore();
         }
 
         dataStore.setMetadata(metadataKey, newMetadataValue);

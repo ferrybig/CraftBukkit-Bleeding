@@ -29,36 +29,55 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Encapsulates any custom data that may be attached to CraftMetaItem.
+ * Encapsulates any custom data that may be stored in an NBTTagCompound.
+ * <p>
  * Handles serialization of ConfigurationSerialization objects and
  * basic data types to and from a persistent data store.
  * <p>
- * This also helps CraftMetaItem implement the Metadatable interface
+ * This is used by CraftMetaItem to implement the Metadatable interface
  * by mapping Plugin ownership to a standard tag structure.
- * <p>
- * The data store is currently implemented as a stand-alone
- * NBTTagCompound. This could be changed, but it is
- * the easiest way to persist data into an Item.
  */
-public class NBTMetadataStore {
+public class NBTMetadataStore implements Cloneable {
+    // Theses are key strings used to store and check for custom data
+    // Bukkit may store custom internal data under CUSTOM_DATA_KEY.
+    // Custom Plugin data (from the Metadatable interface)
+    // is stored under BUKKIT_DATA_KEY.PLUGIN_DATA_KEY
+    public final static String BUKKIT_DATA_KEY = "bukkit";
+    public final static String PLUGIN_DATA_KEY = "plugins";
+
     protected NBTTagCompound tag;
 
     /**
-     * Create an empty item data object.
+     * Check to see if a tag has any plugin data on it.
+     *
+     * @param tag The tag to scan for data
+     * @return True if the tag has a non-empty
+     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
      */
-    protected NBTMetadataStore() {
+    public static boolean hasPluginData(NBTTagCompound tag) {
+        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+        if (bukkitRoot == null) return false;
+        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+
+        return pluginRoot != null && !pluginRoot.isEmpty();
+    }
+
+    /**
+     * Create an empty data store.
+     */
+    public NBTMetadataStore() {
         this.tag = new NBTTagCompound();
     }
 
     /**
-     * Wrap a datastore around an existing NBTTagCompound.
+     * Wrap a data store around an existing NBTTagCompound.
      * <p>
      * It is expected that this tag will contain a structure
      * that follows the "<datakey>.<plugin> = <value>" format.
      *
      * @param tag The root of this datastore.
      */
-    protected NBTMetadataStore(NBTTagCompound tag) {
+    public NBTMetadataStore(NBTTagCompound tag) {
         this.tag = (NBTTagCompound)tag.clone();
     }
 
@@ -70,7 +89,7 @@ public class NBTMetadataStore {
      *
      * @param dataMap A Map of data to import into the store
      */
-    protected NBTMetadataStore(Map<String, Object> dataMap) {
+    public NBTMetadataStore(Map<String, Object> dataMap) {
         this.tag = (NBTTagCompound)convert(dataMap);
     }
 
@@ -146,7 +165,7 @@ public class NBTMetadataStore {
      *
      * @return A Map containing all of the data in the store.
      */
-    protected Map<String, Object> serialize() {
+    public Map<String, Object> serialize() {
         Map<String, Object> map = new HashMap<String, Object>();
         Set<String> pluginKeys = getAllKeys(tag);
         for (String pluginKey : pluginKeys) {
@@ -324,20 +343,30 @@ public class NBTMetadataStore {
     }
 
     /**
-     * Apply a Map of data to an item's NBTTag
+     * Return a raw copy of this store's data.
      *
-     * @param itemTag The tag for which to apply data.
+     * @return A copy of this store's data.
+     */
+    public NBTTagCompound getTag()
+    {
+        return (NBTTagCompound)tag.clone();
+    }
+
+    /**
+     * Apply a Map of data to an NBTTagCompound
+     *
+     * @param tag The tag for which to apply data.
      * @param data The data to apply
      */
-    private static void applyToTag(NBTTagCompound itemTag, Map<String, Object> data) {
-        if (itemTag == null || data == null) return;
+    private static void applyToTag(NBTTagCompound tag, Map<String, Object> data) {
+        if (tag == null || data == null) return;
 
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             NBTBase copiedValue = convert(entry.getValue());
             if (copiedValue != null) {
-                itemTag.set(entry.getKey(), copiedValue);
+                tag.set(entry.getKey(), copiedValue);
             } else {
-                itemTag.remove(entry.getKey());
+                tag.remove(entry.getKey());
             }
         }
     }
@@ -359,7 +388,7 @@ public class NBTMetadataStore {
 
     @Override
     public boolean equals(Object other) {
-        // This might be difficult to do properly.
+        // This seems to work as expected in testing, though I am suspicious.
         return other instanceof NBTMetadataStore && ((NBTMetadataStore) other).tag.equals(this.tag);
     }
 
@@ -367,6 +396,11 @@ public class NBTMetadataStore {
     public int hashCode() {
         // This might be difficult to do properly.
         return tag.hashCode();
+    }
+
+    @Override
+    public Object clone() {
+        return new NBTMetadataStore(tag);
     }
 
     public boolean isEmpty() {
