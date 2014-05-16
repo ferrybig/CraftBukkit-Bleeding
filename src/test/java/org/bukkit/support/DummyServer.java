@@ -59,6 +59,14 @@ public class DummyServer implements InvocationHandler {
                         }
                     }
                 );
+            methods.put(
+                    Server.class.getMethod("getPluginManager"),
+                    new MethodHandler() {
+                        public Object handle(DummyServer server, Object[] args) {
+                            return DummyPluginManager.instance();
+                        }
+                    }
+            );
             Bukkit.setServer(Proxy.getProxyClass(Server.class.getClassLoader(), Server.class).asSubclass(Server.class).getConstructor(InvocationHandler.class).newInstance(new DummyServer()));
         } catch (Throwable t) {
             throw new Error(t);

@@ -1,11 +1,15 @@
 package org.bukkit.craftbukkit.inventory;
 
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
+import org.bukkit.metadata.PersistentMetadataValue;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.support.DummyPlugin;
 import org.bukkit.support.AbstractTestingBase;
 import org.junit.Test;
 
@@ -16,6 +20,9 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 public class ItemMetaDataTest extends AbstractTestingBase {
+    private Plugin pluginX = new DummyPlugin("pluginx");
+    private Plugin pluginY = new DummyPlugin("pluginy");
+
     private static final String TEST_STRING_VALUE = "MY_TEST string 123";
     private static final int TEST_INTEGER_VALUE = 12345;
     private static final double TEST_DOUBLE_VALUE = 12345.1234;
@@ -41,49 +48,26 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
         ItemMeta itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
-
-        LinkedObject objectInstance = new LinkedObject();
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("test_object", objectInstance);
-
+        itemMeta.setMetadata("Testing", new FixedMetadataValue(pluginX, TEST_STRING_VALUE));
         testStack.setItemMeta(itemMeta);
     }
-
 
     @Test(expected=IllegalArgumentException.class)
-    public void testOverrideBuiltinData() {
+    public void testAddNestedInvalidData() {
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
         ItemMeta itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
 
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("ench", "I'm going to mess up your enchants!");
+        LinkedObject objectInstance = new LinkedObject();
+        List<Object> list = new ArrayList<Object>();
+        list.add(objectInstance);
+        itemMeta.setMetadata("Testing", new PersistentMetadataValue(pluginX, list));
 
-        testStack.setItemMeta(itemMeta);
-    }
-
-    @Test
-    public void testNestedWellKnownTags() {
-        ItemStack testStack = new ItemStack(Material.STICK);
-        testStack = CraftItemStack.asCraftCopy(testStack);
-        ItemMeta itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
-
-        // This is a special test case that fires if the safety checks
-        // are improperly looking at nested data
-        // Adding "myplugin.value.id" or "myplugin.id" is fine,
-        // even though "id" is not.
-        ConfigurationSection customData = itemMeta.getCustomData();
-        ConfigurationSection subSection = customData.createSection("test_sub_section");
-        subSection.set("id", TEST_STRING_VALUE);
         testStack.setItemMeta(itemMeta);
     }
 
     @Test
     public void testAddSerializeableData() {
-
         ItemStack testStoredStack = new ItemStack(Material.DIAMOND_SWORD);
         testStoredStack = CraftItemStack.asCraftCopy(testStoredStack);
         ItemMeta itemMeta = testStoredStack.getItemMeta();
@@ -93,32 +77,37 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         lore.add(TEST_STRING_VALUE + "_2");
         itemMeta.setLore(lore);
         itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
-        itemMeta.getCustomData().set("testing_embedded_tag", TEST_STRING_VALUE);
+        itemMeta.setMetadata("testing_embedded_data", new PersistentMetadataValue(pluginY, TEST_STRING_VALUE));
         testStoredStack.setItemMeta(itemMeta);
 
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
+        assertThat(testStack.hasMetadata(), is(false));
         itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
+        assertThat(itemMeta.hasMetadata(), is(false));
 
         SerializeableObject serializeable = new SerializeableObject();
         serializeable.map.put("Test-String", TEST_STRING_VALUE);
         serializeable.map.put("Test-Integer", TEST_INTEGER_VALUE);
         serializeable.map.put("Test-Double", TEST_DOUBLE_VALUE);
         serializeable.map.put("Test-ItemStack", testStoredStack);
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("test_serializeable", serializeable);
-
-        assertThat(itemMeta.hasCustomData(), is(true));
+        itemMeta.setMetadata("test_serializeable", new PersistentMetadataValue(pluginX, serializeable));
+        assertThat(itemMeta.hasMetadata(), is(true));
 
         testStack.setItemMeta(itemMeta);
+        assertThat(testStack.hasMetadata(), is(true));
 
-        ItemMeta newMeta = testStack.getItemMeta();
-        assertThat(newMeta.hasCustomData(), is(true));
-        ConfigurationSection newData = newMeta.getCustomData();
-        assertThat(newData, is(not(nullValue())));
-        assertThat(newData.contains("test_serializeable"), is(true));
-        Object testObject = newData.get("test_serializeable");
+        ItemStack cloneStack = testStack.clone();
+        assertThat(cloneStack.hasMetadata(), is(true));
+        ItemMeta newMeta = cloneStack.getItemMeta();
+        assertThat(newMeta.hasMetadata(), is(true));
+        assertThat(newMeta.hasMetadata("test_serializeable"), is(true));
+
+        List<MetadataValue> values = newMeta.getMetadata("test_serializeable");
+        assertThat(values.size(), is(1));
+        MetadataValue value = values.get(0);
+        assertThat(value.getOwningPlugin(), is(pluginX));
+        Object testObject = value.value();
         assertThat(testObject instanceof SerializeableObject, is(true));
         SerializeableObject deserialized = (SerializeableObject)testObject;
         assertThat(deserialized.map.size(), is(serializeable.map.size()));
@@ -133,7 +122,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemStack deserializedItemStack = (ItemStack)deserializedItem;
         assertThat(deserializedItemStack.getType(), is(Material.DIAMOND_SWORD));
         ItemMeta deserializedMeta = deserializedItemStack.getItemMeta();
-        assertThat(deserializedMeta.hasCustomData(), is(true));
+        assertThat(deserializedMeta.hasMetadata(), is(true));
         assertThat(deserializedMeta.hasEnchants(), is(true));
     }
 
@@ -146,8 +135,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
             ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
             testStack = CraftItemStack.asCraftCopy(testStack);
             ItemMeta itemMeta = testStack.getItemMeta();
-            ConfigurationSection customData = itemMeta.getCustomData();
-            customData.set("testing", TEST_STRING_VALUE);
+            itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
             itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
             testStack.setItemMeta(itemMeta);
 
@@ -201,8 +189,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
         testStack = CraftItemStack.asCraftCopy(testStack);
         ItemMeta itemMeta = testStack.getItemMeta();
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("testing", TEST_STRING_VALUE);
+        itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
         itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
         testStack.setItemMeta(itemMeta);
 
@@ -220,9 +207,15 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
         ItemStack deserializedItem = yamlConfig.getItemStack("item");
         assertThat(deserializedItem, is(not(nullValue())));
-        assertThat(itemMeta.hasCustomData(), is(true));
+        assertThat(itemMeta.hasMetadata(), is(true));
         assertThat(itemMeta.hasEnchants(), is(true));
-        assertThat(itemMeta.getCustomData().getString("testing"), is(TEST_STRING_VALUE));
+        assertThat(itemMeta.hasMetadata("testing"), is(true));
+
+        List<MetadataValue> values = itemMeta.getMetadata("testing");
+        assertThat(values.size(), is(1));
+        MetadataValue value = values.get(0);
+        assertThat(value.getOwningPlugin(), is(pluginX));
+        assertThat(value.asString(), is(TEST_STRING_VALUE));
     }
 
     @Test
@@ -230,35 +223,108 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
         ItemMeta itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
-
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("testing", TEST_STRING_VALUE);
-
-        assertThat(itemMeta.hasCustomData(), is(true));
+        assertThat(itemMeta.hasMetadata(), is(false));
+        itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
+        assertThat(itemMeta.hasMetadata(), is(true));
+        assertThat(itemMeta.hasMetadata("testing"), is(true));
 
         testStack.setItemMeta(itemMeta);
+        assertThat(testStack.hasMetadata(), is(true));
 
         ItemMeta newMeta = testStack.getItemMeta();
-        assertThat(newMeta.hasCustomData(), is(true));
+        assertThat(newMeta.hasMetadata(), is(true));
 
-        ConfigurationSection newData = newMeta.getCustomData();
-        assertThat(newData, is(not(nullValue())));
-        assertThat(newData.contains("testing"), is(true));
-        assertThat(newData.getString("testing"), is(TEST_STRING_VALUE));
-
-        newData.set("testing", null);
+        List<MetadataValue> values = newMeta.getMetadata("testing");
+        assertThat(values.size(), is(1));
+        MetadataValue value = values.get(0);
+        assertThat(value.getOwningPlugin(), is(pluginX));
+        assertThat(value.asString(), is(TEST_STRING_VALUE));
+        newMeta.removeMetadata("testing", pluginX);
         testStack.setItemMeta(newMeta);
 
         ItemMeta cleanedMeta = testStack.getItemMeta();
-        assertThat(cleanedMeta.hasCustomData(), is(false));
-        ConfigurationSection cleanedData = cleanedMeta.getCustomData();
-        assertThat(cleanedData, is(not(nullValue())));
-        assertThat(cleanedData.contains("testing"), is(false));
+        assertThat(cleanedMeta.hasMetadata(), is(false));
+        assertThat(cleanedMeta.hasMetadata("testing"), is(false));
+    }
 
-        // Re-check that querying for data did not add data
-        // Internally, the data object is now non-null but should be empty
-        assertThat(cleanedMeta.hasCustomData(), is(false));
+    @Test
+    public void multiPluginTest() {
+        ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
+        testStack = CraftItemStack.asCraftCopy(testStack);
+        ItemMeta itemMeta = testStack.getItemMeta();
+
+        itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
+        itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginY, TEST_INTEGER_VALUE));
+
+        assertThat(itemMeta.hasMetadata(), is(true));
+        assertThat(itemMeta.hasMetadata("testing"), is(true));
+
+        testStack.setItemMeta(itemMeta);
+
+        ItemStack cloned = testStack.clone();
+        assertThat(cloned.hasMetadata(), is(true));
+
+        ItemMeta clonedMeta = testStack.getItemMeta();
+        assertThat(clonedMeta.hasMetadata("testing"), is(true));
+
+        List<MetadataValue> values = clonedMeta.getMetadata("testing");
+        assertThat(values.size(), is(2));
+
+        for (MetadataValue value : values) {
+            if (value.getOwningPlugin() == pluginX) {
+                assertThat(value.asString(), is(TEST_STRING_VALUE));
+            } else {
+                assertThat(value.asInt(), is(TEST_INTEGER_VALUE))          ;
+            }
+        }
+
+        clonedMeta.removeMetadata("testing", pluginX);
+
+        values = clonedMeta.getMetadata("testing");
+        assertThat(values.size(), is(1));
+
+        cloned.setItemMeta(clonedMeta);
+        assertThat(cloned.hasMetadata(), is(true));
+        cloned = cloned.clone();
+        assertThat(cloned.hasMetadata(), is(true));
+        clonedMeta = cloned.getItemMeta();
+        assertThat(clonedMeta.hasMetadata(), is(true));
+        assertThat(clonedMeta.hasMetadata("testing"), is(true));
+
+        values = clonedMeta.getMetadata("testing");
+        assertThat(values.size(), is(1));
+        MetadataValue value = values.get(0);
+        assertThat(value.getOwningPlugin(), is(pluginY));
+        assertThat(value.asInt(), is(TEST_INTEGER_VALUE));
+
+        clonedMeta.removeMetadata("testing", pluginY);
+        assertThat(clonedMeta.hasMetadata(), is(false));
+        assertThat(clonedMeta.hasMetadata("testing"), is(false));
+        cloned.setItemMeta(clonedMeta);
+        assertThat(cloned.hasMetadata(), is(false));
+    }
+
+    @Test
+    public void testEquality() {
+        ItemStack testStack1 = new ItemStack(Material.DIAMOND_SWORD);
+        testStack1 = CraftItemStack.asCraftCopy(testStack1);
+
+        ItemStack testStack2 = new ItemStack(Material.DIAMOND_SWORD);
+        testStack2 = CraftItemStack.asCraftCopy(testStack2);
+
+        assertThat(testStack1, is(testStack2));
+
+        ItemMeta meta1 = testStack1.getItemMeta();
+        meta1.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
+        testStack1.setItemMeta(meta1);
+
+        assertThat(testStack1, is(not(testStack2)));
+
+        ItemMeta meta2 = testStack2.getItemMeta();
+        meta2.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
+        testStack2.setItemMeta(meta2);
+
+        assertThat(testStack1, is(testStack2));
     }
 
     @Test
@@ -266,41 +332,40 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemStack testStack = new ItemStack(Material.DIAMOND_SWORD);
         testStack = CraftItemStack.asCraftCopy(testStack);
         ItemMeta itemMeta = testStack.getItemMeta();
-        assertThat(itemMeta.hasCustomData(), is(false));
+        assertThat(itemMeta.hasMetadata(), is(false));
         assertThat(itemMeta.hasEnchants(), is(false));
 
-        ConfigurationSection customData = itemMeta.getCustomData();
-        customData.set("testing", TEST_STRING_VALUE);
+        itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
 
-        assertThat(itemMeta.hasCustomData(), is(true));
+        assertThat(itemMeta.hasMetadata(), is(true));
         assertThat(itemMeta.hasEnchants(), is(false));
 
         itemMeta.addEnchant(Enchantment.DURABILITY, 1, false);
 
-        assertThat(itemMeta.hasCustomData(), is(true));
+        assertThat(itemMeta.hasMetadata(), is(true));
         assertThat(itemMeta.hasEnchants(), is(true));
 
         testStack.setItemMeta(itemMeta);
 
         ItemMeta newMeta = testStack.getItemMeta();
-        assertThat(newMeta.hasCustomData(), is(true));
+        assertThat(newMeta.hasMetadata(), is(true));
         assertThat(newMeta.hasEnchants(), is(true));
         assertThat(newMeta.hasEnchant(Enchantment.DURABILITY), is(true));
 
-        ConfigurationSection newData = newMeta.getCustomData();
-        assertThat(newData, is(not(nullValue())));
-        assertThat(newData.contains("testing"), is(true));
-        assertThat(newData.getString("testing"), is(TEST_STRING_VALUE));
+        assertThat(newMeta.hasMetadata("testing"), is(true));
 
-        newData.set("testing", null);
+        List<MetadataValue> values = newMeta.getMetadata("testing");
+        assertThat(values.size(), is(1));
+        MetadataValue value = values.get(0);
+        assertThat(value.getOwningPlugin(), is(pluginX));
+        assertThat(value.asString(), is(TEST_STRING_VALUE));
+
+        newMeta.removeMetadata("testing", pluginX);
         testStack.setItemMeta(newMeta);
 
         ItemMeta cleanedMeta = testStack.getItemMeta();
-        assertThat(cleanedMeta.hasCustomData(), is(false));
-        ConfigurationSection cleanedData = cleanedMeta.getCustomData();
-        assertThat(cleanedData, is(not(nullValue())));
-        assertThat(cleanedData.contains("testing"), is(false));
-        assertThat(cleanedMeta.hasCustomData(), is(false));
+        assertThat(cleanedMeta.hasMetadata(), is(false));
+        assertThat(cleanedMeta.hasMetadata("testing"), is(false));
         assertThat(newMeta.hasEnchants(), is(true));
         assertThat(newMeta.hasEnchant(Enchantment.DURABILITY), is(true));
     }
