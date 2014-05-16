@@ -24,6 +24,13 @@ import com.google.common.collect.ImmutableMap;
 @DelegateDeserialization(ItemStack.class)
 public final class CraftItemStack extends ItemStack {
 
+    // Theses are key strings used to store and check for custom data
+    // Bukkit may store custom internal data under CUSTOM_DATA_KEY.
+    // Custom Plugin data (from ItemMeta's Metadatable interface)
+    // is stored under BUKKIT_DATA_KEY.PLUGIN_DATA_KEY
+    protected final static String BUKKIT_DATA_KEY = "bukkit";
+    protected final static String PLUGIN_DATA_KEY = "plugins";
+
     public static net.minecraft.server.ItemStack asNMSCopy(ItemStack original) {
         if (original instanceof CraftItemStack) {
             CraftItemStack stack = (CraftItemStack) original;
@@ -407,5 +414,30 @@ public final class CraftItemStack extends ItemStack {
 
     static boolean hasItemMeta(net.minecraft.server.ItemStack item) {
         return !(item == null || item.tag == null || item.tag.isEmpty());
+    }
+
+    @Override
+    public boolean hasMetadata() {
+        return hasMetadata(handle);
+    }
+
+    /**
+     * Checks for any data on an NMS item that would map to Plugin
+     * metadata in the ItemMeta's Metadatable interface.
+     * <p>
+     * Any internal Bukkit data stored in the root BUKKIT_DATA_KEY
+     * tag would need to be accounted for with a separate check.
+     *
+     * @param item The ItemStack to check
+     * @return True if the Item's tag has a non-empty
+     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
+     */
+    static boolean hasMetadata(net.minecraft.server.ItemStack item) {
+        if (!hasItemMeta(item)) return false;
+        NBTTagCompound bukkitRoot = item.tag.getCompound(BUKKIT_DATA_KEY);
+        if (bukkitRoot == null) return false;
+        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+
+        return pluginRoot != null &&!pluginRoot.isEmpty();
     }
 }
