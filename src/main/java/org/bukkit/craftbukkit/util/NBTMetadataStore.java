@@ -63,6 +63,21 @@ public class NBTMetadataStore implements Cloneable {
     }
 
     /**
+     * Check to see if a tag has any plugin data on it.
+     *
+     * @param tag The tag to scan for data
+     * @return True if the tag has a non-empty
+     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
+     */
+    public static boolean hasPluginData(NBTTagCompound tag, String key) {
+        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+        if (bukkitRoot == null) return false;
+        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+
+        return pluginRoot != null && pluginRoot.hasKey(key);
+    }
+
+    /**
      * Create an empty data store.
      */
     public NBTMetadataStore() {

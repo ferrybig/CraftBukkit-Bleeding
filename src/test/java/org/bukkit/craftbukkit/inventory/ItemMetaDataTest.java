@@ -85,6 +85,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(testStack.hasMetadata(), is(false));
         itemMeta = testStack.getItemMeta();
         assertThat(itemMeta.hasMetadata(), is(false));
+        assertThat(itemMeta.hasMetadata("test_serializeable"), is(false));
 
         SerializeableObject serializeable = new SerializeableObject();
         serializeable.map.put("Test-String", TEST_STRING_VALUE);
@@ -93,6 +94,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         serializeable.map.put("Test-ItemStack", testStoredStack);
         itemMeta.setMetadata("test_serializeable", new PersistentMetadataValue(pluginX, serializeable));
         assertThat(itemMeta.hasMetadata(), is(true));
+        assertThat(itemMeta.hasMetadata("test_serializeable"), is(true));
 
         testStack.setItemMeta(itemMeta);
         assertThat(testStack.hasMetadata(), is(true));
@@ -285,6 +287,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
         cloned.setItemMeta(clonedMeta);
         assertThat(cloned.hasMetadata(), is(true));
+        assertThat(cloned.hasMetadata("testing"), is(true));
         cloned = cloned.clone();
         assertThat(cloned.hasMetadata(), is(true));
         clonedMeta = cloned.getItemMeta();
@@ -351,7 +354,6 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(newMeta.hasMetadata(), is(true));
         assertThat(newMeta.hasEnchants(), is(true));
         assertThat(newMeta.hasEnchant(Enchantment.DURABILITY), is(true));
-
         assertThat(newMeta.hasMetadata("testing"), is(true));
 
         List<MetadataValue> values = newMeta.getMetadata("testing");
