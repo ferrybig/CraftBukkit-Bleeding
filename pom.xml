@@ -179,7 +179,7 @@
             <manifestEntries>
               <Main-Class>org.bukkit.craftbukkit.Main</Main-Class>
               <Implementation-Title>CraftBukkit</Implementation-Title>
-              <Implementation-Version>${describe}</Implementation-Version>
+              <Implementation-Version>Test-ItemMetadata</Implementation-Version>
               <Implementation-Vendor>Bukkit Team</Implementation-Vendor>
               <Specification-Title>Bukkit</Specification-Title>
               <Specification-Version>${api.version}</Specification-Version>
@@ -212,7 +212,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <executions>
           <execution>
             <phase>package</phase>
