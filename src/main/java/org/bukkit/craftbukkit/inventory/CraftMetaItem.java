@@ -182,6 +182,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     static final ItemMetaKey ENCHANTMENTS = new ItemMetaKey("ench", "enchants");
     static final ItemMetaKey BUKKIT = new ItemMetaKey(NBTMetadataStore.BUKKIT_DATA_KEY);
     static final ItemMetaKey PLUGINS = new ItemMetaKey(NBTMetadataStore.PLUGIN_DATA_KEY);
+    static final ItemMetaKey GLOW = new ItemMetaKey("glow");
     @Specific(Specific.To.NBT)
     static final ItemMetaKey ENCHANTMENTS_ID = new ItemMetaKey("id");
     @Specific(Specific.To.NBT)
@@ -205,6 +206,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     private String displayName;
     private List<String> lore;
     private Map<Enchantment, Integer> enchantments;
+    private boolean glow;
     private NBTMetadataStore dataStore;
     private int repairCost;
     private final NBTTagList attributes;
@@ -229,14 +231,19 @@ class CraftMetaItem implements ItemMeta, Repairable {
             this.enchantments = new HashMap<Enchantment, Integer>(meta.enchantments);
         }
 
+        this.glow = meta.glow;
+
         this.repairCost = meta.repairCost;
         this.attributes = meta.attributes;
     }
 
     CraftMetaItem(NBTTagCompound tag) {
         NBTTagCompound bukkitData = tag.getCompound(BUKKIT.NBT);
-        if (bukkitData != null && bukkitData.hasKey(PLUGINS.NBT)) {
-            dataStore = new NBTMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
+        if (bukkitData != null) {
+            if (bukkitData.hasKey(PLUGINS.NBT)) {
+                dataStore = new NBTMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
+            }
+            glow = bukkitData.getBoolean(GLOW.NBT);
         }
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
@@ -336,6 +343,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 dataStore = new NBTMetadataStore(metadataMap);
             }
         }
+        glow = SerializableMeta.getBoolean(map, GLOW.BUKKIT);
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
 
         Iterable<?> lore = SerializableMeta.getObject(Iterable.class, map, LORE.BUKKIT, true);
@@ -381,7 +389,14 @@ class CraftMetaItem implements ItemMeta, Repairable {
             setDisplayTag(itemTag, LORE.NBT, createStringList(lore));
         }
 
-        applyEnchantments(enchantments, itemTag, ENCHANTMENTS);
+        // This is a bit of a hack to force the MC client to show the glow
+        // effect. If this client behavior ever changes, the glow API
+        // may break irreparably.
+        if (enchantments == null && glow) {
+            itemTag.set(ENCHANTMENTS.NBT, new NBTTagList());
+        } else {
+            applyEnchantments(enchantments, itemTag, ENCHANTMENTS);
+        }
 
         if (hasRepairCost()) {
             itemTag.setInt(REPAIR.NBT, repairCost);
@@ -391,9 +406,12 @@ class CraftMetaItem implements ItemMeta, Repairable {
             itemTag.set(ATTRIBUTES.NBT, attributes);
         }
 
-        if (hasMetadata()) {
+        if (hasMetadata() || hasGlowEffect()) {
             NBTTagCompound bukkitData = itemTag.getCompound(BUKKIT.NBT);
-            bukkitData.set(PLUGINS.NBT, dataStore.getTag());
+            if (hasMetadata()) {
+                bukkitData.set(PLUGINS.NBT, dataStore.getTag());
+            }
+            bukkitData.setBoolean(GLOW.NBT, glow);
             itemTag.set(BUKKIT.NBT, bukkitData);
         }
     }
@@ -447,7 +465,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Overridden
     boolean isEmpty() {
-        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost() || hasMetadata());
+        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost() || hasMetadata() || hasGlowEffect());
     }
 
     public String getDisplayName() {
@@ -510,6 +528,14 @@ class CraftMetaItem implements ItemMeta, Repairable {
         return !(enchantments == null || enchantments.isEmpty());
     }
 
+    public boolean hasGlowEffect() {
+        return glow;
+    }
+
+    public void setGlowEffect(boolean glow) {
+        this.glow = glow;
+    }
+
     public boolean hasConflictingEnchant(Enchantment ench) {
         return checkConflictingEnchants(enchantments, ench);
     }
@@ -564,7 +590,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 && (this.hasEnchants() ? that.hasEnchants() && this.enchantments.equals(that.enchantments) : !that.hasEnchants())
                 && (this.hasLore() ? that.hasLore() && this.lore.equals(that.lore) : !that.hasLore())
                 && (this.hasAttributes() ? that.hasAttributes() && this.attributes.equals(that.attributes) : !that.hasAttributes())
-                && (this.hasMetadata() ? that.hasMetadata() && this.dataStore.equals(that.dataStore) : !that.hasMetadata());
+                && (this.hasMetadata() ? that.hasMetadata() && this.dataStore.equals(that.dataStore) : !that.hasMetadata())
+                && (this.hasGlowEffect() ? that.hasGlowEffect() && this.glow == that.glow : !that.hasGlowEffect());
     }
 
     /**
@@ -591,6 +618,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         hash = 61 * hash + (hasAttributes() ? this.attributes.hashCode() : 0);
         hash = 61 * hash + (hasRepairCost() ? this.repairCost : 0);
         hash = 61 * hash + (hasMetadata() ? this.dataStore.hashCode() : 0);
+        hash = 61 * hash + (hasGlowEffect() ? 1 : 0);
         return hash;
     }
 
@@ -608,6 +636,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             if (this.hasMetadata()) {
                 clone.dataStore = (NBTMetadataStore)dataStore.clone();
             }
+            clone.glow = glow;
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new Error(e);
@@ -639,6 +668,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (hasMetadata()) {
             builder.put(PLUGINS.BUKKIT, dataStore.serialize());
+        }
+
+        if (glow) {
+            builder.put(GLOW.BUKKIT, glow);
         }
 
         return builder;
