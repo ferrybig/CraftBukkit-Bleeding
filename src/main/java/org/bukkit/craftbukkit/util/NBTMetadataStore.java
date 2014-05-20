@@ -173,6 +173,25 @@ public class NBTMetadataStore implements Cloneable {
     }
 
     /**
+     * Retrieve a single key of stored metadata for a specific Plugin
+     *
+     * @param metadataKey The metadata to look up
+     * @param owningPlugin The Plugin to look for data
+     * @return A List of values found, or an empty List.
+     */
+    public MetadataValue getMetadata(String metadataKey, Plugin owningPlugin) {
+        if (!tag.hasKey(metadataKey)) {
+            return null;
+        }
+        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        String pluginName = owningPlugin.getName();
+        if (!dataTag.hasKey(pluginName)) {
+            return null;
+        }
+        return new PersistentMetadataValue(owningPlugin, convert(dataTag.get(pluginName)));
+    }
+
+    /**
      * Check for existing metadata.
      *
      * @param metadataKey The key to check for
