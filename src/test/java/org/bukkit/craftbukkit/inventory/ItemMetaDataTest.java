@@ -242,6 +242,15 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemMeta newMeta = testStack.getItemMeta();
         assertThat(newMeta.hasMetadata(), is(true));
 
+        // Test single-call interface
+        MetadataValue singleValue = newMeta.getMetadata("testing", pluginX);
+        assertThat(singleValue, is(not(nullValue())));
+        assertThat(singleValue.getOwningPlugin(), is(pluginX));
+        assertThat(singleValue.asString(), is(TEST_STRING_VALUE));
+
+        MetadataValue missingValue = newMeta.getMetadata("testing", pluginY);
+        assertThat(missingValue, is(nullValue()));
+
         List<MetadataValue> values = newMeta.getMetadata("testing");
         assertThat(values.size(), is(1));
         MetadataValue value = values.get(0);
