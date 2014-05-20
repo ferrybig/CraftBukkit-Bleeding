@@ -8,6 +8,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.craftbukkit.Overridden;
 import org.bukkit.craftbukkit.inventory.CraftMetaItem.ItemMetaKey.Specific;
+import org.bukkit.craftbukkit.util.NBTMetadataStore;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.Repairable;
@@ -35,6 +37,8 @@ import org.bukkit.inventory.meta.Repairable;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.bukkit.metadata.MetadataValue;
+import org.bukkit.plugin.Plugin;
 
 /**
  * Children must include the following:
@@ -176,6 +180,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
     static final ItemMetaKey DISPLAY = new ItemMetaKey("display");
     static final ItemMetaKey LORE = new ItemMetaKey("Lore", "lore");
     static final ItemMetaKey ENCHANTMENTS = new ItemMetaKey("ench", "enchants");
+    static final ItemMetaKey BUKKIT = new ItemMetaKey(NBTMetadataStore.BUKKIT_DATA_KEY);
+    static final ItemMetaKey PLUGINS = new ItemMetaKey(NBTMetadataStore.PLUGIN_DATA_KEY);
     @Specific(Specific.To.NBT)
     static final ItemMetaKey ENCHANTMENTS_ID = new ItemMetaKey("id");
     @Specific(Specific.To.NBT)
@@ -199,6 +205,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     private String displayName;
     private List<String> lore;
     private Map<Enchantment, Integer> enchantments;
+    private NBTMetadataStore dataStore;
     private int repairCost;
     private final NBTTagList attributes;
 
@@ -206,6 +213,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (meta == null) {
             attributes = null;
             return;
+        }
+
+        if (meta.hasMetadata()) {
+            this.dataStore = (NBTMetadataStore)meta.dataStore.clone();
         }
 
         this.displayName = meta.displayName;
@@ -223,6 +234,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(NBTTagCompound tag) {
+        NBTTagCompound bukkitData = tag.getCompound(BUKKIT.NBT);
+        if (bukkitData != null && bukkitData.hasKey(PLUGINS.NBT)) {
+            dataStore = new NBTMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
+        }
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
 
@@ -246,7 +261,6 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (tag.hasKey(REPAIR.NBT)) {
             repairCost = tag.getInt(REPAIR.NBT);
         }
-
 
         if (tag.get(ATTRIBUTES.NBT) instanceof NBTTagList) {
             NBTTagList save = null;
@@ -316,6 +330,12 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(Map<String, Object> map) {
+        if (map.containsKey(PLUGINS.BUKKIT)) {
+            Map<String, Object> metadataMap = SerializableMeta.getObject(Map.class, map, PLUGINS.BUKKIT, true);
+            if (metadataMap != null) {
+                dataStore = new NBTMetadataStore(metadataMap);
+            }
+        }
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
 
         Iterable<?> lore = SerializableMeta.getObject(Iterable.class, map, LORE.BUKKIT, true);
@@ -370,6 +390,12 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (attributes != null) {
             itemTag.set(ATTRIBUTES.NBT, attributes);
         }
+
+        if (hasMetadata()) {
+            NBTTagCompound bukkitData = itemTag.getCompound(BUKKIT.NBT);
+            bukkitData.set(PLUGINS.NBT, dataStore.getTag());
+            itemTag.set(BUKKIT.NBT, bukkitData);
+        }
     }
 
     static NBTTagList createStringList(List<String> list) {
@@ -421,7 +447,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Overridden
     boolean isEmpty() {
-        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost());
+        return !(hasDisplayName() || hasEnchants() || hasLore() || hasAttributes() || hasRepairCost() || hasMetadata());
     }
 
     public String getDisplayName() {
@@ -538,7 +564,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
                 && (this.hasEnchants() ? that.hasEnchants() && this.enchantments.equals(that.enchantments) : !that.hasEnchants())
                 && (this.hasLore() ? that.hasLore() && this.lore.equals(that.lore) : !that.hasLore())
                 && (this.hasAttributes() ? that.hasAttributes() && this.attributes.equals(that.attributes) : !that.hasAttributes())
-                && (this.hasRepairCost() ? that.hasRepairCost() && this.repairCost == that.repairCost : !that.hasRepairCost());
+                && (this.hasMetadata() ? that.hasMetadata() && this.dataStore.equals(that.dataStore) : !that.hasMetadata());
     }
 
     /**
@@ -564,6 +590,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         hash = 61 * hash + (hasEnchants() ? this.enchantments.hashCode() : 0);
         hash = 61 * hash + (hasAttributes() ? this.attributes.hashCode() : 0);
         hash = 61 * hash + (hasRepairCost() ? this.repairCost : 0);
+        hash = 61 * hash + (hasMetadata() ? this.dataStore.hashCode() : 0);
         return hash;
     }
 
@@ -577,6 +604,9 @@ class CraftMetaItem implements ItemMeta, Repairable {
             }
             if (this.enchantments != null) {
                 clone.enchantments = new HashMap<Enchantment, Integer>(this.enchantments);
+            }
+            if (this.hasMetadata()) {
+                clone.dataStore = (NBTMetadataStore)dataStore.clone();
             }
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -605,6 +635,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         if (hasRepairCost()) {
             builder.put(REPAIR.BUKKIT, repairCost);
+        }
+
+        if (hasMetadata()) {
+            builder.put(PLUGINS.BUKKIT, dataStore.serialize());
         }
 
         return builder;
@@ -659,6 +693,57 @@ class CraftMetaItem implements ItemMeta, Repairable {
         }
 
         return false;
+    }
+
+    @Override
+    public void setMetadata(String metadataKey, MetadataValue newMetadataValue) {
+        if (dataStore == null) {
+            dataStore = new NBTMetadataStore();
+        }
+
+        dataStore.setMetadata(metadataKey, newMetadataValue);
+    }
+
+    @Override
+    public List<MetadataValue> getMetadata(String metadataKey) {
+        if (dataStore == null) {
+            return Collections.emptyList();
+        }
+
+        return dataStore.getMetadata(metadataKey);
+    }
+
+    @Override
+    public MetadataValue getMetadata(String metadataKey, Plugin owningPlugin) {
+        if (dataStore == null) {
+            return null;
+        }
+
+        return dataStore.getMetadata(metadataKey, owningPlugin);
+    }
+    
+    @Override
+    public boolean hasMetadata() {
+        return dataStore != null && !dataStore.isEmpty();
+    }
+
+    @Override
+    public boolean hasMetadata(String metadataKey) {
+        return dataStore != null && dataStore.hasMetadata(metadataKey);
+    }
+
+    @Override
+    public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
+        return dataStore != null && dataStore.hasMetadata(metadataKey, owningPlugin);
+    }
+
+    @Override
+    public void removeMetadata(String metadataKey, Plugin owningPlugin) {
+        if (dataStore == null) {
+            return;
+        }
+
+        dataStore.removeMetadata(metadataKey, owningPlugin);
     }
 
     @Override
