@@ -63,9 +63,11 @@ public class NBTMetadataStore implements Cloneable {
     }
 
     /**
-     * Check to see if a tag has any plugin data on it.
+     * Check to see if a tag has a specific key
+     * registered to any Plugin.
      *
      * @param tag The tag to scan for data
+     * @param key The key to check for
      * @return True if the tag has a non-empty
      *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
      */
@@ -75,6 +77,25 @@ public class NBTMetadataStore implements Cloneable {
         NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
 
         return pluginRoot != null && pluginRoot.hasKey(key);
+    }
+
+    /**
+     * Check to see if a tag has any plugin data on it.
+     *
+     * @param tag The tag to scan for data
+     * @param key The key to check for
+     * @param owningPlugin The plugin to check for data
+     * @return True if the tag has a non-empty
+     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
+     */
+    public static boolean hasPluginData(NBTTagCompound tag, String key, Plugin owningPlugin) {
+        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+        if (bukkitRoot == null) return false;
+        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+        if (pluginRoot == null || !pluginRoot.hasKey(key)) return false;
+        NBTTagCompound dataRoot = pluginRoot.getCompound(key);
+        String pluginName = owningPlugin.getName();
+        return dataRoot != null && dataRoot.hasKey(pluginName);
     }
 
     /**
@@ -162,12 +183,28 @@ public class NBTMetadataStore implements Cloneable {
     }
 
     /**
+     * Check for existing metadata registered to a specific Plugin.
+     *
+     * @param metadataKey The key to remove
+     * @param owningPlugin the plugin that owns the data
+     * @param owningPlugin The Plugin that owns this data.
+     */
+    public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
+        if (!hasMetadata(metadataKey)) return false;
+
+        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        return dataTag.hasKey(owningPlugin.getName());
+    }
+
+    /**
      * Remove data from this store.
      *
      * @param metadataKey The key to remove
      * @param owningPlugin The Plugin that owns this data.
      */
     public void removeMetadata(String metadataKey, Plugin owningPlugin) {
+        if (!hasMetadata(metadataKey)) return;
+
         NBTTagCompound dataTag = tag.getCompound(metadataKey);
         dataTag.remove(owningPlugin.getName());
         if (dataTag.isEmpty()) {

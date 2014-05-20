@@ -98,6 +98,10 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
         testStack.setItemMeta(itemMeta);
         assertThat(testStack.hasMetadata(), is(true));
+        assertThat(testStack.hasMetadata("test_serializeable"), is(true));
+        assertThat(testStack.hasMetadata("test_not_there"), is(false));
+        assertThat(testStack.hasMetadata("test_serializeable", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test_serializeable", pluginY), is(false));
 
         ItemStack cloneStack = testStack.clone();
         assertThat(cloneStack.hasMetadata(), is(true));
@@ -229,7 +233,9 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         itemMeta.setMetadata("testing", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
         assertThat(itemMeta.hasMetadata(), is(true));
         assertThat(itemMeta.hasMetadata("testing"), is(true));
-
+        assertThat(itemMeta.hasMetadata("testing2"), is(false));
+        assertThat(itemMeta.hasMetadata("testing", pluginX), is(true));
+        assertThat(itemMeta.hasMetadata("testing", pluginY), is(false));
         testStack.setItemMeta(itemMeta);
         assertThat(testStack.hasMetadata(), is(true));
 

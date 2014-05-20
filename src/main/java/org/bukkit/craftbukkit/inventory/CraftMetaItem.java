@@ -724,6 +724,11 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     @Override
+    public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
+        return dataStore != null && dataStore.hasMetadata(metadataKey, owningPlugin);
+    }
+
+    @Override
     public void removeMetadata(String metadataKey, Plugin owningPlugin) {
         if (dataStore == null) {
             return;
