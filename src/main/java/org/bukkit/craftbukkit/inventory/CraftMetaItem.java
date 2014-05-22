@@ -66,6 +66,7 @@ import org.bukkit.plugin.Plugin;
  */
 @DelegateDeserialization(CraftMetaItem.SerializableMeta.class)
 class CraftMetaItem implements ItemMeta, Repairable {
+    static final String GLOW_KEY = "glow";
 
     static class ItemMetaKey {
 
@@ -380,6 +381,14 @@ class CraftMetaItem implements ItemMeta, Repairable {
         }
 
         applyEnchantments(enchantments, itemTag, ENCHANTMENTS);
+        // This is a bit of a hack to force the MC client to show the glow
+        // effect. If this client behavior ever changes, the glow API
+        // may break irreparably.
+        if (enchantments == null && dataStore != null && dataStore.getBukkitDataAsBoolean(GLOW_KEY)) {
+            itemTag.set(ENCHANTMENTS.NBT, new NBTTagList());
+        } else {
+            applyEnchantments(enchantments, itemTag, ENCHANTMENTS);
+        }
 
         if (hasRepairCost()) {
             itemTag.setInt(REPAIR.NBT, repairCost);
@@ -468,6 +477,21 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     public boolean hasRepairCost() {
         return repairCost > 0;
+    }
+
+    public boolean hasGlowEffect() {
+        return dataStore != null && dataStore.getBukkitDataAsBoolean(GLOW_KEY);
+    }
+
+    public void setGlowEffect(boolean glow) {
+        if (glow) {
+            if (dataStore == null) {
+                dataStore = new NBTMetadataStore();
+                dataStore.setBukkitData(GLOW_KEY, true);
+            }
+        } else if (dataStore != null) {
+            dataStore.removeBukkitData(GLOW_KEY);
+        }
     }
 
     public boolean hasEnchant(Enchantment ench) {
@@ -697,7 +721,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             dataStore = new NBTMetadataStore();
         }
 
-        dataStore.setMetadata(metadataKey, newMetadataValue);
+        dataStore.setPluginMetadata(metadataKey, newMetadataValue);
     }
 
     @Override
@@ -706,7 +730,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             return Collections.emptyList();
         }
 
-        return dataStore.getMetadata(metadataKey);
+        return dataStore.getPluginMetadata(metadataKey);
     }
 
     @Override
@@ -715,7 +739,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             return null;
         }
 
-        return dataStore.getMetadata(metadataKey, owningPlugin);
+        return dataStore.getPluginMetadata(metadataKey, owningPlugin);
     }
 
     @Override
@@ -725,12 +749,12 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
     @Override
     public boolean hasMetadata(String metadataKey) {
-        return dataStore != null && dataStore.hasMetadata(metadataKey);
+        return dataStore != null && dataStore.hasPluginMetadata(metadataKey);
     }
 
     @Override
     public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
-        return dataStore != null && dataStore.hasMetadata(metadataKey, owningPlugin);
+        return dataStore != null && dataStore.hasPluginMetadata(metadataKey, owningPlugin);
     }
 
     @Override
@@ -739,7 +763,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
             return;
         }
 
-        dataStore.removeMetadata(metadataKey, owningPlugin);
+        dataStore.removePluginMetadata(metadataKey, owningPlugin);
     }
 
     @Override

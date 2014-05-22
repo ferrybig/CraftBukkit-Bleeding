@@ -20,6 +20,7 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.metadata.PersistentMetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.util.NumberConversions;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -181,10 +182,7 @@ public class NBTMetadataStore implements Cloneable {
      * @return The NBTTagCompound that holds this data
      */
     protected NBTTagCompound getPluginMetadataRoot(boolean create) {
-        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
-        if (create) {
-            tag.set(BUKKIT_DATA_KEY, bukkitRoot);
-        }
+        NBTTagCompound bukkitRoot = getBukkitDataRoot(create);
         NBTTagCompound pluginsRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
         if (create) {
             bukkitRoot.set(PLUGIN_DATA_KEY, pluginsRoot);
@@ -201,7 +199,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param metadataKey The metadata key to store
      * @param newMetadataValue The value to store, must be PersistentMetadataValue
      */
-    public void setMetadata(String metadataKey, MetadataValue newMetadataValue) {
+    public void setPluginMetadata(String metadataKey, MetadataValue newMetadataValue) {
         if (!(newMetadataValue instanceof PersistentMetadataValue)) {
             throw new IllegalArgumentException("This store can only hold PersistentMetadataValue");
         }
@@ -218,7 +216,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param metadataKey The metadata to look up
      * @return A List of values found, or an empty List.
      */
-    public List<MetadataValue> getMetadata(String metadataKey) {
+    public List<MetadataValue> getPluginMetadata(String metadataKey) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
         if (!metadataRoot.hasKey(metadataKey)) {
             return Collections.emptyList();
@@ -244,7 +242,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param owningPlugin The Plugin to look for data
      * @return A List of values found, or an empty List.
      */
-    public MetadataValue getMetadata(String metadataKey, Plugin owningPlugin) {
+    public MetadataValue getPluginMetadata(String metadataKey, Plugin owningPlugin) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
         if (!metadataRoot.hasKey(metadataKey)) {
             return null;
@@ -263,7 +261,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param metadataKey The key to check for
      * @return True if the key is present in this store
      */
-    public boolean hasMetadata(String metadataKey) {
+    public boolean hasPluginMetadata(String metadataKey) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
         return metadataRoot.hasKey(metadataKey);
     }
@@ -274,7 +272,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param metadataKey The key to remove
      * @param owningPlugin the plugin that owns the data
      */
-    public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
+    public boolean hasPluginMetadata(String metadataKey, Plugin owningPlugin) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
         if (!metadataRoot.hasKey(metadataKey)) return false;
 
@@ -288,7 +286,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param metadataKey The key to remove
      * @param owningPlugin The Plugin that owns this data.
      */
-    public void removeMetadata(String metadataKey, Plugin owningPlugin) {
+    public void removePluginMetadata(String metadataKey, Plugin owningPlugin) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
         if (!metadataRoot.hasKey(metadataKey)) return;
 
@@ -303,6 +301,116 @@ public class NBTMetadataStore implements Cloneable {
                     tag.remove(BUKKIT_DATA_KEY);
                 }
             }
+        }
+    }
+
+    /**
+     * Retrieve the NBTTagCompound that holds all of the custom Bukkit data.
+     *
+     * @param create If True, the path to the root will be created if it does not exist.
+     * @return The NBTTagCompound that holds this data
+     */
+    protected NBTTagCompound getBukkitDataRoot(boolean create) {
+        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+        if (create) {
+            tag.set(BUKKIT_DATA_KEY, bukkitRoot);
+        }
+        return bukkitRoot;
+    }
+
+    /**
+     * Check for a specific key of custom Bukkit data in this store.
+     *
+     * @param key The key to look for
+     * @return True if the key is in this store under the bukkit root.
+     */
+    public boolean hasBukkitData(String key) {
+        NBTTagCompound bukkitRoot = getBukkitDataRoot(false);
+        return bukkitRoot.hasKey(key);
+    }
+
+    /**
+     * Store a raw Object in the custom Bukkit data store
+     *
+     * @param key The key to store
+     * @param value The data to store
+     */
+    public void setBukkitData(String key, Object value) {
+        NBTTagCompound bukkitRoot = getBukkitDataRoot(true);
+        bukkitRoot.set(key, convert(value));
+    }
+
+    /**
+     * Retrieve a raw Object stored in the Bukkit custom data.
+     *
+     * @param key The key to retrieve
+     * @return The object, if it exists in the store, else null.
+     */
+    public Object getBukkitData(String key) {
+        NBTTagCompound bukkitRoot = getBukkitDataRoot(false);
+        return convert(bukkitRoot.get(key));
+    }
+
+    public int getBukkitDataAsInt(String key) {
+        return NumberConversions.toInt(getBukkitData(key));
+    }
+
+    public float getBukkitDataAsFloat(String key) {
+        return NumberConversions.toFloat(getBukkitData(key));
+    }
+
+    public double getBukkitDataAsDouble(String key) {
+        return NumberConversions.toDouble(getBukkitData(key));
+    }
+
+    public long getBukkitDataAsLong(String key) {
+        return NumberConversions.toLong(getBukkitData(key));
+    }
+
+    public short getBukkitDataAsShort(String key) {
+        return NumberConversions.toShort(getBukkitData(key));
+    }
+
+    public byte getBukkitDataAsByte(String key) {
+        return NumberConversions.toByte(getBukkitData(key));
+    }
+
+    public boolean getBukkitDataAsBoolean(String key) {
+        Object value = getBukkitData(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+
+        if (value instanceof Number) {
+            return ((Number) value).intValue() != 0;
+        }
+
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+
+        return value != null;
+    }
+
+    public String asString(String key) {
+        Object value = getBukkitData(key);
+
+        if (value == null) {
+            return "";
+        }
+        return value.toString();
+    }
+
+    /**
+     * Remove a specific key of Bukkit data from this store.
+     *
+     * @param key The key to remove
+     */
+    public void removeBukkitData(String key) {
+        NBTTagCompound bukkitRoot = getBukkitDataRoot(false);
+        bukkitRoot.remove(key);
+        if (bukkitRoot.isEmpty()) {
+            tag.remove(BUKKIT_DATA_KEY);
         }
     }
 
