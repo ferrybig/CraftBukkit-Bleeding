@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.util;
 
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.server.NBTBase;
 import net.minecraft.server.NBTTagByte;
 import net.minecraft.server.NBTTagByteArray;
@@ -45,21 +46,77 @@ public class NBTMetadataStore implements Cloneable {
     public final static String BUKKIT_DATA_KEY = "bukkit";
     public final static String PLUGIN_DATA_KEY = "plugins";
 
+    // This is copied from CraftMetaItem.SerializableMeta
+    // It is needed for filtering, and I wasn't sure how to cleanly share
+    // this without a lot of refactoring.
+    static final String TYPE_FIELD = "meta-type";
+
     protected NBTTagCompound tag;
 
     /**
-     * Check to see if a tag has any plugin data on it.
+     * Returns a filtered store, such that it may not contain any of
+     * the specified keys.
+     * <p>
+     * If there is no unfiltered data in the given tag, this method will
+     * not create a new store, and will return null.
      *
      * @param tag The tag to scan for data
-     * @return True if the tag has a non-empty
-     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
+     * @param filterKeys A Set of keys to filter out
+     * @return A new NBTMetadataStore containing a copy of the data in
+     *   tag, minus what was filtered. If the end result is empty,
+     *   null will be returned.
      */
-    public static boolean hasPluginData(NBTTagCompound tag) {
-        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
-        if (bukkitRoot == null) return false;
-        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+    public static NBTMetadataStore getFilteredStore(NBTTagCompound tag, Set<String> filterKeys) {
+        NBTTagCompound filteredTag = null;
+        Set<String> keys = getAllKeys(tag);
+        for (String key : keys) {
+            if (filterKeys.contains(key)) {
+                continue;
+            }
 
-        return pluginRoot != null && !pluginRoot.isEmpty();
+            if (filteredTag == null) {
+                filteredTag = new NBTTagCompound();
+            }
+            filteredTag.set(key, tag.get(key).clone());
+        }
+        return filteredTag == null ? null : new NBTMetadataStore(filteredTag);
+    }
+
+    /**
+     * Returns a filtered store, such that it may not contain any of
+     * the specified keys.
+     * <p>
+     * If there is no unfiltered data in the given Map, this method will
+     * not create a new store, and will return null.
+     *
+     * @param dataMap The Ma[ to scan for data
+     * @param filterKeys A Set of keys to filter out
+     * @return A new NBTMetadataStore containing a copy of the data in
+     *   dataMap, minus what was filtered. If the end result is empty,
+     *   null will be returned.
+     */
+    public static NBTMetadataStore getFilteredStore(Map<String, Object> dataMap, Set<String> filterKeys) {
+        NBTTagCompound filteredTag = null;
+        Set<String> keys = dataMap.keySet();
+        for (String key : keys) {
+            if (filterKeys.contains(key)) {
+                continue;
+            }
+
+            // Filter out special ConfigurationSerialization and
+            // SerializeableMeta tags.
+            // These seem like they shouldn't make it this far down the pipeline,
+            // but it seems like they will be in the root after deserialization.
+            if (key.equals(ConfigurationSerialization.SERIALIZED_TYPE_KEY) || key.equals(TYPE_FIELD)) {
+                continue;
+            }
+
+            if (filteredTag == null) {
+                filteredTag = new NBTTagCompound();
+            }
+            filteredTag.set(key, convert(dataMap.get(key)));
+        }
+        return filteredTag == null ? null : new NBTMetadataStore(filteredTag);
     }
 
     /**
@@ -113,20 +170,26 @@ public class NBTMetadataStore implements Cloneable {
      *
      * @param tag The root of this datastore.
      */
-    public NBTMetadataStore(NBTTagCompound tag) {
-        this.tag = (NBTTagCompound)tag.clone();
+    private NBTMetadataStore(NBTTagCompound tag) {
+        this.tag = tag;
     }
 
     /**
-     * Import a datastore from a Map of Objects.
-     * <p>
-     * Only basic data types and ConfigurationSerializable objects
-     * can be imported.
+     * Retrieve the NBTTagCompound that holds all of the Plugin metadata.
      *
-     * @param dataMap A Map of data to import into the store
+     * @param create If True, the path to the root will be created if it does not exist.
+     * @return The NBTTagCompound that holds this data
      */
-    public NBTMetadataStore(Map<String, Object> dataMap) {
-        this.tag = (NBTTagCompound)convert(dataMap);
+    protected NBTTagCompound getPluginMetadataRoot(boolean create) {
+        NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+        if (create) {
+            tag.set(BUKKIT_DATA_KEY, bukkitRoot);
+        }
+        NBTTagCompound pluginsRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+        if (create) {
+            bukkitRoot.set(PLUGIN_DATA_KEY, pluginsRoot);
+        }
+        return pluginsRoot;
     }
 
     /**
@@ -143,9 +206,10 @@ public class NBTMetadataStore implements Cloneable {
             throw new IllegalArgumentException("This store can only hold PersistentMetadataValue");
         }
 
-        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(true);
+        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         dataTag.set(newMetadataValue.getOwningPlugin().getName(), convert(newMetadataValue.value()));
-        tag.set(metadataKey, dataTag);
+        metadataRoot.set(metadataKey, dataTag);
     }
 
     /**
@@ -155,13 +219,14 @@ public class NBTMetadataStore implements Cloneable {
      * @return A List of values found, or an empty List.
      */
     public List<MetadataValue> getMetadata(String metadataKey) {
-        if (!tag.hasKey(metadataKey)) {
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
+        if (!metadataRoot.hasKey(metadataKey)) {
             return Collections.emptyList();
         }
 
         PluginManager pm = Bukkit.getPluginManager();
         List<MetadataValue> metadata = new ArrayList<MetadataValue>();
-        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         Set<String> pluginKeys = getAllKeys(dataTag);
         for (String pluginKey : pluginKeys) {
             Plugin plugin = pm.getPlugin(pluginKey);
@@ -180,10 +245,11 @@ public class NBTMetadataStore implements Cloneable {
      * @return A List of values found, or an empty List.
      */
     public MetadataValue getMetadata(String metadataKey, Plugin owningPlugin) {
-        if (!tag.hasKey(metadataKey)) {
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
+        if (!metadataRoot.hasKey(metadataKey)) {
             return null;
         }
-        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         String pluginName = owningPlugin.getName();
         if (!dataTag.hasKey(pluginName)) {
             return null;
@@ -198,7 +264,8 @@ public class NBTMetadataStore implements Cloneable {
      * @return True if the key is present in this store
      */
     public boolean hasMetadata(String metadataKey) {
-        return tag.hasKey(metadataKey);
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
+        return metadataRoot.hasKey(metadataKey);
     }
 
     /**
@@ -206,12 +273,12 @@ public class NBTMetadataStore implements Cloneable {
      *
      * @param metadataKey The key to remove
      * @param owningPlugin the plugin that owns the data
-     * @param owningPlugin The Plugin that owns this data.
      */
     public boolean hasMetadata(String metadataKey, Plugin owningPlugin) {
-        if (!hasMetadata(metadataKey)) return false;
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
+        if (!metadataRoot.hasKey(metadataKey)) return false;
 
-        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         return dataTag.hasKey(owningPlugin.getName());
     }
 
@@ -222,27 +289,52 @@ public class NBTMetadataStore implements Cloneable {
      * @param owningPlugin The Plugin that owns this data.
      */
     public void removeMetadata(String metadataKey, Plugin owningPlugin) {
-        if (!hasMetadata(metadataKey)) return;
+        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
+        if (!metadataRoot.hasKey(metadataKey)) return;
 
-        NBTTagCompound dataTag = tag.getCompound(metadataKey);
+        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         dataTag.remove(owningPlugin.getName());
         if (dataTag.isEmpty()) {
-            tag.remove(metadataKey);
+            metadataRoot.remove(metadataKey);
+            if (metadataRoot.isEmpty()) {
+                NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
+                bukkitRoot.remove(PLUGIN_DATA_KEY);
+                if (bukkitRoot.isEmpty()) {
+                    tag.remove(BUKKIT_DATA_KEY);
+                }
+            }
         }
     }
 
     /**
-     * This will serialize all data into a Map.
+     * Apply the contents of this data store on top of an item tag.
+     * <p>
+     * This will overwrite any keys in the tag that are also in this
+     * store.
      *
-     * @return A Map containing all of the data in the store.
+     * @param other The tag to write this data store to
      */
-    public Map<String, Object> serialize() {
-        Map<String, Object> map = new HashMap<String, Object>();
+    public void applyToTag(NBTTagCompound other) {
+        if (other == null) return;
+
+        Set<String> keys = getAllKeys(tag);
+        for (String key : keys) {
+            other.set(key, tag.get(key).clone());
+        }
+    }
+
+    /**
+     * This will serialize all data into an ImmutableMap.Builder.
+     *
+     * @param builder An ImmutableMap builder to serialize this data store.
+     * @return The same Map Builder
+     */
+    public ImmutableMap.Builder<String, Object> serialize(ImmutableMap.Builder<String, Object> builder) {
         Set<String> pluginKeys = getAllKeys(tag);
         for (String pluginKey : pluginKeys) {
-            map.put(pluginKey, convert(tag.get(pluginKey)));
+            builder.put(pluginKey, convert(tag.get(pluginKey)));
         }
-        return map;
+        return builder;
     }
 
     /**
@@ -467,13 +559,13 @@ public class NBTMetadataStore implements Cloneable {
 
     @Override
     public int hashCode() {
-        // This might be difficult to do properly.
+        // TODO: Is this sufficient?
         return tag.hashCode();
     }
 
     @Override
     public Object clone() {
-        return new NBTMetadataStore(tag);
+        return new NBTMetadataStore((NBTTagCompound)tag.clone());
     }
 
     public boolean isEmpty() {
