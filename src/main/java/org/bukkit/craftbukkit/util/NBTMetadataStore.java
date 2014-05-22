@@ -381,6 +381,8 @@ public class NBTMetadataStore implements Cloneable {
             copiedValue = new NBTTagDouble((Double)value);
         } else if (value instanceof Byte) {
             copiedValue = new NBTTagByte((Byte)value);
+        } else if (value instanceof Boolean) {
+            copiedValue = new NBTTagByte((Boolean)value ? (byte)1 : (byte)0);
         } else if (value instanceof Short) {
             copiedValue = new NBTTagShort((Short)value);
         } else if (value instanceof List) {
