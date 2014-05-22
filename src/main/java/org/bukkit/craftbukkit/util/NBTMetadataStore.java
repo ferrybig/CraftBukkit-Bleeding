@@ -400,7 +400,7 @@ public class NBTMetadataStore implements Cloneable {
         return value != null;
     }
 
-    public String getBukkitDataasString(String key) {
+    public String getBukkitDataAsString(String key) {
         Object value = getBukkitData(key);
 
         if (value == null) {
