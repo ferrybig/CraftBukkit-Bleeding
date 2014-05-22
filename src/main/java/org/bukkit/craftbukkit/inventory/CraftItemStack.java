@@ -430,7 +430,7 @@ public final class CraftItemStack extends ItemStack {
      */
     public boolean hasMetadata(net.minecraft.server.ItemStack item, String key) {
         if (!hasItemMeta(item)) return false;
-        return NBTMetadataStore.hasPluginData(item.tag, key);
+        return NBTMetadataStore.hasPluginMetadata(item.tag, key);
     }
 
     @Override
@@ -454,6 +454,6 @@ public final class CraftItemStack extends ItemStack {
      */
     public boolean hasMetadata(net.minecraft.server.ItemStack item, String key, Plugin owningPlugin) {
         if (!hasItemMeta(item)) return false;
-        return NBTMetadataStore.hasPluginData(item.tag, key, owningPlugin);
+        return NBTMetadataStore.hasPluginMetadata(item.tag, key, owningPlugin);
     }
 }
