@@ -10,9 +10,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 import net.minecraft.server.NBTBase;
 import net.minecraft.server.NBTTagCompound;
@@ -81,6 +83,10 @@ class CraftMetaItem implements ItemMeta, Repairable {
         final String BUKKIT;
         final String NBT;
 
+        // Auto-registry of well-known tag names
+        final static Set<String> BUKKIT_TAGS = new HashSet<String>();
+        final static Set<String> NBT_TAGS = new HashSet<String>();
+
         ItemMetaKey(final String both) {
             this(both, both);
         }
@@ -88,6 +94,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
         ItemMetaKey(final String nbt, final String bukkit) {
             this.NBT = nbt;
             this.BUKKIT = bukkit;
+            if (bukkit != null) BUKKIT_TAGS.add(bukkit);
+            if (nbt != null) NBT_TAGS.add(nbt);
         }
     }
 
@@ -180,8 +188,6 @@ class CraftMetaItem implements ItemMeta, Repairable {
     static final ItemMetaKey DISPLAY = new ItemMetaKey("display");
     static final ItemMetaKey LORE = new ItemMetaKey("Lore", "lore");
     static final ItemMetaKey ENCHANTMENTS = new ItemMetaKey("ench", "enchants");
-    static final ItemMetaKey BUKKIT = new ItemMetaKey(NBTMetadataStore.BUKKIT_DATA_KEY);
-    static final ItemMetaKey PLUGINS = new ItemMetaKey(NBTMetadataStore.PLUGIN_DATA_KEY);
     @Specific(Specific.To.NBT)
     static final ItemMetaKey ENCHANTMENTS_ID = new ItemMetaKey("id");
     @Specific(Specific.To.NBT)
@@ -234,10 +240,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(NBTTagCompound tag) {
-        NBTTagCompound bukkitData = tag.getCompound(BUKKIT.NBT);
-        if (bukkitData != null && bukkitData.hasKey(PLUGINS.NBT)) {
-            dataStore = new NBTMetadataStore(bukkitData.getCompound(PLUGINS.NBT));
-        }
+        dataStore = NBTMetadataStore.getFilteredStore(tag, ItemMetaKey.NBT_TAGS);
         if (tag.hasKey(DISPLAY.NBT)) {
             NBTTagCompound display = tag.getCompound(DISPLAY.NBT);
 
@@ -330,12 +333,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
     }
 
     CraftMetaItem(Map<String, Object> map) {
-        if (map.containsKey(PLUGINS.BUKKIT)) {
-            Map<String, Object> metadataMap = SerializableMeta.getObject(Map.class, map, PLUGINS.BUKKIT, true);
-            if (metadataMap != null) {
-                dataStore = new NBTMetadataStore(metadataMap);
-            }
-        }
+        dataStore = NBTMetadataStore.getFilteredStore(map, ItemMetaKey.BUKKIT_TAGS);
         setDisplayName(SerializableMeta.getString(map, NAME.BUKKIT, true));
 
         Iterable<?> lore = SerializableMeta.getObject(Iterable.class, map, LORE.BUKKIT, true);
@@ -392,9 +390,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         }
 
         if (hasMetadata()) {
-            NBTTagCompound bukkitData = itemTag.getCompound(BUKKIT.NBT);
-            bukkitData.set(PLUGINS.NBT, dataStore.getTag());
-            itemTag.set(BUKKIT.NBT, bukkitData);
+            dataStore.applyToTag(itemTag);
         }
     }
 
@@ -638,7 +634,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
         }
 
         if (hasMetadata()) {
-            builder.put(PLUGINS.BUKKIT, dataStore.serialize());
+            dataStore.serialize(builder);
         }
 
         return builder;
@@ -721,7 +717,7 @@ class CraftMetaItem implements ItemMeta, Repairable {
 
         return dataStore.getMetadata(metadataKey, owningPlugin);
     }
-    
+
     @Override
     public boolean hasMetadata() {
         return dataStore != null && !dataStore.isEmpty();

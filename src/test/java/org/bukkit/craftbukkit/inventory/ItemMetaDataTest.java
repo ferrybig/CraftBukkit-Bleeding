@@ -82,7 +82,6 @@ public class ItemMetaDataTest extends AbstractTestingBase {
 
         ItemStack testStack = new ItemStack(Material.STICK);
         testStack = CraftItemStack.asCraftCopy(testStack);
-        assertThat(testStack.hasMetadata(), is(false));
         itemMeta = testStack.getItemMeta();
         assertThat(itemMeta.hasMetadata(), is(false));
         assertThat(itemMeta.hasMetadata("test_serializeable"), is(false));
@@ -97,14 +96,12 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(itemMeta.hasMetadata("test_serializeable"), is(true));
 
         testStack.setItemMeta(itemMeta);
-        assertThat(testStack.hasMetadata(), is(true));
         assertThat(testStack.hasMetadata("test_serializeable"), is(true));
         assertThat(testStack.hasMetadata("test_not_there"), is(false));
         assertThat(testStack.hasMetadata("test_serializeable", pluginX), is(true));
         assertThat(testStack.hasMetadata("test_serializeable", pluginY), is(false));
 
         ItemStack cloneStack = testStack.clone();
-        assertThat(cloneStack.hasMetadata(), is(true));
         ItemMeta newMeta = cloneStack.getItemMeta();
         assertThat(newMeta.hasMetadata(), is(true));
         assertThat(newMeta.hasMetadata("test_serializeable"), is(true));
@@ -181,6 +178,7 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(deserialized.map.containsKey("players"), is(true));
         assertThat(deserialized.map.get("item_count"), is(object.map.get("item_count")));
         assertThat(deserialized.map.get("players"), is(object.map.get("players")));
+
         assertThat(deserialized.map.get("items"), is(object.map.get("items")));
 
         Object testList = deserialized.map.get("items");
@@ -237,7 +235,6 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(itemMeta.hasMetadata("testing", pluginX), is(true));
         assertThat(itemMeta.hasMetadata("testing", pluginY), is(false));
         testStack.setItemMeta(itemMeta);
-        assertThat(testStack.hasMetadata(), is(true));
 
         ItemMeta newMeta = testStack.getItemMeta();
         assertThat(newMeta.hasMetadata(), is(true));
@@ -279,9 +276,8 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         testStack.setItemMeta(itemMeta);
 
         ItemStack cloned = testStack.clone();
-        assertThat(cloned.hasMetadata(), is(true));
 
-        ItemMeta clonedMeta = testStack.getItemMeta();
+        ItemMeta clonedMeta = cloned.getItemMeta();
         assertThat(clonedMeta.hasMetadata("testing"), is(true));
 
         List<MetadataValue> values = clonedMeta.getMetadata("testing");
@@ -301,10 +297,8 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(values.size(), is(1));
 
         cloned.setItemMeta(clonedMeta);
-        assertThat(cloned.hasMetadata(), is(true));
         assertThat(cloned.hasMetadata("testing"), is(true));
         cloned = cloned.clone();
-        assertThat(cloned.hasMetadata(), is(true));
         clonedMeta = cloned.getItemMeta();
         assertThat(clonedMeta.hasMetadata(), is(true));
         assertThat(clonedMeta.hasMetadata("testing"), is(true));
@@ -319,7 +313,6 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         assertThat(clonedMeta.hasMetadata(), is(false));
         assertThat(clonedMeta.hasMetadata("testing"), is(false));
         cloned.setItemMeta(clonedMeta);
-        assertThat(cloned.hasMetadata(), is(false));
     }
 
     @Test
