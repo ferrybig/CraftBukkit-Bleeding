@@ -487,8 +487,8 @@ class CraftMetaItem implements ItemMeta, Repairable {
         if (glow) {
             if (dataStore == null) {
                 dataStore = new NBTMetadataStore();
-                dataStore.setBukkitData(GLOW_KEY, true);
             }
+            dataStore.setBukkitData(GLOW_KEY, true);
         } else if (dataStore != null) {
             dataStore.removeBukkitData(GLOW_KEY);
         }
