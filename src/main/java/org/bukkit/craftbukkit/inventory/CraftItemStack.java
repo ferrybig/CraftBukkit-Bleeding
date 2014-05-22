@@ -412,27 +412,6 @@ public final class CraftItemStack extends ItemStack {
     }
 
     @Override
-    public boolean hasMetadata() {
-        return hasMetadata(handle);
-    }
-
-    /**
-     * Checks for any data on an NMS item that would map to Plugin
-     * metadata in the ItemMeta's Metadatable interface.
-     * <p>
-     * Any internal Bukkit data stored in the root BUKKIT_DATA_KEY
-     * tag would need to be accounted for with a separate check.
-     *
-     * @param item The ItemStack to check
-     * @return True if the Item's tag has a non-empty
-     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
-     */
-    static boolean hasMetadata(net.minecraft.server.ItemStack item) {
-        if (!hasItemMeta(item)) return false;
-        return NBTMetadataStore.hasPluginData(item.tag);
-    }
-
-    @Override
     public boolean hasMetadata(String key) {
         return hasMetadata(handle, key);
     }
