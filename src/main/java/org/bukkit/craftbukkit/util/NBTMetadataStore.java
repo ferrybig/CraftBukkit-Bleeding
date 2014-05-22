@@ -129,12 +129,23 @@ public class NBTMetadataStore implements Cloneable {
      * @return True if the tag has a non-empty
      *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
      */
-    public static boolean hasPluginData(NBTTagCompound tag, String key) {
+    public static boolean hasPluginMetadata(NBTTagCompound tag, String key) {
         NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
         if (bukkitRoot == null) return false;
-        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+        NBTTagCompound pluginsRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
+        if (pluginsRoot == null) return false;
 
-        return pluginRoot != null && pluginRoot.hasKey(key);
+        // We must scan for data here. This could be optimized with a
+        // ref-counted Map of keys, but I think the (String, Plugin)
+        // method should be the more common use case.
+        Set<String> plugins = getAllKeys(pluginsRoot);
+        for (String plugin : plugins) {
+            NBTTagCompound pluginRoot = pluginsRoot.getCompound(plugin);
+            if (pluginRoot.hasKey(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -146,14 +157,14 @@ public class NBTMetadataStore implements Cloneable {
      * @return True if the tag has a non-empty
      *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
      */
-    public static boolean hasPluginData(NBTTagCompound tag, String key, Plugin owningPlugin) {
+    public static boolean hasPluginMetadata(NBTTagCompound tag, String key, Plugin owningPlugin) {
         NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
         if (bukkitRoot == null) return false;
-        NBTTagCompound pluginRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
-        if (pluginRoot == null || !pluginRoot.hasKey(key)) return false;
-        NBTTagCompound dataRoot = pluginRoot.getCompound(key);
+        NBTTagCompound pluginsRoot = bukkitRoot.getCompound(PLUGIN_DATA_KEY);
         String pluginName = owningPlugin.getName();
-        return dataRoot != null && dataRoot.hasKey(pluginName);
+        if (pluginsRoot == null || !pluginsRoot.hasKey(pluginName)) return false;
+        NBTTagCompound pluginRoot = pluginsRoot.getCompound(pluginName);
+        return pluginRoot != null && pluginRoot.hasKey(key);
     }
 
     /**
@@ -205,9 +216,10 @@ public class NBTMetadataStore implements Cloneable {
         }
 
         NBTTagCompound metadataRoot = getPluginMetadataRoot(true);
-        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
-        dataTag.set(newMetadataValue.getOwningPlugin().getName(), convert(newMetadataValue.value()));
-        metadataRoot.set(metadataKey, dataTag);
+        String pluginName = newMetadataValue.getOwningPlugin().getName();
+        NBTTagCompound pluginTag = metadataRoot.getCompound(pluginName);
+        pluginTag.set(metadataKey, convert(newMetadataValue.value()));
+        metadataRoot.set(pluginName, pluginTag);
     }
 
     /**
@@ -218,18 +230,17 @@ public class NBTMetadataStore implements Cloneable {
      */
     public List<MetadataValue> getPluginMetadata(String metadataKey) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
-        if (!metadataRoot.hasKey(metadataKey)) {
-            return Collections.emptyList();
-        }
-
         PluginManager pm = Bukkit.getPluginManager();
         List<MetadataValue> metadata = new ArrayList<MetadataValue>();
-        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
-        Set<String> pluginKeys = getAllKeys(dataTag);
+
+        Set<String> pluginKeys = getAllKeys(metadataRoot);
         for (String pluginKey : pluginKeys) {
-            Plugin plugin = pm.getPlugin(pluginKey);
-            if (plugin != null) {
-                metadata.add(new PersistentMetadataValue(plugin, convert(dataTag.get(pluginKey))));
+            NBTTagCompound pluginData = metadataRoot.getCompound(pluginKey);
+            if (pluginData.hasKey(metadataKey)) {
+                Plugin plugin = pm.getPlugin(pluginKey);
+                if (plugin != null) {
+                    metadata.add(new PersistentMetadataValue(plugin, convert(pluginData.get(metadataKey))));
+                }
             }
         }
         return Collections.unmodifiableList(metadata);
@@ -244,15 +255,15 @@ public class NBTMetadataStore implements Cloneable {
      */
     public MetadataValue getPluginMetadata(String metadataKey, Plugin owningPlugin) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
-        if (!metadataRoot.hasKey(metadataKey)) {
-            return null;
-        }
-        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
         String pluginName = owningPlugin.getName();
-        if (!dataTag.hasKey(pluginName)) {
+        if (!metadataRoot.hasKey(pluginName)) {
             return null;
         }
-        return new PersistentMetadataValue(owningPlugin, convert(dataTag.get(pluginName)));
+        NBTTagCompound pluginTag = metadataRoot.getCompound(pluginName);
+        if (!pluginTag.hasKey(metadataKey)) {
+            return null;
+        }
+        return new PersistentMetadataValue(owningPlugin, convert(pluginTag.get(metadataKey)));
     }
 
     /**
@@ -262,8 +273,7 @@ public class NBTMetadataStore implements Cloneable {
      * @return True if the key is present in this store
      */
     public boolean hasPluginMetadata(String metadataKey) {
-        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
-        return metadataRoot.hasKey(metadataKey);
+        return hasPluginMetadata(tag, metadataKey);
     }
 
     /**
@@ -273,11 +283,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param owningPlugin the plugin that owns the data
      */
     public boolean hasPluginMetadata(String metadataKey, Plugin owningPlugin) {
-        NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
-        if (!metadataRoot.hasKey(metadataKey)) return false;
-
-        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
-        return dataTag.hasKey(owningPlugin.getName());
+        return hasPluginMetadata(tag, metadataKey, owningPlugin);
     }
 
     /**
@@ -288,12 +294,14 @@ public class NBTMetadataStore implements Cloneable {
      */
     public void removePluginMetadata(String metadataKey, Plugin owningPlugin) {
         NBTTagCompound metadataRoot = getPluginMetadataRoot(false);
-        if (!metadataRoot.hasKey(metadataKey)) return;
+        String pluginName = owningPlugin.getName();
 
-        NBTTagCompound dataTag = metadataRoot.getCompound(metadataKey);
-        dataTag.remove(owningPlugin.getName());
-        if (dataTag.isEmpty()) {
-            metadataRoot.remove(metadataKey);
+        if (!metadataRoot.hasKey(pluginName)) return;
+
+        NBTTagCompound pluginTag = metadataRoot.getCompound(pluginName);
+        pluginTag.remove(metadataKey);
+        if (pluginTag.isEmpty()) {
+            metadataRoot.remove(pluginName);
             if (metadataRoot.isEmpty()) {
                 NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
                 bukkitRoot.remove(PLUGIN_DATA_KEY);
@@ -392,7 +400,7 @@ public class NBTMetadataStore implements Cloneable {
         return value != null;
     }
 
-    public String asString(String key) {
+    public String getBukkitDataasString(String key) {
         Object value = getBukkitData(key);
 
         if (value == null) {
