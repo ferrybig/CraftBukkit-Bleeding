@@ -15,11 +15,13 @@ import org.apache.commons.lang.Validate;
 import org.bukkit.Material;
 import org.bukkit.configuration.serialization.DelegateDeserialization;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.util.NBTMetadataStore;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.common.collect.ImmutableMap;
+import org.bukkit.plugin.Plugin;
 
 @DelegateDeserialization(ItemStack.class)
 public final class CraftItemStack extends ItemStack {
@@ -407,5 +409,51 @@ public final class CraftItemStack extends ItemStack {
 
     static boolean hasItemMeta(net.minecraft.server.ItemStack item) {
         return !(item == null || item.tag == null || item.tag.isEmpty());
+    }
+
+    @Override
+    public boolean hasMetadata(String key) {
+        return hasMetadata(handle, key);
+    }
+
+    /**
+     * An efficient quick check to see if this ItemStack has a
+     * particular metadata key in its ItemMeta store,
+     * without actually unpacking the ItemMeta object.
+     * <p>
+     * Use this in place of getItemMeta().hasMetadata("field") for simple first-pass
+     * checks for data, if you don't necessarily need to unpack the data.
+     *
+     * @param item The NMS item to check
+     * @param key The String key to check for
+     * @return True if getItemMeta().hasMetadata(key)
+     */
+    public boolean hasMetadata(net.minecraft.server.ItemStack item, String key) {
+        if (!hasItemMeta(item)) return false;
+        return NBTMetadataStore.hasPluginMetadata(item.tag, key);
+    }
+
+    @Override
+    public boolean hasMetadata(String key, Plugin owningPlugin) {
+        return hasMetadata(handle, key, owningPlugin);
+    }
+
+    /**
+     * An efficient quick check to see if this ItemStack has a
+     * particular metadata key in its ItemMeta store for a particular Plugin,
+     * without actually unpacking the ItemMeta object.
+     * <p>
+     * Use this in place of getItemMeta().hasMetadata("field", plugin) for
+     * simple first-pass checks for data, if you don't necessarily need to
+     * unpack the data.
+     *
+     * @param item The NMS item to check
+     * @param key The String key to check for
+     * @param owningPlugin The plugin for which to check for data
+     * @return True if getItemMeta().hasMetadata(key)
+     */
+    public boolean hasMetadata(net.minecraft.server.ItemStack item, String key, Plugin owningPlugin) {
+        if (!hasItemMeta(item)) return false;
+        return NBTMetadataStore.hasPluginMetadata(item.tag, key, owningPlugin);
     }
 }
