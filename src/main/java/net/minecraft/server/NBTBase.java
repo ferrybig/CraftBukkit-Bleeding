@@ -7,9 +7,9 @@ public abstract class NBTBase {
 
     public static final String[] a = new String[] { "END", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "BYTE[]", "STRING", "LIST", "COMPOUND", "INT[]"};
 
-    abstract void write(DataOutput dataoutput);
+    abstract void write(DataOutput dataoutput) throws java.io.IOException; // CraftBukkit - added throws
 
-    abstract void load(DataInput datainput, int i, NBTReadLimiter nbtreadlimiter);
+    abstract void load(DataInput datainput, int i, NBTReadLimiter nbtreadlimiter) throws java.io.IOException; // CraftBukkit - added throws
 
     public abstract String toString();
 

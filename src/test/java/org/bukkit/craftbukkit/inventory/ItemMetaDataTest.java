@@ -14,7 +14,9 @@ import org.bukkit.support.AbstractTestingBase;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -127,6 +129,97 @@ public class ItemMetaDataTest extends AbstractTestingBase {
         ItemMeta deserializedMeta = deserializedItemStack.getItemMeta();
         assertThat(deserializedMeta.hasMetadata(), is(true));
         assertThat(deserializedMeta.hasEnchants(), is(true));
+    }
+
+    @Test
+    public void testDataTypes() {
+        ItemStack testStack = new ItemStack(Material.STICK);
+        testStack = CraftItemStack.asCraftCopy(testStack);
+        ItemMeta itemMeta = testStack.getItemMeta();
+        assertThat(itemMeta.hasMetadata(), is(false));
+
+        itemMeta.setMetadata("test-string", new PersistentMetadataValue(pluginX, TEST_STRING_VALUE));
+        itemMeta.setMetadata("test-integer", new PersistentMetadataValue(pluginX, TEST_INTEGER_VALUE));
+        itemMeta.setMetadata("test-long", new PersistentMetadataValue(pluginX, (long)TEST_INTEGER_VALUE));
+        itemMeta.setMetadata("test-short", new PersistentMetadataValue(pluginX, (short)TEST_INTEGER_VALUE));
+        itemMeta.setMetadata("test-byte", new PersistentMetadataValue(pluginX, (byte)TEST_INTEGER_VALUE));
+        itemMeta.setMetadata("test-float", new PersistentMetadataValue(pluginX, (float)TEST_DOUBLE_VALUE));
+        itemMeta.setMetadata("test-double", new PersistentMetadataValue(pluginX, TEST_DOUBLE_VALUE));
+
+        List<String> testStringList = new ArrayList<String>();
+        testStringList.add(TEST_STRING_VALUE);
+        testStringList.add(TEST_STRING_VALUE);
+
+        itemMeta.setMetadata("test-list", new PersistentMetadataValue(pluginX, testStringList));
+
+        List<List<String>> testNestedList = new ArrayList<List<String>>();
+        testNestedList.add(testStringList);
+        testNestedList.add(testStringList);
+
+        itemMeta.setMetadata("test-nested-list", new PersistentMetadataValue(pluginX, testNestedList));
+
+        Map<String, String> testMapOfString = new HashMap<String, String>();
+        testMapOfString.put("test-1", TEST_STRING_VALUE);
+        testMapOfString.put("test-2", TEST_STRING_VALUE);
+
+        itemMeta.setMetadata("test-string-map", new PersistentMetadataValue(pluginX, testMapOfString));
+
+        Map<String, List<String>> testMapOfLists = new HashMap<String, List<String>>();
+        testMapOfLists.put("test-1", testStringList);
+        testMapOfLists.put("test-2", testStringList);
+
+        itemMeta.setMetadata("test-list-map", new PersistentMetadataValue(pluginX, testMapOfLists));
+
+        assertThat(itemMeta.hasMetadata(), is(true));
+
+        testStack.setItemMeta(itemMeta);
+        assertThat(testStack.hasMetadata("test-not-there"), is(false));
+        assertThat(testStack.hasMetadata("test-string"), is(true));
+        assertThat(testStack.hasMetadata("test-integer", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-integer", pluginY), is(false));
+        assertThat(testStack.hasMetadata("test-long", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-short", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-byte", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-float", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-double", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-list", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-nested-list", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-string-map", pluginX), is(true));
+        assertThat(testStack.hasMetadata("test-list-map", pluginX), is(true));
+
+        ItemStack cloneStack = testStack.clone();
+        ItemMeta newMeta = cloneStack.getItemMeta();
+        assertThat(newMeta.hasMetadata(), is(true));
+        MetadataValue testString = newMeta.getMetadata("test-string", pluginX);
+        assertThat(testString.asString(), is(TEST_STRING_VALUE));
+        MetadataValue testInteger = newMeta.getMetadata("test-integer", pluginX);
+        assertThat(testInteger.asInt(), is(TEST_INTEGER_VALUE));
+        MetadataValue tetLong = newMeta.getMetadata("test-long", pluginX);
+        assertThat(tetLong.asLong(), is((long)TEST_INTEGER_VALUE));
+        MetadataValue testShort = newMeta.getMetadata("test-short", pluginX);
+        assertThat(testShort.asShort(), is((short)TEST_INTEGER_VALUE));
+        MetadataValue testByte = newMeta.getMetadata("test-byte", pluginX);
+        assertThat(testByte.asByte(), is((byte)TEST_INTEGER_VALUE));
+        MetadataValue testFloat = newMeta.getMetadata("test-float", pluginX);
+        assertThat(testFloat.asFloat(), is((float)TEST_DOUBLE_VALUE));
+        MetadataValue testDouble = newMeta.getMetadata("test-double", pluginX);
+        assertThat(testDouble.asDouble(), is(TEST_DOUBLE_VALUE));
+
+        PersistentMetadataValue metaList = (PersistentMetadataValue)newMeta.getMetadata("test-list", pluginX);
+        List<Object> testObjectList = new ArrayList<Object>(testStringList);
+        assertThat(metaList.asList(), is(testObjectList));
+
+        PersistentMetadataValue metaNestedList = (PersistentMetadataValue)newMeta.getMetadata("test-nested-list", pluginX);
+        testObjectList = new ArrayList<Object>(testNestedList);
+        assertThat(metaNestedList.asList(), is(testObjectList));
+
+        PersistentMetadataValue metaStringMap = (PersistentMetadataValue)newMeta.getMetadata("test-string-map", pluginX);
+        Map<String, Object> testObjectMap = new HashMap<String, Object>(testMapOfString);
+        assertThat(metaStringMap.asMap(), is(testObjectMap));
+
+        PersistentMetadataValue metaListMap = (PersistentMetadataValue)newMeta.getMetadata("test-list-map", pluginX);
+        testObjectMap = new HashMap<String, Object>(testMapOfLists);
+        assertThat(metaListMap.asMap(), is(testObjectMap));
     }
 
     @Test
