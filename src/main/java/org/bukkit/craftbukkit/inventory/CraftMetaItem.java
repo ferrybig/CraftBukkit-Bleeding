@@ -380,7 +380,6 @@ class CraftMetaItem implements ItemMeta, Repairable {
             setDisplayTag(itemTag, LORE.NBT, createStringList(lore));
         }
 
-        applyEnchantments(enchantments, itemTag, ENCHANTMENTS);
         // This is a bit of a hack to force the MC client to show the glow
         // effect. If this client behavior ever changes, the glow API
         // may break irreparably.
