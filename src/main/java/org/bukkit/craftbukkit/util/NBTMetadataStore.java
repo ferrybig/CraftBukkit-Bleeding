@@ -238,9 +238,9 @@ public class NBTMetadataStore implements Cloneable {
         for (String pluginKey : pluginKeys) {
             NBTTagCompound pluginData = metadataRoot.getCompound(pluginKey);
             if (pluginData.hasKey(metadataKey)) {
-                Plugin plugin = pm.getPlugin(pluginKey);
-                if (plugin != null) {
-                    metadata.add(new PersistentMetadataValue(plugin, convert(pluginData.get(metadataKey))));
+                MetadataValue value = convertToMetadata(pm.getPlugin(pluginKey), pluginData.get(metadataKey));
+                if (value != null) {
+                    metadata.add(value);
                 }
             }
         }
@@ -264,7 +264,37 @@ public class NBTMetadataStore implements Cloneable {
         if (!pluginTag.hasKey(metadataKey)) {
             return null;
         }
-        return new PersistentMetadataValue(owningPlugin, convert(pluginTag.get(metadataKey)));
+        return convertToMetadata(owningPlugin, pluginTag.get(metadataKey));
+    }
+
+    public static PersistentMetadataValue convertToMetadata(Plugin plugin, NBTBase tag) {
+        if (plugin == null || tag == null) return null;
+
+        Object converted = convert(tag);
+        // Note that we don't currently export arrays as metadata
+        if (converted instanceof String) {
+            return new PersistentMetadataValue(plugin, (String)converted);
+        } else if (converted instanceof Integer) {
+            return new PersistentMetadataValue(plugin, (Integer)converted);
+        } else if (converted instanceof Short) {
+            return new PersistentMetadataValue(plugin, (Short)converted);
+        } else if (converted instanceof Byte) {
+            return new PersistentMetadataValue(plugin, (Byte)converted);
+        } else if (converted instanceof Long) {
+            return new PersistentMetadataValue(plugin, (Long)converted);
+        } else if (converted instanceof Float) {
+            return new PersistentMetadataValue(plugin, (Float)converted);
+        } else if (converted instanceof Double) {
+            return new PersistentMetadataValue(plugin, (Double)converted);
+        } else if (converted instanceof Map) {
+            return new PersistentMetadataValue(plugin, (Map<String, ?>)converted);
+        } else if (converted instanceof List) {
+            return new PersistentMetadataValue(plugin, (List<?>)converted);
+        } else if (converted instanceof ConfigurationSerializable) {
+            return new PersistentMetadataValue(plugin, (ConfigurationSerializable)converted);
+        }
+
+        return null;
     }
 
     /**
@@ -509,11 +539,16 @@ public class NBTMetadataStore implements Cloneable {
                         listValue = convert(list.get(i));
                         break;
                     case 1: // Byte
+                        listValue = list.getByte(i);
+                        break;
                     case 2: // Short
+                        listValue = list.getShort(i);
+                        break;
                     case 3: // Int
+                        listValue = list.getInt(i);
+                        break;
                     case 4: // Long
-                        // I don't think this is going to work.
-                        listValue = list.e(i);
+                        listValue = list.getLong(i);
                         break;
                     case 6: // Double
                         listValue = list.d(i);
@@ -522,19 +557,13 @@ public class NBTMetadataStore implements Cloneable {
                         listValue = list.e(i);
                         break;
                     case 7: // Byte array
-                        int[] intArray = list.c(i);
-                        byte[] byteArray = new byte[intArray.length];
-                        for (int arrayIndex = 0; arrayIndex < intArray.length; arrayIndex++) {
-                            byteArray[arrayIndex] = (byte)intArray[arrayIndex];
-                        }
-                        listValue = byteArray;
+                        listValue = list.getByteArray(i);
                         break;
-                    case 8: // String;
+                    case 8: // String
                         listValue = list.f(i);
                         break;
-                    case 9: // List;
-                        // We don't support nested lists.
-                        listValue = null;
+                    case 9: // List
+                        listValue = convert(list.getList(i));
                         break;
                     case 11: // Int array
                         listValue = list.c(i);
@@ -586,6 +615,8 @@ public class NBTMetadataStore implements Cloneable {
             copiedValue = new NBTTagString((String)value);
         } else if (value instanceof Integer) {
             copiedValue = new NBTTagInt((Integer)value);
+        } else if (value instanceof Long) {
+            copiedValue = new NBTTagLong((Long)value);
         } else if (value instanceof Float) {
             copiedValue = new NBTTagFloat((Float)value);
         } else if (value instanceof Double) {
