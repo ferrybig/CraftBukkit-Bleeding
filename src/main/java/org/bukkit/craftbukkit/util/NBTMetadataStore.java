@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public class NBTMetadataStore implements Cloneable {
     // Theses are key strings used to store and check for custom data
-    // Bukkit may store custom internal data under CUSTOM_DATA_KEY.
+    // Bukkit may store custom internal data under BUKKIT_DATA_KEY.
     // Custom Plugin data (from the Metadatable interface)
     // is stored under BUKKIT_DATA_KEY.PLUGIN_DATA_KEY
     public final static String BUKKIT_DATA_KEY = "bukkit";
@@ -78,6 +78,7 @@ public class NBTMetadataStore implements Cloneable {
             if (filteredTag == null) {
                 filteredTag = new NBTTagCompound();
             }
+
             filteredTag.set(key, tag.get(key).clone());
         }
         return filteredTag == null ? null : new NBTMetadataStore(filteredTag);
@@ -515,6 +516,8 @@ public class NBTMetadataStore implements Cloneable {
                         listValue = list.e(i);
                         break;
                     case 6: // Double
+                        listValue = list.d(i);
+                        break;
                     case 5: // Float
                         listValue = list.e(i);
                         break;
