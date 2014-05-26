@@ -550,11 +550,11 @@ public class NBTMetadataStore implements Cloneable {
                     case 4: // Long
                         listValue = list.getLong(i);
                         break;
-                    case 6: // Double
-                        listValue = list.d(i);
-                        break;
                     case 5: // Float
                         listValue = list.e(i);
+                        break;
+                    case 6: // Double
+                        listValue = list.d(i);
                         break;
                     case 7: // Byte array
                         listValue = list.getByteArray(i);
