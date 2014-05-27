@@ -169,7 +169,7 @@ public class NBTTagList extends NBTBase {
     public byte getByte(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase)this.list.get(i);
-            return nbtbase.getTypeId() == 1 ? ((NBTTagByte) nbtbase).f() : 0;
+            return org.bukkit.craftbukkit.util.NBTType.BYTE.is(nbtbase) ? ((NBTTagByte) nbtbase).f() : 0;
         } else {
             return 0;
         }
@@ -178,7 +178,7 @@ public class NBTTagList extends NBTBase {
     public short getShort(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase)this.list.get(i);
-            return nbtbase.getTypeId() == 2 ? ((NBTTagShort) nbtbase).e() : 0;
+            return org.bukkit.craftbukkit.util.NBTType.SHORT.is(nbtbase) ? ((NBTTagShort) nbtbase).e() : 0;
         } else {
             return 0;
         }
@@ -187,7 +187,7 @@ public class NBTTagList extends NBTBase {
     public int getInt(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase)this.list.get(i);
-            return nbtbase.getTypeId() == 3 ? ((NBTTagInt) nbtbase).d() : 0;
+            return org.bukkit.craftbukkit.util.NBTType.INT.is(nbtbase) ? ((NBTTagInt) nbtbase).d() : 0;
         } else {
             return 0;
         }
@@ -196,7 +196,7 @@ public class NBTTagList extends NBTBase {
     public long getLong(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase)this.list.get(i);
-            return nbtbase.getTypeId() == 4 ? ((NBTTagLong) nbtbase).c() : 0;
+            return org.bukkit.craftbukkit.util.NBTType.LONG.is(nbtbase) ? ((NBTTagLong) nbtbase).c() : 0;
         } else {
             return 0;
         }
@@ -205,7 +205,7 @@ public class NBTTagList extends NBTBase {
     public byte[] getByteArray(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase) this.list.get(i);
-            return nbtbase.getTypeId() == 7 ? ((NBTTagByteArray) nbtbase).c() : new byte[0];
+            return org.bukkit.craftbukkit.util.NBTType.BYTE_ARRAY.is(nbtbase) ? ((NBTTagByteArray) nbtbase).c() : new byte[0];
         } else {
             return new byte[0];
         }
@@ -214,7 +214,7 @@ public class NBTTagList extends NBTBase {
     public NBTTagList getList(int i) {
         if (i >= 0 && i < this.list.size()) {
             NBTBase nbtbase = (NBTBase)this.list.get(i);
-            return nbtbase.getTypeId() == 9 ? ((NBTTagList) nbtbase) : new NBTTagList();
+            return org.bukkit.craftbukkit.util.NBTType.LIST.is(nbtbase) ? ((NBTTagList) nbtbase) : new NBTTagList();
         } else {
             return new NBTTagList();
         }
