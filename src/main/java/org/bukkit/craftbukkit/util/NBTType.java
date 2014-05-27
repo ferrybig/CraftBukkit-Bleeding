@@ -1,15 +1,13 @@
 package org.bukkit.craftbukkit.util;
 
-import com.google.common.collect.Maps;
 import net.minecraft.server.NBTBase;
 import net.minecraft.server.NBTTagList;
-
-import java.util.Map;
 
 /**
  * Enumerates the possible types of NBTBase variant data.
  */
 public enum NBTType {
+    END(0),
     BYTE(1),
     SHORT(2),
     INT(3),
