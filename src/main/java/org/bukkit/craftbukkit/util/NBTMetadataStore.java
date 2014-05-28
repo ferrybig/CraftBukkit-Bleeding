@@ -43,7 +43,7 @@ public class NBTMetadataStore implements Cloneable {
     // Theses are key strings used to store and check for custom data
     // Bukkit may store custom internal data under BUKKIT_DATA_KEY.
     // Custom Plugin data (from the Metadatable interface)
-    // is stored under BUKKIT_DATA_KEY.PLUGIN_DATA_KEY
+    // is stored under BUKKIT_DATA_KEY.PLUGIN_DATA_KEY.<plugin name>
     public final static String BUKKIT_DATA_KEY = "bukkit";
     public final static String PLUGIN_DATA_KEY = "plugins";
 
@@ -106,7 +106,7 @@ public class NBTMetadataStore implements Cloneable {
             }
 
             // Filter out special ConfigurationSerialization and
-            // SerializeableMeta tags.
+            // SerializableMeta tags.
             // These seem like they shouldn't make it this far down the pipeline,
             // but it seems like they will be in the root after deserialization.
             if (key.equals(ConfigurationSerialization.SERIALIZED_TYPE_KEY) || key.equals(TYPE_FIELD)) {
@@ -156,7 +156,7 @@ public class NBTMetadataStore implements Cloneable {
      * @param key The key to check for
      * @param owningPlugin The plugin to check for data
      * @return True if the tag has a non-empty
-     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY compound.
+     *   BUKKIT_DATA_KEY.PLUGIN_DATA_KEY.<owningPlugin.name> compound.
      */
     public static boolean hasPluginMetadata(NBTTagCompound tag, String key, Plugin owningPlugin) {
         NBTTagCompound bukkitRoot = tag.getCompound(BUKKIT_DATA_KEY);
@@ -177,9 +177,6 @@ public class NBTMetadataStore implements Cloneable {
 
     /**
      * Wrap a data store around an existing NBTTagCompound.
-     * <p>
-     * It is expected that this tag will contain a structure
-     * that follows the "<datakey>.<plugin> = <value>" format.
      *
      * @param tag The root of this datastore.
      */
@@ -267,6 +264,13 @@ public class NBTMetadataStore implements Cloneable {
         return convertToMetadata(owningPlugin, pluginTag.get(metadataKey));
     }
 
+    /**
+     * A helper method to convert a tag directly to a MetadataValue.
+     *
+     * @param plugin The owning plugin
+     * @param tag The tag to convert
+     * @return A new MetadataValue object, or null if the tag could not be converted
+     */
     public static PersistentMetadataValue convertToMetadata(Plugin plugin, NBTBase tag) {
         if (plugin == null || tag == null) return null;
 
@@ -488,24 +492,21 @@ public class NBTMetadataStore implements Cloneable {
      * Convert an NBTBase object to an object of the appropriate type for
      * inclusion in our data map.
      * <p>
-     * This will convert a compound tag into either a Map (used for object
-     * deserialization) or a ConfigurationSection.
-     * <p>
-     * It is not possible to store a Map directly.
+     * A compound tag may be returned as a Map or, if serialized type
+     * information is found, a ConfigurationSerializable Object.
      *
-     * @param tag The tag to convert and store
-     * @return The converted object, or null if nothing was stored
+     * @param tag The tag to convert
+     * @return The converted object, or null if the data cannot be converted
      */
     private static Object convert(NBTBase tag) {
         if (tag == null) return null;
 
         Object value = null;
-        // This adds some extra reaching into NBT internals.
         if (tag instanceof NBTTagCompound) {
             NBTTagCompound compound = (NBTTagCompound)tag;
             Collection<String> keys = getAllKeys(compound);
 
-            // Check for Map, ConfigurationSection or SerliazebleObject creation
+            // Check for Map or ConfigurationSerializable, both of which are stored in a compound tag
             boolean isSerializedObject = compound.hasKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY);
             Map<String, Object> dataMap = new HashMap<String, Object>();
             for (String tagKey : keys) {
@@ -530,42 +531,42 @@ public class NBTMetadataStore implements Cloneable {
             NBTTagList list = (NBTTagList)tag;
             int tagSize = list.size();
             List<Object> convertedList = new ArrayList<Object>(tagSize);
-            int listType = list.d();
+            NBTType listType = NBTType.getListType(list);
             for (int i = 0; i < tagSize; i++) {
                 // Convert to appropriate NBT object type
                 Object listValue = null;
                 switch (listType) {
-                    case 10: // TagCompound
+                    case COMPOUND:
                         listValue = convert(list.get(i));
                         break;
-                    case 1: // Byte
+                    case BYTE:
                         listValue = list.getByte(i);
                         break;
-                    case 2: // Short
+                    case SHORT:
                         listValue = list.getShort(i);
                         break;
-                    case 3: // Int
+                    case INT:
                         listValue = list.getInt(i);
                         break;
-                    case 4: // Long
+                    case LONG:
                         listValue = list.getLong(i);
                         break;
-                    case 6: // Double
-                        listValue = list.d(i);
-                        break;
-                    case 5: // Float
+                    case FLOAT:
                         listValue = list.e(i);
                         break;
-                    case 7: // Byte array
+                    case DOUBLE:
+                        listValue = list.d(i);
+                        break;
+                    case BYTE_ARRAY:
                         listValue = list.getByteArray(i);
                         break;
-                    case 8: // String
+                    case STRING:
                         listValue = list.f(i);
                         break;
-                    case 9: // List
+                    case LIST:
                         listValue = convert(list.getList(i));
                         break;
-                    case 11: // Int array
+                    case INT_ARRAY:
                         listValue = list.c(i);
                         break;
                 }
@@ -697,19 +698,16 @@ public class NBTMetadataStore implements Cloneable {
     @SuppressWarnings("unchecked")
     protected static Set<String> getAllKeys(NBTTagCompound tag) {
         if (tag == null) return null;
-        // TODO: Deobfuscate c() and remove the wrapper?
         return tag.c();
     }
 
     @Override
     public boolean equals(Object other) {
-        // This seems to work as expected in testing, though I am suspicious.
         return other instanceof NBTMetadataStore && ((NBTMetadataStore) other).tag.equals(this.tag);
     }
 
     @Override
     public int hashCode() {
-        // TODO: Is this sufficient?
         return tag.hashCode();
     }
 
