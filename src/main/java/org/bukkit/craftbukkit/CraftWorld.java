@@ -592,6 +592,20 @@ public class CraftWorld implements World {
         return list;
     }
 
+    public List<Entity> getEntities(Location center, double x, double y, double z) {
+        AxisAlignedBB bb = AxisAlignedBB.a(center.getX() - x, center.getY() - y, center.getZ() - z,
+                                           center.getX() + x, center.getY() + y, center.getZ() + z);
+        // The source Entity is only used for equivalency checking, via == (not .equals)
+        // so passing null should be safe.
+        List<net.minecraft.server.Entity> nmsEntityList = world.getEntities(null, bb);
+        List<Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(nmsEntityList.size());
+
+        for (net.minecraft.server.Entity entity : nmsEntityList) {
+            bukkitEntityList.add(entity.getBukkitEntity());
+        }
+        return bukkitEntityList;
+    }
+
     public List<LivingEntity> getLivingEntities() {
         List<LivingEntity> list = new ArrayList<LivingEntity>();
 
