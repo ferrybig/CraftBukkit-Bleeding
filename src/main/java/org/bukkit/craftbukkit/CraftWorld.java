@@ -592,18 +592,8 @@ public class CraftWorld implements World {
         return list;
     }
 
-    public List<Entity> getEntities(Location center, double x, double y, double z) {
-        AxisAlignedBB bb = AxisAlignedBB.a(center.getX() - x, center.getY() - y, center.getZ() - z,
-                                           center.getX() + x, center.getY() + y, center.getZ() + z);
-        // The source Entity is only used for equivalency checking, via == (not .equals)
-        // so passing null should be safe.
-        List<net.minecraft.server.Entity> nmsEntityList = world.getEntities(null, bb);
-        List<Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(nmsEntityList.size());
-
-        for (net.minecraft.server.Entity entity : nmsEntityList) {
-            bukkitEntityList.add(entity.getBukkitEntity());
-        }
-        return bukkitEntityList;
+    public Collection<Entity> getEntities(Location center, double x, double y, double z) {
+        return getEntitiesByClasses(center, x, y, z, null);
     }
 
     public List<LivingEntity> getLivingEntities() {
@@ -677,6 +667,43 @@ public class CraftWorld implements World {
 
         return list;
     }
+
+
+    public <T extends Entity> Collection<T> getEntitiesByClass(Location center, double x, double y, double z, Class<T> cls) {
+        return (Collection<T>)getEntitiesByClasses(center, x, y, z, cls);
+    }
+
+    public Collection<Entity> getEntitiesByClasses(Location center, double x, double y, double z, Class<?>... classes) {
+        AxisAlignedBB bb = AxisAlignedBB.a(center.getX() - x, center.getY() - y, center.getZ() - z,
+                center.getX() + x, center.getY() + y, center.getZ() + z);
+        // The source Entity is only used for equivalency checking, via == (not .equals)
+        // so passing null should be safe.
+        List<net.minecraft.server.Entity> nmsEntityList = world.getEntities(null, bb);
+        List<Entity> bukkitEntityList = new java.util.ArrayList<org.bukkit.entity.Entity>(nmsEntityList.size());
+
+        for (net.minecraft.server.Entity entity : nmsEntityList) {
+            Entity bukkitEntity = ((net.minecraft.server.Entity) entity).getBukkitEntity();
+
+            if (bukkitEntity == null) {
+                continue;
+            }
+            Class<?> bukkitClass = bukkitEntity.getClass();
+
+            if (classes == null) {
+                bukkitEntityList.add(entity.getBukkitEntity());
+            } else {
+                for (Class<?> clazz : classes) {
+                    if (clazz.isAssignableFrom(bukkitClass)) {
+                        bukkitEntityList.add(entity.getBukkitEntity());
+                        break;
+                    }
+                }
+            }
+        }
+        return bukkitEntityList;
+
+    }
+
 
     public List<Player> getPlayers() {
         List<Player> list = new ArrayList<Player>();
