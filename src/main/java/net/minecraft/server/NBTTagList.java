@@ -13,7 +13,7 @@ public class NBTTagList extends NBTBase {
 
     public NBTTagList() {}
 
-    void write(DataOutput dataoutput) throws java.io.IOException { // CraftBukkit - added throws
+    void write(DataOutput dataoutput) throws java.io.IOException {
         if (!this.list.isEmpty()) {
             this.type = ((NBTBase) this.list.get(0)).getTypeId();
         } else {
@@ -28,11 +28,10 @@ public class NBTTagList extends NBTBase {
         }
     }
 
-    void load(DataInput datainput, int i, NBTReadLimiter nbtreadlimiter) throws java.io.IOException { // CraftBukkit - added throws
+    void load(DataInput datainput, int i) throws java.io.IOException {
         if (i > 512) {
             throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
         } else {
-            nbtreadlimiter.a(8L);
             this.type = datainput.readByte();
             int j = datainput.readInt();
 
@@ -41,7 +40,7 @@ public class NBTTagList extends NBTBase {
             for (int k = 0; k < j; ++k) {
                 NBTBase nbtbase = NBTBase.createTag(this.type);
 
-                nbtbase.load(datainput, i + 1, nbtreadlimiter);
+                nbtbase.load(datainput, i + 1);
                 this.list.add(nbtbase);
             }
         }
@@ -164,6 +163,7 @@ public class NBTTagList extends NBTBase {
     public int d() {
         return this.type;
     }
+
 
     // CraftBukkit start - add additional type accessors
     public byte getByte(int i) {
