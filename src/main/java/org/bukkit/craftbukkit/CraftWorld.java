@@ -668,14 +668,12 @@ public class CraftWorld implements World {
         return list;
     }
 
-
     public <T extends Entity> Collection<T> getEntitiesByClass(Location center, double x, double y, double z, Class<T> cls) {
         return (Collection<T>)getEntitiesByClasses(center, x, y, z, cls);
     }
 
     public Collection<Entity> getEntitiesByClasses(Location center, double x, double y, double z, Class<?>... classes) {
-        AxisAlignedBB bb = AxisAlignedBB.a(center.getX() - x, center.getY() - y, center.getZ() - z,
-                center.getX() + x, center.getY() + y, center.getZ() + z);
+        AxisAlignedBB bb = AxisAlignedBB.a(center.getX() - x, center.getY() - y, center.getZ() - z, center.getX() + x, center.getY() + y, center.getZ() + z);
         // The source Entity is only used for equivalency checking, via == (not .equals)
         // so passing null should be safe.
         List<net.minecraft.server.Entity> nmsEntityList = world.getEntities(null, bb);
@@ -688,7 +686,6 @@ public class CraftWorld implements World {
                 continue;
             }
             Class<?> bukkitClass = bukkitEntity.getClass();
-
             if (classes == null) {
                 bukkitEntityList.add(entity.getBukkitEntity());
             } else {
@@ -701,9 +698,7 @@ public class CraftWorld implements World {
             }
         }
         return bukkitEntityList;
-
     }
-
 
     public List<Player> getPlayers() {
         List<Player> list = new ArrayList<Player>();
