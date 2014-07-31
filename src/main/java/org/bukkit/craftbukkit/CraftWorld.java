@@ -669,7 +669,7 @@ public class CraftWorld implements World {
     }
 
     public <T extends Entity> Collection<T> getEntitiesByClass(Location center, double x, double y, double z, Class<T> cls) {
-        return (Collection<T>)getEntitiesByClasses(center, x, y, z, cls);
+        return (Collection<T>) getEntitiesByClasses(center, x, y, z, cls);
     }
 
     public Collection<Entity> getEntitiesByClasses(Location center, double x, double y, double z, Class<?>... classes) {
