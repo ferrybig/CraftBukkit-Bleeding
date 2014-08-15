@@ -219,5 +219,14 @@ public class NBTTagList extends NBTBase {
             return new NBTTagList();
         }
     }
+
+    public String getString(int i) {
+        if (i >= 0 && i < this.list.size()) {
+            NBTBase nbtbase = (NBTBase)this.list.get(i);
+            return org.bukkit.craftbukkit.util.NBTType.STRING.is(nbtbase) ? ((NBTTagString) nbtbase).a_() : "";
+        } else {
+            return "";
+        }
+    }
     // CraftBukkit end
 }
