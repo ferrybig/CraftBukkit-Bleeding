@@ -18,12 +18,6 @@
     <buildtag.suffix></buildtag.suffix>
   </properties>
 
-  <scm>
-    <connection>scm:git:git://github.com/Bukkit/CraftBukkit.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/Bukkit/CraftBukkit.git</developerConnection>
-    <url>https://github.com/Bukkit/CraftBukkit</url>
-  </scm>
-
   <distributionManagement>
     <repository>
       <id>repobo-rel</id>
